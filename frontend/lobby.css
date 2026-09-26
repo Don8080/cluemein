@@ -125,6 +125,11 @@ p.intro {
   color: #666;
 }
 
+/* English lists on the first row, other languages below. */
+.wordset-row + .wordset-row {
+  margin-top: 0.75em;
+}
+
 .btn-wordsettoggle {
   cursor: pointer;
   border-radius: 0.25em;

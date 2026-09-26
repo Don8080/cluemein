@@ -1,26 +1,37 @@
 // ClueMeIn server (Node port of HorsePaste's Go server).
-// Phase 1: games live in memory only; persistence arrives with the database.
-require('dotenv').config();
+// Boards still live in memory; RuleSets and sessions will move them to the database.
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const { Game, randomState, nextGameState } = require('./game');
+const { initDb, normalizeWord } = require('./db');
 
 const PORT = process.env.PORT || 3003;
 const LONG_POLL_MS = 15 * 1000;
 
-function loadWordFile(file) {
-  return fs
-    .readFileSync(path.join(__dirname, 'assets', file), 'utf8')
-    .split(/\r?\n/)
-    .map((w) => w.trim())
-    .filter(Boolean);
+const db = initDb();
+
+const listWordsStmt = db.prepare(
+  'SELECT word FROM standard_words WHERE wordlist_id = ? ORDER BY word'
+);
+
+function wordsForLists(ids) {
+  const words = new Set();
+  for (const id of ids) {
+    for (const { word } of listWordsStmt.all(id)) words.add(word);
+  }
+  return [...words];
 }
 
-const defaultWords = loadWordFile('original.txt').sort();
-const gameIDWords = loadWordFile('game-id-words.txt')
-  .filter((w) => w.length >= 3)
-  .map((w) => w.toLowerCase());
+const originalList = db.prepare("SELECT id FROM wordlists WHERE name = 'Original'").get();
+const defaultWords = wordsForLists([originalList.id]).sort();
+
+const gameIDWords = fs
+  .readFileSync(path.join(__dirname, 'assets', 'game-id-words.txt'), 'utf8')
+  .split(/\r?\n/)
+  .map((w) => w.trim().toLowerCase())
+  .filter((w) => w.length >= 3);
 
 // id -> { game, waiters: Set<fn> }. Waiters are pending long-poll requests.
 const games = new Map();
@@ -129,13 +140,32 @@ app.post('/end-turn', (req, res) => {
   res.json(handle.game);
 });
 
+// Standard word lists, in picker order, with word counts.
+app.get('/api/wordlists', (req, res) => {
+  res.json(
+    db
+      .prepare(
+        `SELECT l.id, l.name, l.language, l.picker_row, COUNT(w.id) AS count
+           FROM wordlists l LEFT JOIN standard_words w ON w.wordlist_id = l.id
+          GROUP BY l.id ORDER BY l.picker_row, l.sort_order`
+      )
+      .all()
+  );
+});
+
 app.post('/next-game', (req, res) => {
   const body = req.body || {};
   const gameID = body.game_id;
   if (typeof gameID !== 'string' || !gameID) return res.status(400).send('Missing game_id');
 
+  // Words come from standard lists (by id) plus any explicit words, e.g. a
+  // custom list or the previous board's word set.
+  const listIDs = (body.wordlist_ids || []).map(Number).filter(Number.isInteger);
   const wordSet = [
-    ...new Set((body.word_set || []).map((w) => String(w).trim().toUpperCase()).filter(Boolean)),
+    ...new Set([
+      ...wordsForLists(listIDs),
+      ...(body.word_set || []).map(normalizeWord).filter(Boolean),
+    ]),
   ].sort();
   if (wordSet.length > 0 && wordSet.length < 25) return res.status(400).send('Need at least 25 words');
   if (wordSet.length > 10000) return res.status(400).send('Too many words in the set.');

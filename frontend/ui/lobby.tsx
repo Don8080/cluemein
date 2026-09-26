@@ -3,28 +3,42 @@ import axios from 'axios';
 import CustomWords from '~/ui/custom_words';
 import WordSetToggle from '~/ui/wordset_toggle';
 import TimerSettings from '~/ui/timer_settings';
-import OriginalWords from '~/words.json';
 
 export const Lobby = ({ defaultGameID }) => {
   const [newGameName, setNewGameName] = React.useState(defaultGameID);
-  const [selectedWordSets, setSelectedWordSets] = React.useState([
-    'English (Original)',
-  ]);
+  // Standard lists from the server: [{ id, name, language, picker_row, count }]
+  const [wordLists, setWordLists] = React.useState([]);
+  const [selectedListIDs, setSelectedListIDs] = React.useState([]);
+  const [customSelected, setCustomSelected] = React.useState(false);
   const [customWordsText, setCustomWordsText] = React.useState('');
-  const [words, setWords] = React.useState({ ...OriginalWords, Custom: [] });
   const [warning, setWarning] = React.useState(null);
   const [timer, setTimer] = React.useState(null);
   const [enforceTimerEnabled, setEnforceTimerEnabled] = React.useState(false);
 
-  let selectedWordCount = selectedWordSets
-    .map((l) => words[l].length)
-    .reduce((a, cv) => a + cv, 0);
+  React.useEffect(() => {
+    axios.get('/api/wordlists').then(({ data }) => {
+      setWordLists(data);
+      const original = data.find((l) => l.name === 'Original');
+      if (original) setSelectedListIDs([original.id]);
+    });
+  }, []);
+
+  const customWords = customWordsText
+    .split(',')
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
+
+  const selectedWordCount =
+    wordLists
+      .filter((l) => selectedListIDs.includes(l.id))
+      .reduce((a, l) => a + l.count, 0) +
+    (customSelected ? customWords.length : 0);
 
   React.useEffect(() => {
     if (selectedWordCount >= 25) {
       setWarning(null);
     }
-  }, [selectedWordSets, customWordsText]);
+  }, [selectedWordCount]);
 
   function handleNewGame(e) {
     e.preventDefault();
@@ -32,11 +46,7 @@ export const Lobby = ({ defaultGameID }) => {
       return;
     }
 
-    let combinedWordSet = selectedWordSets
-      .map((l) => words[l])
-      .reduce((a, w) => a.concat(w), []);
-
-    if (combinedWordSet.length < 25) {
+    if (selectedWordCount < 25) {
       setWarning('Selected wordsets do not include at least 25 words.');
       return;
     }
@@ -44,32 +54,41 @@ export const Lobby = ({ defaultGameID }) => {
     axios
       .post('/next-game', {
         game_id: newGameName,
-        word_set: combinedWordSet,
+        wordlist_ids: selectedListIDs,
+        word_set: customSelected ? customWords : [],
         create_new: false,
         timer_duration_ms:
           timer && timer.length ? timer[0] * 60 * 1000 + timer[1] * 1000 : 0,
         enforce_timer: timer && timer.length && enforceTimerEnabled,
       })
       .then(() => {
-        const newURL = (document.location.pathname = '/' + newGameName);
-        window.location = newURL;
-      });
+        window.location = '/' + newGameName;
+      })
+      .catch((err) => setWarning(err.response?.data || 'Could not start the game.'));
   }
 
-  let toggleWordSet = (wordSet) => {
-    let wordSets = [...selectedWordSets];
-    let index = wordSets.indexOf(wordSet);
-
-    if (index == -1) {
-      wordSets.push(wordSet);
-    } else {
-      wordSets.splice(index, 1);
-    }
-    setSelectedWordSets(wordSets);
+  const toggleList = (id) => {
+    setSelectedListIDs(
+      selectedListIDs.includes(id)
+        ? selectedListIDs.filter((x) => x !== id)
+        : [...selectedListIDs, id]
+    );
   };
 
-  let langs = Object.keys(OriginalWords);
-  langs.sort();
+  const listRow = (row) => (
+    <div className="wordset-row">
+      {wordLists
+        .filter((l) => l.picker_row === row)
+        .map((l) => (
+          <WordSetToggle
+            key={l.id}
+            label={l.name}
+            selected={selectedListIDs.includes(l.id)}
+            onToggle={() => toggleList(l.id)}
+          ></WordSetToggle>
+        ))}
+    </div>
+  );
 
   return (
     <div id="lobby">
@@ -116,32 +135,15 @@ export const Lobby = ({ defaultGameID }) => {
                 You've selected <strong>{selectedWordCount}</strong> words.
               </p>
               <div id="default-wordsets">
-                {langs.map((_label) => (
-                  <WordSetToggle
-                    key={_label}
-                    words={words[_label]}
-                    label={_label}
-                    selected={selectedWordSets.includes(_label)}
-                    onToggle={(e) => toggleWordSet(_label)}
-                  ></WordSetToggle>
-                ))}
+                {listRow(1)}
+                {listRow(2)}
               </div>
 
               <CustomWords
                 words={customWordsText}
-                onWordChange={(w) => {
-                  setCustomWordsText(w);
-                  setWords({
-                    ...words,
-                    Custom: w
-                      .trim()
-                      .split(',')
-                      .map((w) => w.trim())
-                      .filter((w) => w.length > 0),
-                  });
-                }}
-                selected={selectedWordSets.includes('Custom')}
-                onToggle={(e) => toggleWordSet('Custom')}
+                onWordChange={setCustomWordsText}
+                selected={customSelected}
+                onToggle={() => setCustomSelected(!customSelected)}
               />
             </div>
           </div>

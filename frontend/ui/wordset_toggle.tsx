@@ -1,9 +1,6 @@
 import * as React from 'react';
-import OriginalWords from '~/words.json';
 
-const WordSetToggle = ({ words, label, selected, onToggle }) => {
-  const [expanded, setExpanded] = React.useState(false);
-
+const WordSetToggle = ({ label, selected, onToggle }) => {
   return (
     <div
       className={selected ? 'btn-wordsettoggle selected' : 'btn-wordsettoggle'}
