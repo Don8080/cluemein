@@ -180,8 +180,6 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
 
-  const minPlayers = Number(value.min_players);
-
   return (
     <div className="ruleset-form">
       <div className="form-grid">
@@ -202,10 +200,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
         <label>*Minimum Team Size</label>
         <span>
           <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
-          <span className="hint">
-            Includes Cluers and Floaters
-            {Number.isInteger(minPlayers) && minPlayers >= 3 ? ` (at most ${minPlayers - 1})` : ''}
-          </span>
+          <span className="hint">Includes Cluers and Floaters</span>
         </span>
       </div>
 
