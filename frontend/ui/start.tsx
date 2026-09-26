@@ -118,7 +118,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
 
   return (
     <div id="start">
-      <h2>Start</h2>
+      <h2 className="screen-heading">Start</h2>
       {accountArea}
       {notice && <div className="form-message">{notice}</div>}
 

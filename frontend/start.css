@@ -1,15 +1,18 @@
 /* Start screen (A1) and the popups (P0, P3). */
 
-#start {
-  max-width: 560px;
-  margin: 1.5em auto;
-  padding: 0 16px;
-  font-family: 'Roboto', sans-serif;
+/* Every screen's heading sits right under the site title, centered. */
+h2.screen-heading {
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: bold;
+  margin: 0 0 0.8em;
 }
 
-#start h2 {
-  margin: 0 0 0.75em;
-  font-weight: normal;
+#start {
+  max-width: 560px;
+  margin: 0 auto 1.5em;
+  padding: 0 16px;
+  font-family: 'Roboto', sans-serif;
 }
 
 #start .account {
@@ -172,28 +175,9 @@ button.link-button,
 
 #ruleset-screen {
   max-width: 720px;
-  margin: 1.5em auto 3em;
+  margin: 0 auto 3em;
   padding: 0 16px;
   font-family: 'Roboto', sans-serif;
-}
-
-#ruleset-screen h2 {
-  font-weight: normal;
-  margin: 0 0 1em;
-}
-
-/* Modify Game: the game's name reads as part of the page header. */
-#ruleset-screen .screen-title {
-  text-align: center;
-  color: #777;
-  font-size: 0.95em;
-}
-
-#ruleset-screen h2.ruleset-name {
-  text-align: center;
-  font-size: 1.8em;
-  font-weight: bold;
-  margin: 0.1em 0 1em;
 }
 
 #ruleset-screen .description-field {

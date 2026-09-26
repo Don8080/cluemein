@@ -28,7 +28,7 @@ export const Popup = ({ title, onClose, children, wide = false }) => {
       <div
         className={'popup' + (wide ? ' wide' : '')}
         role="dialog"
-        aria-label={title}
+        aria-label={'Clue Me In: ' + title}
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
       >
         <div
@@ -37,7 +37,7 @@ export const Popup = ({ title, onClose, children, wide = false }) => {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          {title}
+          Clue Me In: {title}
         </div>
         <div className="popup-body">{children}</div>
       </div>

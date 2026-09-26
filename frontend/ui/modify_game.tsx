@@ -50,7 +50,7 @@ export const ModifyGame = ({ rulesetID }) => {
 
   return (
     <div id="ruleset-screen">
-      <h2 className="ruleset-name">Modify Game: {ruleset.name}</h2>
+      <h2 className="screen-heading">Modify Game: {ruleset.name}</h2>
 
       <RulesetForm
         value={settings}

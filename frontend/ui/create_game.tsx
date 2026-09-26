@@ -61,7 +61,7 @@ export const CreateGame = ({ user }) => {
 
   return (
     <div id="ruleset-screen">
-      <h2>Create Game</h2>
+      <h2 className="screen-heading">Create Game</h2>
 
       <div className="form-grid">
         <label>*Name of Game</label>
