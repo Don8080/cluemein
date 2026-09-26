@@ -50,8 +50,7 @@ export const ModifyGame = ({ rulesetID }) => {
 
   return (
     <div id="ruleset-screen">
-      <div className="screen-title">Modify Game</div>
-      <h2 className="ruleset-name">{ruleset.name}</h2>
+      <h2 className="ruleset-name">Modify Game: {ruleset.name}</h2>
 
       <RulesetForm
         value={settings}
@@ -59,14 +58,15 @@ export const ModifyGame = ({ rulesetID }) => {
         lists={lists}
         mode="modify"
         addedListIDs={ruleset.wordlist_ids}
+        beforeWordLists={
+          <div className="form-section">
+            <button type="button" onClick={() => setShowVocabulary(true)}>
+              Modify Vocabulary
+            </button>{' '}
+            <span className="hint">{ruleset.word_count} words in this game</span>
+          </div>
+        }
       />
-
-      <div className="form-section">
-        <button type="button" onClick={() => setShowVocabulary(true)}>
-          Modify Vocabulary
-        </button>{' '}
-        <span className="hint">{ruleset.word_count} words in this game</span>
-      </div>
 
       {error && <div className="form-error">{error}</div>}
       {!error && problem && <div className="form-hint">{problem}</div>}

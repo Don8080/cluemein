@@ -18,7 +18,14 @@ export const Vocabulary = ({ rulesetID, onClose }) => {
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
-    axios.get(`/api/rulesets/${rulesetID}/words`).then(({ data }) => setWords(data));
+    axios.get(`/api/rulesets/${rulesetID}/words`).then(({ data }) => {
+      setWords(data);
+      // Start filtered on the first word alphabetically so the list is short.
+      if (data.length) {
+        setSearchText(data[0].word);
+        setSearch(data[0].word);
+      }
+    });
   }, []);
 
   // Starting letters come from the vocabulary itself, so other alphabets work.

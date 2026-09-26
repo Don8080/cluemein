@@ -176,7 +176,7 @@ export const DescriptionInput = ({ value, onChange }) => (
   </span>
 );
 
-export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] }) => {
+export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], beforeWordLists = null }) => {
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
 
@@ -219,6 +219,8 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
         <input value={value.graffito_url} onChange={set('graffito_url')} />
       </div>
 
+      {beforeWordLists}
+
       <div className="form-section">
         <div className="section-label">{mode === 'create' ? '*Build Word List' : 'Add Word Lists'}</div>
         <WordListPicker
@@ -231,7 +233,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
 
       <div className="form-section timer-settings">
         <label className="check">
-          <input type="checkbox" checked={value.timer_on} onChange={set('timer_on')} /> Timer
+          Timer <input type="checkbox" checked={value.timer_on} onChange={set('timer_on')} />
         </label>
         <div className="form-grid">
           <label>First Turn Duration</label>

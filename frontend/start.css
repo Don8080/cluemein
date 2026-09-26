@@ -312,7 +312,8 @@ button.link-button,
 }
 
 #ruleset-screen .section-label {
-  color: #444;
+  color: #333;
+  font-weight: bold;
   margin-bottom: 0.3em;
 }
 
