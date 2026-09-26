@@ -1,5 +1,4 @@
 import * as React from 'react';
-import axios from 'axios';
 import * as ReactDOM from 'react-dom';
 import { Game } from '~/ui/game';
 import { Lobby } from '~/ui/lobby';
@@ -29,7 +28,7 @@ export class App extends React.Component {
       <div id="application">
         <div id="topbar">
           <h1>
-            <a href={'http://' + window.location.host}>Horsepaste</a>
+            <a href={'/'}>ClueMeIn</a>
           </h1>
         </div>
         {pane}
@@ -40,6 +39,4 @@ export class App extends React.Component {
 
 document.addEventListener('DOMContentLoaded', (event) => {
   ReactDOM.render(<App />, document.getElementById('app'));
-  // Sorry! Don't hate the player; hate the game.
-  axios.get('https://ipv4.games/claim?name=jackson');
 });
