@@ -398,7 +398,6 @@ export class Game extends React.Component {
           className={
             this.state.cluegiver ? 'cluegiver-selected' : 'player-selected'
           }
-          role="radiogroup"
         >
           <SettingsButton
             onClick={(e) => {
@@ -406,18 +405,11 @@ export class Game extends React.Component {
             }}
           />
           <button
-            onClick={(e) => this.toggleRole(e, 'player')}
-            className="player"
-            role="radio"
-            aria-checked={!this.state.cluegiver}
-          >
-            Player
-          </button>
-          <button
-            onClick={(e) => this.toggleRole(e, 'cluegiver')}
+            onClick={(e) =>
+              this.toggleRole(e, this.state.cluegiver ? 'player' : 'cluegiver')
+            }
             className="cluegiver"
-            role="radio"
-            aria-checked={this.state.cluegiver}
+            aria-pressed={this.state.cluegiver}
           >
             Clue giver
           </button>

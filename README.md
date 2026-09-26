@@ -13,7 +13,7 @@ npm run build
 npm start
 ```
 
-Then open http://localhost:3000. Use `npm run watch` in a second terminal to rebuild the front end on every change.
+Then open http://localhost:3003. Use `npm run watch` in a second terminal to rebuild the front end on every change.
 
 ## Layout
 

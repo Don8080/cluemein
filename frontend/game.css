@@ -90,22 +90,13 @@
 }
 
 #mode-toggle button.cluegiver {
-  border-left: none;
-  border-radius: 0 5px 5px 0;
-  -moz-border-radius: 0 5px 5px 0;
-  -webkit-border-radius: 0 5px 5px 0;
+  border-radius: 5px;
 }
 
-#mode-toggle button.player {
-  border-radius: 5px 0 0 5px;
-  -moz-border-radius: 5px 0 0 5px;
-  -webkit-border-radius: 5px 0 0 5px;
-}
-
-#mode-toggle.player-selected button.player,
+/* Clue giver is an on/off toggle; show it pressed while on. */
 #mode-toggle.cluegiver-selected button.cluegiver {
-  cursor: auto;
-  color: #999;
+  background: #ccc;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 #next-game-btn {

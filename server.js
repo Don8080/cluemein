@@ -6,7 +6,7 @@ const path = require('path');
 const express = require('express');
 const { Game, randomState, nextGameState } = require('./game');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 const LONG_POLL_MS = 15 * 1000;
 
 function loadWordFile(file) {
