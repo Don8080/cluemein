@@ -180,6 +180,17 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
 
+  // Mouseover text for the label and its field.
+  const tips = {
+    sessionDuration: `Session ends after ${value.max_session_hours || 'x'} hours`,
+    minPlayers: 'Define when the team assignments can be made',
+    minTeamSize:
+      'Establish how the number of session players determines the number of floaters. For example:\n\n' +
+      'When there are 5 players:\n' +
+      'A minimum team size of 3 means 1 floater.\n' +
+      'A minimum team size of 4 means 3 floaters',
+  };
+
   return (
     <div className="ruleset-form">
       <div className="form-grid">
@@ -189,16 +200,16 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
             <DescriptionInput value={value.description} onChange={set('description')} />
           </>
         )}
-        <label>*Maximum Session Duration</label>
-        <span>
+        <label title={tips.sessionDuration}>*Maximum Session Duration</label>
+        <span title={tips.sessionDuration}>
           <input className="short" type="number" min="0.5" max="24" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
         </span>
-        <label>*Minimum Number of Players</label>
-        <span>
+        <label title={tips.minPlayers}>*Minimum Number of Players</label>
+        <span title={tips.minPlayers}>
           <input className="short" type="number" min="3" value={value.min_players} onChange={set('min_players')} />
         </span>
-        <label>*Minimum Team Size</label>
-        <span>
+        <label title={tips.minTeamSize}>*Minimum Team Size</label>
+        <span title={tips.minTeamSize}>
           <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
           <span className="hint">Includes Cluers and Floaters</span>
         </span>
