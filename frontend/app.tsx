@@ -45,7 +45,7 @@ export const App = () => {
     <div id="application">
       <div id="topbar">
         <h1>
-          <a href="/">ClueMeIn</a>
+          <a href="/">Clue Me In</a>
         </h1>
       </div>
       {pane}

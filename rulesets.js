@@ -35,6 +35,7 @@ function setupRulesets(app, db, requireAuth) {
     return {
       id: rs.id,
       name: rs.name,
+      description: rs.description || '',
       max_session_hours: rs.max_session_hours,
       min_players: rs.min_players,
       min_team_size: rs.min_team_size,
@@ -67,11 +68,17 @@ function setupRulesets(app, db, requireAuth) {
       );
     }
 
+    // Accepts "zoom.us/j/123" as well as a full link; adds https:// if missing.
     const url = (v, label) => {
-      const s = String(v || '').trim();
-      if (s && !/^https?:\/\/\S+$/i.test(s)) throw new InputError(`${label} must start with http:// or https://`);
-      return s || null;
+      let s = String(v || '').trim();
+      if (!s) return null;
+      if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+      if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(s)) throw new InputError(`${label} doesn't look like a web address.`);
+      return s;
     };
+
+    const description = String(body.description || '').trim();
+    if (description.length > 75) throw new InputError('Game Description can be at most 75 characters.');
 
     const timerOn = !!body.timer_on;
     const first = Math.round(num(body.first_turn_seconds));
@@ -101,11 +108,12 @@ function setupRulesets(app, db, requireAuth) {
     }
     if (missing.length) {
       throw new InputError(
-        `These emails don't have ClueMeIn accounts yet: ${missing.join(', ')}. Each player must create an account first.`
+        `These emails don't have Clue Me In accounts yet: ${missing.join(', ')}. Each player must create an account first.`
       );
     }
 
     return {
+      description: description || null,
       max_session_hours: hours,
       min_players: minPlayers,
       min_team_size: minTeam,
@@ -130,11 +138,11 @@ function setupRulesets(app, db, requireAuth) {
 
   function saveSettings(id, s) {
     db.prepare(
-      `UPDATE rulesets SET max_session_hours = ?, min_players = ?, min_team_size = ?, video_url = ?,
-         graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
+      `UPDATE rulesets SET description = ?, max_session_hours = ?, min_players = ?, min_team_size = ?,
+         video_url = ?, graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
          next_turn_seconds = ?, enforce_timer = ? WHERE id = ?`
     ).run(
-      s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
+      s.description, s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
       s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, id
     );
     // Replace the player list, keeping the order given.
@@ -186,7 +194,7 @@ function setupRulesets(app, db, requireAuth) {
     res.json(
       db
         .prepare(
-          `SELECT r.id, r.name, r.video_url FROM rulesets r
+          `SELECT r.id, r.name, r.description, r.video_url FROM rulesets r
              JOIN ruleset_members m ON m.ruleset_id = r.id AND m.user_id = ?
             ORDER BY r.name`
         )
@@ -226,16 +234,20 @@ function setupRulesets(app, db, requireAuth) {
     if (!src) return;
     const id = inTransaction(res, () => {
       const name = checkName(req.body.name);
+      const description = String(req.body.description || '').trim();
+      if (description.length > 75) throw new InputError('Game Description can be at most 75 characters.');
       const { lastInsertRowid: newID } = db
         .prepare(
-          `INSERT INTO rulesets (name, max_session_hours, min_players, min_team_size, video_url,
+          `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
              enforce_timer, created_by)
-           SELECT ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
+           SELECT ?, description, max_session_hours, min_players, min_team_size, video_url, graffito_message,
              graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, ?
              FROM rulesets WHERE id = ?`
         )
         .run(name, req.session.userID, src.id);
+      // A description typed in Create Game replaces the copied one.
+      if (description) db.prepare('UPDATE rulesets SET description = ? WHERE id = ?').run(description, newID);
       db.prepare(
         `INSERT INTO ruleset_members (ruleset_id, user_id, player_name)
          SELECT ?, user_id, player_name FROM ruleset_members WHERE ruleset_id = ? ORDER BY rowid`

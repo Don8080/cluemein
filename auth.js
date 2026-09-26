@@ -125,9 +125,9 @@ function setupAuth(app, db) {
     await sendEmail({
       from: FROM_VERIFY,
       to: user.email,
-      subject: 'Finish creating your ClueMeIn account',
-      text: `Welcome to ClueMeIn!\n\nOpen this link to finish creating your account:\n${url}\n\nThen go back to ClueMeIn and click "Refresh after Verification".\n\nThis link is valid for 24 hours.`,
-      html: `<p>Welcome to ClueMeIn!</p><p><a href="${url}">Click here</a> to finish creating your account.</p><p>Then go back to ClueMeIn and click <b>Refresh after Verification</b>.</p><p>This link is valid for 24 hours.</p>`,
+      subject: 'Finish creating your Clue Me In account',
+      text: `Welcome to Clue Me In!\n\nOpen this link to finish creating your account:\n${url}\n\nThen go back to Clue Me In and click "Refresh after Verification".\n\nThis link is valid for 24 hours.`,
+      html: `<p>Welcome to Clue Me In!</p><p><a href="${url}">Click here</a> to finish creating your account.</p><p>Then go back to Clue Me In and click <b>Refresh after Verification</b>.</p><p>This link is valid for 24 hours.</p>`,
     });
   }
 
@@ -250,7 +250,7 @@ function setupAuth(app, db) {
       await sendEmail({
         from: FROM_RESET,
         to: user.email,
-        subject: 'Log in to ClueMeIn',
+        subject: 'Log in to Clue Me In',
         text: `Log in directly: ${loginURL}\n\nOr set a new password: ${resetURL}\n\nThis link can be used once and expires in 1 hour.`,
         html: `<p><a href="${loginURL}">Log in directly</a></p><p>or <a href="${resetURL}">set a new password</a>.</p><p>This link can be used once and expires in 1 hour.</p>`,
       });

@@ -7,8 +7,14 @@ import WordSetToggle from '~/ui/wordset_toggle';
 export const emptyPlayer = () => ({ name: '', email: '' });
 const isBlank = (p) => !p.name.trim() && !p.email.trim();
 
+export const DESCRIPTION_MAX = 75;
+
+// How a game appears in dropdowns: its name and description.
+export const gameLabel = (g) => (g.description ? `${g.name} — ${g.description}` : g.name);
+
 export function defaultSettings(myEmail) {
   return {
+    description: '',
     max_session_hours: '4',
     min_players: '4',
     min_team_size: '',
@@ -27,6 +33,7 @@ export function defaultSettings(myEmail) {
 // Converts a RuleSet from the server into form values.
 export function settingsFromRuleset(rs) {
   return {
+    description: rs.description,
     max_session_hours: String(rs.max_session_hours),
     min_players: String(rs.min_players),
     min_team_size: String(rs.min_team_size),
@@ -45,6 +52,7 @@ export function settingsFromRuleset(rs) {
 // Converts form values into the request body the server expects.
 export function settingsToRequest(s) {
   return {
+    description: s.description,
     max_session_hours: s.max_session_hours,
     min_players: s.min_players,
     min_team_size: s.min_team_size,
@@ -158,6 +166,16 @@ export const WordListPicker = ({ lists, selected, onChange, hideIDs = [] }) => {
   );
 };
 
+// Game Description field with a character count (max 75).
+export const DescriptionInput = ({ value, onChange }) => (
+  <span className="description-field">
+    <input value={value} maxLength={DESCRIPTION_MAX} onChange={onChange} />
+    <span className="hint">
+      {value.length}/{DESCRIPTION_MAX}
+    </span>
+  </span>
+);
+
 export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] }) => {
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
@@ -167,6 +185,12 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
   return (
     <div className="ruleset-form">
       <div className="form-grid">
+        {mode === 'modify' && (
+          <>
+            <label>Game Description</label>
+            <DescriptionInput value={value.description} onChange={set('description')} />
+          </>
+        )}
         <label>*Maximum Session Duration</label>
         <span>
           <input className="short" type="number" min="0.5" max="24" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
@@ -193,11 +217,11 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] })
 
       <div className="form-grid">
         <label>Video Chat URL</label>
-        <input value={value.video_url} onChange={set('video_url')} placeholder="https://…" />
+        <input value={value.video_url} onChange={set('video_url')} />
         <label>Graffito Message</label>
         <input value={value.graffito_message} onChange={set('graffito_message')} />
         <label>Graffito URL</label>
-        <input value={value.graffito_url} onChange={set('graffito_url')} placeholder="https://…" />
+        <input value={value.graffito_url} onChange={set('graffito_url')} />
       </div>
 
       <div className="form-section">

@@ -77,6 +77,7 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS rulesets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL COLLATE NOCASE,
+      description TEXT,                 -- up to 75 characters, shown beside the name
       max_session_hours REAL NOT NULL DEFAULT 4,
       min_players INTEGER NOT NULL DEFAULT 4,
       min_team_size INTEGER NOT NULL,
@@ -131,6 +132,12 @@ function initDb() {
       margin INTEGER                    -- "by #": unguessed words of the losing team
     );
   `);
+
+  // Columns added after a table was first created.
+  const hasColumn = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
+  if (!hasColumn('rulesets', 'description')) {
+    db.exec('ALTER TABLE rulesets ADD COLUMN description TEXT');
+  }
 
   seedWordlists(db);
   return db;

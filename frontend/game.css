@@ -5,8 +5,6 @@
 }
 
 #infoContent {
-  font-family: system, -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
-    'Lucida Grande';
   border-bottom: 1px #eee solid;
   display: grid;
   grid-auto-flow: column;
@@ -27,7 +25,7 @@
 
 #timer {
   font-size: 1.5em;
-  font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 #status-line {

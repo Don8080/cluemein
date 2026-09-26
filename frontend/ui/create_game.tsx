@@ -1,6 +1,13 @@
 import * as React from 'react';
 import axios from 'axios';
-import { RulesetForm, defaultSettings, settingsProblem, settingsToRequest } from '~/ui/ruleset_form';
+import {
+  DescriptionInput,
+  RulesetForm,
+  defaultSettings,
+  gameLabel,
+  settingsProblem,
+  settingsToRequest,
+} from '~/ui/ruleset_form';
 import { setLastRuleset } from '~/ui/prefs';
 
 const errorText = (err) => err.response?.data?.error || 'Something went wrong. Please try again.';
@@ -25,7 +32,10 @@ export const CreateGame = ({ user }) => {
     setError(null);
     setBusy(true);
     try {
-      const { data } = await axios.post(`/api/rulesets/${copyFrom}/copy`, { name });
+      const { data } = await axios.post(`/api/rulesets/${copyFrom}/copy`, {
+        name,
+        description: settings.description,
+      });
       setLastRuleset(data.id);
       window.location.href = `/modify/${data.id}`;
     } catch (err) {
@@ -56,13 +66,18 @@ export const CreateGame = ({ user }) => {
       <div className="form-grid">
         <label>*Name of Game</label>
         <input value={name} autoFocus onChange={(e) => setName(e.target.value)} />
+        <label>Game Description</label>
+        <DescriptionInput
+          value={settings.description}
+          onChange={(e) => setSettings({ ...settings, description: e.target.value })}
+        />
         <label>Copy From</label>
         <span className="copy-row">
           <select value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} disabled={!games.length}>
             <option value="">{games.length ? 'Choose a game…' : 'No games to copy'}</option>
             {games.map((g) => (
               <option key={g.id} value={g.id}>
-                {g.name}
+                {gameLabel(g)}
               </option>
             ))}
           </select>

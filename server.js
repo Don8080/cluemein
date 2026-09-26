@@ -74,7 +74,7 @@ function renderIndex(selectedGameID) {
   return `<!DOCTYPE html>
 <html>
   <head>
-    <title>ClueMeIn</title>
+    <title>Clue Me In</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="/static/app.js" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">

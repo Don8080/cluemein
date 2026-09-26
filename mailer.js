@@ -10,8 +10,8 @@ const ses = new SESClient({
   },
 });
 
-const FROM_VERIFY = `ClueMeIn Email Verification <${process.env.FROM_EMAIL}>`;
-const FROM_RESET = `ClueMeIn Password Reset <${process.env.FROM_EMAIL}>`;
+const FROM_VERIFY = `Clue Me In Email Verification <${process.env.FROM_EMAIL}>`;
+const FROM_RESET = `Clue Me In Password Reset <${process.env.FROM_EMAIL}>`;
 
 async function sendEmail({ from, to, subject, text, html }) {
   await ses.send(

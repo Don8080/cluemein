@@ -3,6 +3,7 @@ import axios from 'axios';
 import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
+import { gameLabel } from '~/ui/ruleset_form';
 
 const MESSAGES = {
   verified: 'Your email is verified and you are logged in.',
@@ -128,7 +129,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
             <select value={gameID ?? ''} onChange={(e) => chooseGame(Number(e.target.value))}>
               {games.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.name}
+                  {gameLabel(g)}
                 </option>
               ))}
             </select>

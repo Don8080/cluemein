@@ -182,6 +182,30 @@ button.link-button,
   margin: 0 0 1em;
 }
 
+/* Modify Game: the game's name reads as part of the page header. */
+#ruleset-screen .screen-title {
+  text-align: center;
+  color: #777;
+  font-size: 0.95em;
+}
+
+#ruleset-screen h2.ruleset-name {
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: bold;
+  margin: 0.1em 0 1em;
+}
+
+#ruleset-screen .description-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+#ruleset-screen .description-field input {
+  flex: 1;
+}
+
 #ruleset-screen button,
 .popup.wide button {
   padding: 0.5em 1em;

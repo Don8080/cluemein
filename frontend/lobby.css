@@ -1,7 +1,15 @@
 html,
 body {
   margin: 0;
-  font-family: 'Roboto', verdana, sans-serif;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+/* Form controls don't inherit the page font by default. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 #topbar {
@@ -21,13 +29,12 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   text-align: center;
-  font-family: 'Courier New', monospace;
 }
 
 h1,
 h2,
 h3 {
-  font-family: 'Courier New', monospace;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
 
 h2 {

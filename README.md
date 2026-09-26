@@ -1,4 +1,4 @@
-# ClueMeIn
+# Clue Me In
 
 A Codenames-style word game for our group, based on [HorsePaste](https://github.com/jbowens/horsepaste) by jbowens.
 The Go server was replaced with Node; the React front end comes from HorsePaste.

@@ -95,7 +95,7 @@ export const Lobby = ({ defaultGameID }) => {
       <div id="available-games">
         <form id="new-game">
           <p className="intro">
-            Play ClueMeIn online across multiple devices on a shared board. To
+            Play Clue Me In online across multiple devices on a shared board. To
             create a new game or join an existing game, enter a game identifier
             and click 'GO'.
           </p>
