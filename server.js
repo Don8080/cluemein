@@ -7,6 +7,7 @@ const express = require('express');
 const { Game, randomState, nextGameState } = require('./game');
 const { initDb, normalizeWord } = require('./db');
 const { setupAuth } = require('./auth');
+const { setupRulesets } = require('./rulesets');
 
 const PORT = process.env.PORT || 3003;
 const LONG_POLL_MS = 15 * 1000;
@@ -98,6 +99,7 @@ app.use('/static', express.static(path.join(__dirname, 'frontend', 'dist')));
 app.set('trust proxy', 1); // Railway terminates HTTPS in front of the app
 
 const { requireAuth } = setupAuth(app, db);
+setupRulesets(app, db, requireAuth);
 
 // Everything below except the page itself requires a logged-in player.
 app.use(['/game-state', '/guess', '/end-turn', '/next-game', '/api/wordlists'], requireAuth);
@@ -195,11 +197,12 @@ app.post('/next-game', (req, res) => {
   res.json(handle.game);
 });
 
-// The single page. "/" is the Start screen, "/quick" the temporary
-// HorsePaste-style lobby, and anything else a board by game id.
-app.get('/:id?', (req, res) => {
-  const id = req.params.id || '';
-  res.type('html').send(renderIndex(id === 'quick' ? '' : id));
+// The single page; the front end picks the screen from the path
+// ("/", "/create", "/modify/:id", "/quick", "/game/:id").
+app.get('/game/:id', (req, res) => res.type('html').send(renderIndex(req.params.id)));
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+  res.type('html').send(renderIndex(''));
 });
 
 // Drop finished games after 3 hours and any game after 72 hours.

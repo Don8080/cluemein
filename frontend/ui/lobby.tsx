@@ -62,7 +62,7 @@ export const Lobby = ({ defaultGameID }) => {
         enforce_timer: timer && timer.length && enforceTimerEnabled,
       })
       .then(() => {
-        window.location = '/' + newGameName;
+        window.location = '/game/' + encodeURIComponent(newGameName);
       })
       .catch((err) => setWarning(err.response?.data || 'Could not start the game.'));
   }

@@ -32,6 +32,7 @@ Settings come from a `.env` file in this folder (not committed):
 - `game.js`: game rules (board generation, turns, winning), ported from HorsePaste's `game.go`
 - `auth.js`: accounts: login sessions, sign-up with email verification, forgot/change password
 - `mailer.js`: sends email through Amazon SES
+- `rulesets.js`: games (RuleSets): create, copy, modify, vocabulary edits and export
 - `db.js`: SQLite schema (Node's built-in `node:sqlite`); seeds the standard word lists on first run
 - `build.js`: bundles `frontend/` into `frontend/dist` with esbuild
 - `frontend/`: React UI

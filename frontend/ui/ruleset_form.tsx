@@ -1,0 +1,234 @@
+import * as React from 'react';
+import WordSetToggle from '~/ui/wordset_toggle';
+
+// Settings shared by Create Game (B1) and Modify Game (B2). The parent owns
+// the values; timer durations are edited in minutes.
+
+export const emptyPlayer = () => ({ name: '', email: '' });
+const isBlank = (p) => !p.name.trim() && !p.email.trim();
+
+export function defaultSettings(myEmail) {
+  return {
+    max_session_hours: '4',
+    min_players: '4',
+    min_team_size: '',
+    players: [{ name: '', email: myEmail || '' }, emptyPlayer()],
+    video_url: '',
+    graffito_message: '',
+    graffito_url: '',
+    wordlist_ids: [],
+    timer_on: false,
+    first_turn_minutes: '5',
+    next_turn_minutes: '2',
+    enforce_timer: false,
+  };
+}
+
+// Converts a RuleSet from the server into form values.
+export function settingsFromRuleset(rs) {
+  return {
+    max_session_hours: String(rs.max_session_hours),
+    min_players: String(rs.min_players),
+    min_team_size: String(rs.min_team_size),
+    players: [...rs.players.map((p) => ({ name: p.name, email: p.email })), emptyPlayer()],
+    video_url: rs.video_url,
+    graffito_message: rs.graffito_message,
+    graffito_url: rs.graffito_url,
+    wordlist_ids: [],
+    timer_on: rs.timer_on,
+    first_turn_minutes: String(rs.first_turn_seconds / 60),
+    next_turn_minutes: String(rs.next_turn_seconds / 60),
+    enforce_timer: rs.enforce_timer,
+  };
+}
+
+// Converts form values into the request body the server expects.
+export function settingsToRequest(s) {
+  return {
+    max_session_hours: s.max_session_hours,
+    min_players: s.min_players,
+    min_team_size: s.min_team_size,
+    players: s.players.filter((p) => !isBlank(p)),
+    video_url: s.video_url,
+    graffito_message: s.graffito_message,
+    graffito_url: s.graffito_url,
+    wordlist_ids: s.wordlist_ids,
+    timer_on: s.timer_on,
+    first_turn_seconds: Math.round(Number(s.first_turn_minutes) * 60),
+    next_turn_seconds: Math.round(Number(s.next_turn_minutes) * 60),
+    enforce_timer: s.enforce_timer,
+  };
+}
+
+// Returns why the form can't be saved yet, or null. `needLists` is true for
+// Create Game, where at least one word list is required.
+export function settingsProblem(s, needLists) {
+  const minPlayers = Number(s.min_players);
+  const minTeam = Number(s.min_team_size);
+  if (!s.max_session_hours || !s.min_players || !s.min_team_size) return 'Fill in the required (*) fields.';
+  if (Number.isInteger(minPlayers) && Number.isInteger(minTeam) && minTeam > minPlayers - 1) {
+    return `Minimum Team Size can be at most ${minPlayers - 1} with ${minPlayers} players.`;
+  }
+  const complete = s.players.filter((p) => p.name.trim() && p.email.trim()).length;
+  if (s.players.some((p) => !isBlank(p) && (!p.name.trim() || !p.email.trim()))) {
+    return 'Every player needs both a name and an email.';
+  }
+  if (complete < 3) return 'Enter at least 3 players.';
+  if (needLists && !s.wordlist_ids.length) return 'Choose at least one word list.';
+  return null;
+}
+
+// Player rows. A spare blank row is added when one gets focus, keeping at
+// most two blank rows.
+const PlayerRows = ({ players, onChange, removable }) => {
+  const set = (i, field, value) => onChange(players.map((p, j) => (j === i ? { ...p, [field]: value } : p)));
+  const onFocus = (i) => {
+    if (!isBlank(players[i])) return;
+    if (players.filter(isBlank).length < 2) onChange([...players, emptyPlayer()]);
+  };
+  const remove = (i) => {
+    const rest = players.filter((_, j) => j !== i);
+    onChange(rest.some(isBlank) ? rest : [...rest, emptyPlayer()]);
+  };
+
+  return (
+    <table className="players-table">
+      <thead>
+        <tr>
+          <th>*Player Name</th>
+          <th>*Email</th>
+          {removable && <th></th>}
+        </tr>
+      </thead>
+      <tbody>
+        {players.map((p, i) => (
+          <tr key={i}>
+            <td>
+              <input value={p.name} onFocus={() => onFocus(i)} onChange={(e) => set(i, 'name', e.target.value)} />
+            </td>
+            <td>
+              <input
+                type="email"
+                value={p.email}
+                onFocus={() => onFocus(i)}
+                onChange={(e) => set(i, 'email', e.target.value)}
+              />
+            </td>
+            {removable && (
+              <td>
+                {!isBlank(p) && (
+                  <button type="button" className="link-button" onClick={() => remove(i)}>
+                    Remove
+                  </button>
+                )}
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+// Word-list toggles: English lists on row 1, other languages below.
+// `hideIDs` hides lists already in the game (Modify Game).
+export const WordListPicker = ({ lists, selected, onChange, hideIDs = [] }) => {
+  const toggle = (id) => onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  const row = (n) => {
+    const shown = lists.filter((l) => l.picker_row === n && !hideIDs.includes(l.id));
+    if (!shown.length) return null;
+    return (
+      <div className="wordset-row">
+        {shown.map((l) => (
+          <WordSetToggle
+            key={l.id}
+            label={`${l.name} (${l.count})`}
+            selected={selected.includes(l.id)}
+            onToggle={() => toggle(l.id)}
+          />
+        ))}
+      </div>
+    );
+  };
+  return (
+    <div id="wordsets" className="wordlist-picker">
+      {row(1)}
+      {row(2)}
+    </div>
+  );
+};
+
+export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [] }) => {
+  const set = (field) => (e) =>
+    onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+
+  const minPlayers = Number(value.min_players);
+
+  return (
+    <div className="ruleset-form">
+      <div className="form-grid">
+        <label>*Maximum Session Duration</label>
+        <span>
+          <input className="short" type="number" min="0.5" max="24" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
+        </span>
+        <label>*Minimum Number of Players</label>
+        <span>
+          <input className="short" type="number" min="3" value={value.min_players} onChange={set('min_players')} />
+        </span>
+        <label>*Minimum Team Size</label>
+        <span>
+          <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
+          <span className="hint">
+            Includes Cluers and Floaters
+            {Number.isInteger(minPlayers) && minPlayers >= 3 ? ` (at most ${minPlayers - 1})` : ''}
+          </span>
+        </span>
+      </div>
+
+      <PlayerRows
+        players={value.players}
+        onChange={(players) => onChange({ ...value, players })}
+        removable={mode === 'modify'}
+      />
+
+      <div className="form-grid">
+        <label>Video Chat URL</label>
+        <input value={value.video_url} onChange={set('video_url')} placeholder="https://…" />
+        <label>Graffito Message</label>
+        <input value={value.graffito_message} onChange={set('graffito_message')} />
+        <label>Graffito URL</label>
+        <input value={value.graffito_url} onChange={set('graffito_url')} placeholder="https://…" />
+      </div>
+
+      <div className="form-section">
+        <div className="section-label">{mode === 'create' ? '*Build Word List' : 'Add Word Lists'}</div>
+        <WordListPicker
+          lists={lists}
+          selected={value.wordlist_ids}
+          onChange={(wordlist_ids) => onChange({ ...value, wordlist_ids })}
+          hideIDs={addedListIDs}
+        />
+      </div>
+
+      <div className="form-section timer-settings">
+        <label className="check">
+          <input type="checkbox" checked={value.timer_on} onChange={set('timer_on')} /> Timer
+        </label>
+        <div className="form-grid">
+          <label>First Turn Duration</label>
+          <span>
+            <input className="short" type="number" min="0.5" step="0.5" disabled={!value.timer_on} value={value.first_turn_minutes} onChange={set('first_turn_minutes')} /> Minutes
+          </span>
+          <label>Subsequent Turn Duration</label>
+          <span>
+            <input className="short" type="number" min="0.5" step="0.5" disabled={!value.timer_on} value={value.next_turn_minutes} onChange={set('next_turn_minutes')} /> Minutes
+          </span>
+          <label>Enforce Timer</label>
+          <span>
+            <input type="checkbox" disabled={!value.timer_on} checked={value.enforce_timer} onChange={set('enforce_timer')} />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};

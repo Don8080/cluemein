@@ -2,6 +2,7 @@ import * as React from 'react';
 import axios from 'axios';
 import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
+import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 
 const MESSAGES = {
   verified: 'Your email is verified and you are logged in.',
@@ -9,8 +10,10 @@ const MESSAGES = {
 };
 
 // (A1) Start. Shows who is logged in, the game (RuleSet) picker and the
-// main buttons. RuleSets arrive in the next phase, so the picker is empty.
+// main buttons.
 export const Start = ({ account, setAccount, openLogin }) => {
+  const [games, setGames] = React.useState(null); // [{ id, name, video_url }]
+  const [gameID, setGameID] = React.useState(null);
   const params = new URLSearchParams(window.location.search);
   const [notice, setNotice] = React.useState(MESSAGES[params.get('message')] || null);
   // null | { kind: 'login', notice? } | { kind: 'change', email } | { kind: 'reset', token }
@@ -29,6 +32,25 @@ export const Start = ({ account, setAccount, openLogin }) => {
   }, []);
 
   const user = account.user;
+
+  // Load this player's games once logged in; default to the last one used.
+  React.useEffect(() => {
+    if (!user) {
+      setGames(null);
+      return;
+    }
+    axios.get('/api/rulesets').then(({ data }) => {
+      setGames(data);
+      const last = getLastRuleset();
+      setGameID(data.some((g) => g.id === last) ? last : data[0]?.id ?? null);
+    });
+  }, [user?.id]);
+
+  const chosen = games?.find((g) => g.id === gameID);
+  const chooseGame = (id) => {
+    setGameID(id);
+    setLastRuleset(id);
+  };
 
   const refreshAfterVerification = async () => {
     const { data } = await axios.get('/api/me');
@@ -102,24 +124,38 @@ export const Start = ({ account, setAccount, openLogin }) => {
       <div className="start-row">
         <label>
           Choose Game:{' '}
-          <select disabled>
-            <option>No Games Available Yet</option>
-          </select>
+          {games && games.length ? (
+            <select value={gameID ?? ''} onChange={(e) => chooseGame(Number(e.target.value))}>
+              {games.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select disabled>
+              <option>No Games Available Yet</option>
+            </select>
+          )}
         </label>
       </div>
       <div className="start-row">
-        <button disabled title="Available once games (RuleSets) exist">
+        <button disabled title="Sessions arrive in the next phase">
           Play
         </button>
-        <button disabled title="Uses the chosen game's video link">
+        <button
+          disabled={!chosen?.video_url}
+          title={chosen && !chosen.video_url ? 'This game has no Video Chat URL' : undefined}
+          onClick={() => window.open(chosen.video_url, '_blank', 'noopener')}
+        >
           Join Video Session
         </button>
       </div>
       <div className="start-row">
-        <button disabled title="Coming in the next phase">
+        <button disabled={!user} onClick={() => (window.location.href = '/create')}>
           Create Game
         </button>
-        <button disabled title="Available once a game is chosen">
+        <button disabled={!chosen} onClick={() => (window.location.href = `/modify/${chosen.id}`)}>
           Modify Game
         </button>
       </div>

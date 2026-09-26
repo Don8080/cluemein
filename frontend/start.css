@@ -167,3 +167,243 @@ button.link-button,
 .login-form .button-row.secondary button {
   font-size: 0.85em;
 }
+
+/* Create Game (B1) and Modify Game (B2). */
+
+#ruleset-screen {
+  max-width: 720px;
+  margin: 1.5em auto 3em;
+  padding: 0 16px;
+  font-family: 'Roboto', sans-serif;
+}
+
+#ruleset-screen h2 {
+  font-weight: normal;
+  margin: 0 0 1em;
+}
+
+#ruleset-screen button,
+.popup.wide button {
+  padding: 0.5em 1em;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  background: #eee;
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+#ruleset-screen button.primary {
+  background: #dfeedd;
+  border-color: #8bb67f;
+}
+
+#ruleset-screen button:disabled {
+  cursor: default;
+  color: #aaa;
+  background: #f4f4f4;
+  border-color: #ddd;
+}
+
+#ruleset-screen .form-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.6em 1em;
+  align-items: center;
+  margin: 1em 0;
+}
+
+#ruleset-screen .form-grid label {
+  color: #444;
+  text-align: right;
+}
+
+#ruleset-screen input,
+#ruleset-screen select {
+  padding: 0.4em;
+  font-size: 0.95em;
+  box-sizing: border-box;
+}
+
+#ruleset-screen .form-grid > input {
+  width: 100%;
+}
+
+#ruleset-screen input.short {
+  width: 5em;
+}
+
+#ruleset-screen .copy-row {
+  display: flex;
+  gap: 0.5em;
+}
+
+#ruleset-screen .or-divider {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  color: #888;
+  margin: 1.2em 0;
+}
+
+#ruleset-screen .or-divider::before,
+#ruleset-screen .or-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #ddd;
+}
+
+.hint,
+.form-hint {
+  color: #777;
+  font-size: 0.85em;
+}
+
+.form-hint {
+  margin: 0.5em 0;
+}
+
+.players-table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+}
+
+.players-table th {
+  text-align: left;
+  font-weight: normal;
+  color: #444;
+  padding: 0 0.4em 0.3em 0;
+}
+
+.players-table td {
+  padding: 0.15em 0.4em 0.15em 0;
+}
+
+.players-table input {
+  width: 100%;
+}
+
+#ruleset-screen .form-section {
+  margin: 1.2em 0;
+}
+
+#ruleset-screen .section-label {
+  color: #444;
+  margin-bottom: 0.3em;
+}
+
+.wordlist-picker {
+  margin-top: 0 !important;
+}
+
+#ruleset-screen .check {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+#ruleset-screen .button-row {
+  display: flex;
+  gap: 0.6em;
+  margin-top: 1em;
+}
+
+@media (max-width: 520px) {
+  #ruleset-screen .form-grid {
+    grid-template-columns: 1fr;
+  }
+  #ruleset-screen .form-grid label {
+    text-align: left;
+  }
+}
+
+/* Change Vocabulary (P2). */
+
+.popup.wide {
+  width: min(640px, calc(100vw - 32px));
+}
+
+.vocabulary .vocab-search {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.vocabulary input {
+  padding: 0.4em;
+  font-size: 0.95em;
+}
+
+.vocabulary .vocab-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em;
+  align-items: center;
+  margin: 0.7em 0;
+}
+
+.vocabulary .vocab-letters .hint {
+  margin-right: 0.4em;
+}
+
+.popup.wide .vocab-letters button.letter {
+  padding: 0.15em 0.4em;
+  min-width: 1.8em;
+  font-size: 0.85em;
+}
+
+.popup.wide .vocab-letters button.letter.active {
+  background: #2a6ebb;
+  border-color: #2a6ebb;
+  color: #fff;
+}
+
+.vocabulary .vocab-add {
+  display: block;
+  font-size: 0.9em;
+  color: #444;
+}
+
+.vocabulary .vocab-add input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.25em;
+}
+
+.vocabulary .vocab-count {
+  margin: 0.7em 0 0.3em;
+}
+
+.vocabulary .vocab-list {
+  max-height: 45vh;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+}
+
+.vocabulary table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9em;
+}
+
+.vocabulary th {
+  position: sticky;
+  top: 0;
+  background: #f4f4f4;
+  text-align: left;
+  font-weight: normal;
+  padding: 0.3em 0.6em;
+}
+
+.vocabulary td {
+  padding: 0.2em 0.6em;
+  border-top: 1px solid #eee;
+}
+
+.vocabulary .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.8em;
+}
