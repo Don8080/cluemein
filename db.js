@@ -39,6 +39,23 @@ function initDb() {
       last_login DATETIME
     );
 
+    -- One-use emailed links: 'verify' (confirm a new account) and 'reset'
+    -- (forgot password: direct login or set a new password).
+    CREATE TABLE IF NOT EXISTS auth_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK (kind IN ('verify', 'reset')),
+      token TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL        -- epoch milliseconds
+    );
+
+    -- Login sessions (express-session store), so logins survive restarts.
+    CREATE TABLE IF NOT EXISTS sessions (
+      sid TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+
     -- Word list names (the "Wordlist names" table).
     CREATE TABLE IF NOT EXISTS wordlists (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

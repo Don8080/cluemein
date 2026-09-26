@@ -1,11 +1,12 @@
 // ClueMeIn server (Node port of HorsePaste's Go server).
 // Boards still live in memory; RuleSets and sessions will move them to the database.
-require('dotenv').config({ quiet: true });
+require('dotenv').config({ quiet: true, path: require('path').join(__dirname, '.env') });
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const { Game, randomState, nextGameState } = require('./game');
 const { initDb, normalizeWord } = require('./db');
+const { setupAuth } = require('./auth');
 
 const PORT = process.env.PORT || 3003;
 const LONG_POLL_MS = 15 * 1000;
@@ -78,6 +79,7 @@ function renderIndex(selectedGameID) {
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/static/game.css" />
     <link rel="stylesheet" type="text/css" href="/static/lobby.css" />
+    <link rel="stylesheet" type="text/css" href="/static/start.css" />
     <link rel="shortcut icon" type="image/png" id="favicon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA8SURBVHgB7dHBDQAgCAPA1oVkBWdzPR84kW4AD0LCg36bXJqUcLL2eVY/EEwDFQBeEfPnqUpkLmigAvABK38Grs5TfaMAAAAASUVORK5CYII="/>
     <script type="text/javascript">
       ${selectedGameID ? `window.selectedGameID = ${jsString(selectedGameID)};` : ''}
@@ -93,6 +95,12 @@ function renderIndex(selectedGameID) {
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 app.use('/static', express.static(path.join(__dirname, 'frontend', 'dist')));
+app.set('trust proxy', 1); // Railway terminates HTTPS in front of the app
+
+const { requireAuth } = setupAuth(app, db);
+
+// Everything below except the page itself requires a logged-in player.
+app.use(['/game-state', '/guess', '/end-turn', '/next-game', '/api/wordlists'], requireAuth);
 
 // Long-poll: answer immediately if the client's state is stale, otherwise
 // wait until the game changes or 15 seconds pass.
@@ -187,8 +195,11 @@ app.post('/next-game', (req, res) => {
   res.json(handle.game);
 });
 
+// The single page. "/" is the Start screen, "/quick" the temporary
+// HorsePaste-style lobby, and anything else a board by game id.
 app.get('/:id?', (req, res) => {
-  res.type('html').send(renderIndex(req.params.id || ''));
+  const id = req.params.id || '';
+  res.type('html').send(renderIndex(id === 'quick' ? '' : id));
 });
 
 // Drop finished games after 3 hours and any game after 72 hours.

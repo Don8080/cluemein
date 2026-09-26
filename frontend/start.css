@@ -1,0 +1,169 @@
+/* Start screen (A1) and the popups (P0, P3). */
+
+#start {
+  max-width: 560px;
+  margin: 1.5em auto;
+  padding: 0 16px;
+  font-family: 'Roboto', sans-serif;
+}
+
+#start h2 {
+  margin: 0 0 0.75em;
+  font-weight: normal;
+}
+
+#start .account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5em 0.75em;
+  margin-bottom: 1.25em;
+}
+
+#start .account-email {
+  font-weight: bold;
+}
+
+#start .account-note {
+  color: #666;
+  font-size: 0.9em;
+  width: 100%;
+}
+
+#start .start-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75em;
+  margin: 0.9em 0;
+}
+
+#start button,
+.popup button {
+  padding: 0.5em 1em;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  background: #eee;
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+#start button:disabled,
+.popup button:disabled {
+  cursor: default;
+  color: #aaa;
+}
+
+#start select {
+  padding: 0.35em;
+  font-size: 0.95em;
+}
+
+#start .temporary {
+  margin-top: 2em;
+  color: #666;
+  font-size: 0.9em;
+}
+
+button.link-button,
+#start button.link-button,
+.popup button.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2a6ebb;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+#start button.link-button.strong {
+  font-weight: bold;
+}
+
+.form-error {
+  color: #c62828;
+  margin: 0.5em 0;
+}
+
+.form-message {
+  color: #2e7d32;
+  margin: 0.5em 0;
+}
+
+/* Popups: dimmed backdrop; clicking it closes the popup. */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.popup {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  width: min(400px, calc(100vw - 32px));
+  font-family: 'Roboto', sans-serif;
+}
+
+.popup-title {
+  padding: 0.7em 1em;
+  background: #f0f0f0;
+  border-radius: 8px 8px 0 0;
+  font-weight: bold;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.popup-body {
+  padding: 1em;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 0.8em;
+  font-size: 0.9em;
+  color: #444;
+}
+
+.login-form input[type='email'],
+.login-form input[type='password'],
+.login-form input[type='text'] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.25em;
+  padding: 0.45em;
+  font-size: 1em;
+}
+
+.login-form label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.login-form .password-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.login-form .password-field input {
+  flex: 1;
+}
+
+.login-form .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.8em;
+}
+
+.login-form .button-row.secondary button {
+  font-size: 0.85em;
+}
