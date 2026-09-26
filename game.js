@@ -78,8 +78,7 @@ class Game {
     this.seed = state.seed;
     this.perm_index = state.perm_index;
     this.round = state.round;
-    this.revealed = state.revealed;
-    this.word_set = state.word_set;
+    this.revealed = [...state.revealed];
     this.created_at = now;
     this.updated_at = now;
     this.round_started_at = now;
@@ -104,18 +103,9 @@ class Game {
     this.layout = perm(randRnd, layout.length).map((i) => layout[i]);
   }
 
-  get stateId() {
-    return `${this.created_at}#${this.version}`;
-  }
-
-  get state() {
-    return {
-      seed: this.seed,
-      perm_index: this.perm_index,
-      round: this.round,
-      revealed: this.revealed,
-      word_set: this.word_set,
-    };
+  // A Game saves as plain JSON (its own fields); restore() rebuilds it.
+  static restore(data) {
+    return Object.assign(Object.create(Game.prototype), data);
   }
 
   touch() {
@@ -175,26 +165,8 @@ class Game {
     this.touch();
   }
 
-  toJSON() {
-    const out = {
-      id: this.id,
-      seed: this.seed,
-      perm_index: this.perm_index,
-      round: this.round,
-      revealed: this.revealed,
-      word_set: this.word_set,
-      created_at: this.created_at,
-      updated_at: this.updated_at,
-      round_started_at: this.round_started_at,
-      starting_team: this.starting_team,
-      words: this.words,
-      layout: this.layout,
-      state_id: this.stateId,
-    };
-    if (this.winning_team) out.winning_team = this.winning_team;
-    if (this.timer_duration_ms) out.timer_duration_ms = this.timer_duration_ms;
-    if (this.enforce_timer) out.enforce_timer = true;
-    return out;
+  remaining(team) {
+    return this.layout.filter((t, i) => t === team && !this.revealed[i]).length;
   }
 }
 

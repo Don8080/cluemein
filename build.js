@@ -9,7 +9,7 @@ const dist = path.join(src, 'dist');
 const watch = process.argv.includes('--watch');
 
 fs.mkdirSync(dist, { recursive: true });
-for (const css of ['game.css', 'lobby.css', 'start.css']) {
+for (const css of ['game.css', 'lobby.css', 'start.css', 'play.css']) {
   fs.copyFileSync(path.join(src, css), path.join(dist, css));
 }
 

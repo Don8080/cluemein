@@ -253,7 +253,7 @@
   color: #eee;
 }
 
-#game-view.full-screen {
+.full-screen #game-view {
   width: 98vw;
 }
 .full-screen .board {

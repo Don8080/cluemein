@@ -1,0 +1,105 @@
+/* Waiting Room (A2) and the board layout (C1). */
+
+.waiting-room .presence-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+  margin: 1em 0 1.5em;
+}
+
+.waiting-room .section-label {
+  font-weight: bold;
+  margin-bottom: 0.3em;
+}
+
+.waiting-room .me {
+  font-weight: bold;
+}
+
+/* Board with the Red team listed on the left and Blue on the right. */
+#play-view {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.5em;
+  padding: 0 16px;
+}
+
+#play-view #game-view {
+  margin: 0;
+}
+
+.full-screen #game-view {
+  flex: 1;
+  width: auto;
+}
+
+.team-list {
+  width: 9em;
+  padding-top: 5.5em;
+}
+
+.team-list.red {
+  color: #d13030;
+  text-align: right;
+}
+
+.team-list.blue {
+  color: #4183cc;
+}
+
+.team-list div {
+  margin-bottom: 0.25em;
+}
+
+.team-list .cluer {
+  font-size: 1.3em;
+  font-weight: bold;
+  margin-bottom: 0.4em;
+}
+
+.team-list .absent {
+  opacity: 0.45;
+  font-style: italic;
+}
+
+.team-list .me,
+.floater-list .me {
+  text-decoration: underline;
+}
+
+.board-info {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.floater-list {
+  margin-top: 0.7em;
+}
+
+.floater-list .section-label {
+  font-weight: bold;
+}
+
+#mode-toggle {
+  gap: 0.5em;
+}
+
+#mode-toggle .floaters-toggle {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+@media (max-width: 1100px) {
+  #play-view {
+    flex-wrap: wrap;
+  }
+  .team-list {
+    order: -1;
+    width: auto;
+    padding-top: 0;
+    text-align: left !important;
+  }
+}

@@ -141,7 +141,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
         </label>
       </div>
       <div className="start-row">
-        <button disabled title="Sessions arrive in the next phase">
+        <button disabled={!chosen} onClick={() => (window.location.href = `/play/${chosen.id}`)}>
           Play
         </button>
         <button
@@ -160,13 +160,6 @@ export const Start = ({ account, setAccount, openLogin }) => {
           Modify Game
         </button>
       </div>
-
-      {user && (
-        <p className="temporary">
-          Until games and sessions are built, you can still try a board in the{' '}
-          <a href="/quick">quick game lobby</a>.
-        </p>
-      )}
 
       {popup?.kind === 'login' && (
         <LoginPopup

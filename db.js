@@ -120,6 +120,13 @@ function initDb() {
       UNIQUE (ruleset_id, word)
     );
 
+    -- The live session of a RuleSet (at most one), saved as JSON so boards
+    -- survive a server restart. Deleted when the session ends.
+    CREATE TABLE IF NOT EXISTS play_sessions (
+      ruleset_id INTEGER PRIMARY KEY REFERENCES rulesets(id) ON DELETE CASCADE,
+      state TEXT NOT NULL
+    );
+
     -- One row per non-floater player per completed board.
     CREATE TABLE IF NOT EXISTS player_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
