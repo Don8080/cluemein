@@ -171,6 +171,30 @@ button.link-button,
   font-size: 0.85em;
 }
 
+/* Login stands out on its own row; Close sits at the bottom right. */
+.popup button.login-button {
+  width: 100%;
+  padding: 0.65em 1em;
+  background: #1e88e5;
+  border-color: #1565c0;
+  color: #fff;
+  font-size: 1.05em;
+  font-weight: bold;
+}
+
+.popup button.login-button:hover {
+  background: #1976d2;
+}
+
+.popup button.login-button:disabled {
+  background: #90caf9;
+  color: #fff;
+}
+
+.login-form .button-row.close-row {
+  justify-content: flex-end;
+}
+
 /* Create Game (B1) and Modify Game (B2). */
 
 #ruleset-screen {

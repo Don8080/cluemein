@@ -16,36 +16,64 @@
   font-weight: bold;
 }
 
-/* Board with the Red team listed on the left and Blue on the right. */
+/* Board with the Red team listed on the left and Blue on the right. On a
+   narrow screen both teams move above the board, still Red on the left and
+   Blue on the right. */
 #play-view {
-  display: flex;
+  display: grid;
+  grid-template-columns: 9em minmax(0, 700px) 9em;
+  grid-template-areas: 'red board blue';
   justify-content: center;
-  align-items: flex-start;
-  gap: 1.5em;
+  align-items: start;
+  column-gap: 1.5em;
   padding: 0 16px;
 }
 
 #play-view #game-view {
+  grid-area: board;
+  width: 100%;
   margin: 0;
 }
 
-.full-screen #game-view {
-  flex: 1;
-  width: auto;
+.full-screen#play-view,
+#play-view.full-screen {
+  grid-template-columns: 9em minmax(0, 1fr) 9em;
 }
 
 .team-list {
-  width: 9em;
   padding-top: 5.5em;
 }
 
 .team-list.red {
+  grid-area: red;
   color: #d13030;
   text-align: right;
 }
 
 .team-list.blue {
+  grid-area: blue;
   color: #4183cc;
+  text-align: left;
+}
+
+@media (max-width: 1100px) {
+  #play-view,
+  #play-view.full-screen {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'red blue'
+      'board board';
+    row-gap: 0.8em;
+  }
+  .team-list {
+    padding-top: 0;
+  }
+  .team-list.red {
+    text-align: left;
+  }
+  .team-list.blue {
+    text-align: right;
+  }
 }
 
 /* Player names are buttons that open the player's actions. */
@@ -109,18 +137,19 @@
   margin-bottom: 0.3em;
 }
 
-.timer.pulse {
-  animation: timer-pulse 1s ease-in-out infinite;
+/* Last 30 seconds: a colored background instead of blinking. */
+.timer {
+  display: inline-block;
+  padding: 0.1em 0.6em;
+  border-radius: 6px;
 }
 
-@keyframes timer-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.15;
-  }
+.timer.warning {
+  background: #ffe0b2;
+}
+
+.timer.urgent {
+  background: #ffcdd2;
 }
 
 /* Status row lined up with the board's five columns:
@@ -205,7 +234,8 @@ button.turn-banner.end-turn:active {
 }
 
 .board-toolbar button:not(.gear),
-.board-bottom button {
+.board-bottom > button,
+.board-bottom .next-buttons button {
   padding: 5px 10px;
   border: 1px #ccc solid;
   border-radius: 5px;
@@ -214,7 +244,7 @@ button.turn-banner.end-turn:active {
   font-size: 0.95em;
 }
 
-.board-bottom button:disabled {
+.board-bottom > button:disabled {
   color: #aaa;
   cursor: default;
 }
@@ -260,6 +290,14 @@ button.turn-banner.end-turn:active {
 .guess-list .section-label {
   font-weight: bold;
   margin-bottom: 0.2em;
+}
+
+.team-list.red .guess-list .section-label {
+  color: #d13030;
+}
+
+.team-list.blue .guess-list .section-label {
+  color: #4183cc;
 }
 
 .guess-turn {
@@ -343,7 +381,7 @@ button.turn-banner.end-turn:active {
 }
 
 .graffito {
-  text-align: center;
+  text-align: right;
   margin: 1.5em 0 1em;
   color: #555;
   font-size: 1.05em;
@@ -369,14 +407,3 @@ button.turn-banner.end-turn:active {
   gap: 0.4em;
 }
 
-@media (max-width: 1100px) {
-  #play-view {
-    flex-wrap: wrap;
-  }
-  .team-list {
-    order: -1;
-    width: auto;
-    padding-top: 0;
-    text-align: left !important;
-  }
-}

@@ -91,11 +91,8 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
         {message && <div className="form-message">{message}</div>}
 
         <div className="button-row">
-          <button type="submit" disabled={busy}>
+          <button type="submit" className="login-button" disabled={busy}>
             Login
-          </button>
-          <button type="button" onClick={onClose}>
-            Close
           </button>
         </div>
         <div className="button-row secondary">
@@ -107,6 +104,11 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
           </button>
           <button type="button" disabled={busy} onClick={() => onChangePassword(values().email)}>
             Change Password
+          </button>
+        </div>
+        <div className="button-row close-row">
+          <button type="button" onClick={onClose}>
+            Close
           </button>
         </div>
       </form>

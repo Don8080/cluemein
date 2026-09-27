@@ -246,10 +246,7 @@ export const Board = ({ view, act }) => {
 
   const endTurn = () => act('end-turn', { round: board.round });
 
-  const next = (path, label) => {
-    if (!over && !confirm(`Start a new board with "${label}"? The current board isn't finished.`)) return;
-    act(path);
-  };
+  const next = (path) => act(path);
 
   const cellLabel = (idx) => {
     let label = board.words[idx].toLowerCase();
@@ -306,7 +303,7 @@ export const Board = ({ view, act }) => {
         <div className="board-toolbar">
           <label
             className="check"
-            title="When on, clicking a word marks it for later consideration instead of guessing it. A right-click always marks a word; marking it again clears the mark."
+            title="When on, clicking a word marks it for later consideration instead of guessing it. A right-click always marks a word; repeating the action clears the mark."
           >
             Safe Click Mode{' '}
             <input type="checkbox" checked={safeClick} onChange={(e) => toggleSetting(null, 'safeClick')} />
@@ -392,10 +389,10 @@ export const Board = ({ view, act }) => {
             )}
           </div>
           <div className="next-buttons">
-            <button type="button" onClick={() => next('next-board', 'Next Board')}>
+            <button type="button" onClick={() => next('next-board')}>
               Next Board
             </button>
-            <button type="button" onClick={() => next('next-game', 'Next Game')}>
+            <button type="button" onClick={() => next('next-game')}>
               Next Game
             </button>
           </div>
