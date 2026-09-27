@@ -246,20 +246,23 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         <label className="check">
           Timer <input type="checkbox" checked={value.timer_on} onChange={set('timer_on')} />
         </label>
-        <div className="form-grid">
-          <label>First Turn Duration</label>
-          <span>
-            <input className="short" type="number" min="0.5" step="0.5" disabled={!value.timer_on} value={value.first_turn_minutes} onChange={set('first_turn_minutes')} /> Minutes
-          </span>
-          <label>Subsequent Turn Duration</label>
-          <span>
-            <input className="short" type="number" min="0.5" step="0.5" disabled={!value.timer_on} value={value.next_turn_minutes} onChange={set('next_turn_minutes')} /> Minutes
-          </span>
-          <label>Enforce Timer</label>
-          <span>
-            <input type="checkbox" disabled={!value.timer_on} checked={value.enforce_timer} onChange={set('enforce_timer')} />
-          </span>
-        </div>
+        {/* The timer's settings only appear while the timer is on. */}
+        {value.timer_on && (
+          <div className="form-grid">
+            <label>First Turn Duration</label>
+            <span>
+              <input className="short" type="number" min="0.5" step="0.5" value={value.first_turn_minutes} onChange={set('first_turn_minutes')} /> Minutes
+            </span>
+            <label>Subsequent Turn Duration</label>
+            <span>
+              <input className="short" type="number" min="0.5" step="0.5" value={value.next_turn_minutes} onChange={set('next_turn_minutes')} /> Minutes
+            </span>
+            <label>Enforce Timer</label>
+            <span>
+              <input type="checkbox" checked={value.enforce_timer} onChange={set('enforce_timer')} />
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
