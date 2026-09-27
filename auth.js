@@ -211,8 +211,10 @@ function setupAuth(app, db) {
     const { password, keep } = req.body;
     const user = findUserByEmail.get(email);
     if (!user || !(await bcrypt.compare(String(password || ''), user.password_hash))) {
+      console.log(`[login] ${email}: ${user ? 'wrong password' : 'no such account'}`);
       return res.status(401).json({ error: 'Incorrect email or password.' });
     }
+    console.log(`[login] ${email}: ${user.email_verified ? 'ok' : 'not verified yet'}`);
     if (!user.email_verified) {
       req.session.pendingUserID = user.id;
       req.session.keep = keep !== false;

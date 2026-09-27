@@ -84,7 +84,9 @@ class Game {
     this.round_started_at = now;
     this.starting_team = randInt(randRnd, 2) === 0 ? 'red' : 'blue';
     this.winning_team = null;
-    this.timer_duration_ms = opts.timer_duration_ms || 0;
+    // Turn timer: the first turn of a board may get longer than the rest.
+    this.first_turn_ms = opts.first_turn_ms || 0;
+    this.next_turn_ms = opts.next_turn_ms || 0;
     this.enforce_timer = !!opts.enforce_timer;
     this.version = 0;
 
@@ -106,6 +108,11 @@ class Game {
   // A Game saves as plain JSON (its own fields); restore() rebuilds it.
   static restore(data) {
     return Object.assign(Object.create(Game.prototype), data);
+  }
+
+  // Length of the current turn in ms (0 = no timer).
+  turnDurationMs() {
+    return this.round === 0 ? this.first_turn_ms : this.next_turn_ms;
   }
 
   touch() {

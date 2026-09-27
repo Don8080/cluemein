@@ -6,7 +6,7 @@
 // server restart. Browsers long-poll /state, which doubles as a presence
 // heartbeat.
 const { Game, randomState, nextGameState } = require('./game');
-const { assignRoles, newStats, register } = require('./roles');
+const { assignRoles, newStats, promoteCluer, register } = require('./roles');
 
 // Silent this long => no longer present. PRESENCE_GRACE_MS overrides it for testing.
 const GRACE_MS = Number(process.env.PRESENCE_GRACE_MS) || 2 * 60 * 1000;
@@ -39,6 +39,7 @@ function setupSessions(app, db, requireAuth) {
     if (!row) return null;
     const s = JSON.parse(row.state);
     s.boards.forEach((b) => (b.game = Game.restore(b.game)));
+    s.loggedOff = s.loggedOff || [];
     const entry = newEntry(s);
     // After a restart, assume everyone who was present still is, for one
     // grace period, until their browsers check in again.
@@ -68,6 +69,7 @@ function setupSessions(app, db, requireAuth) {
       resumable: false, // a board was interrupted by dropping below quorum
       stats: newStats(), // role-rotation history (see roles.js)
       presentIDs: [],
+      loggedOff: [], // players removed with Log Off, until they click Play again
     };
     db.prepare("UPDATE rulesets SET last_used_at = datetime('now') WHERE id = ?").run(rs.id);
     const entry = newEntry(s);
@@ -99,8 +101,10 @@ function setupSessions(app, db, requireAuth) {
 
   function presentIDs(entry) {
     const now = Date.now();
+    const loggedOff = entry.s.loggedOff || [];
     const ids = [];
     for (const [uid, tabs] of entry.presence) {
+      if (loggedOff.includes(uid)) continue;
       if ([...tabs.values()].some((t) => t > now)) ids.push(uid);
     }
     return ids.sort((a, b) => a - b);
@@ -139,6 +143,33 @@ function setupSessions(app, db, requireAuth) {
     s.floatersCanClick = floatersCanClick;
   }
 
+  // Every team needs a present Cluer. When one is missing, promote one of
+  // that team's guessers by the fairness rules, as long as the team still
+  // reaches the minimum team size; otherwise reassign everyone. A new Cluer
+  // has seen the board as a guesser, so a new board is dealt.
+  // Returns true if roles changed.
+  function ensureCluers(s, rs, entry) {
+    const present = presentMembers(entry);
+    let changedRoles = false;
+    for (const team of ['red', 'blue']) {
+      const cluerID = Object.keys(s.roles).map(Number).find((id) => s.roles[id].team === team && s.roles[id].role === 'cluer');
+      if (cluerID && present.includes(cluerID)) continue;
+      if (cluerID) delete s.roles[cluerID];
+      const guessers = present.filter((id) => s.roles[id]?.team === team && s.roles[id].role === 'guesser');
+      const floaters = present.filter((id) => s.roles[id]?.role === 'floater').length;
+      // After promotion: 1 Cluer + remaining guessers + all Floaters.
+      if (!guessers.length || guessers.length + floaters < rs.min_team_size) {
+        reassign(s, present, rs);
+        return true;
+      }
+      const other = present.find((id) => s.roles[id]?.team !== team && s.roles[id]?.role === 'cluer');
+      const pick = promoteCluer(s.stats, present, guessers, other, guessers);
+      s.roles[pick] = { team, role: 'cluer' };
+      changedRoles = true;
+    }
+    return changedRoles;
+  }
+
   // ---- Boards --------------------------------------------------------------
 
   function currentBoard(s) {
@@ -151,7 +182,8 @@ function setupSessions(app, db, requireAuth) {
       : randomState(s.words);
     s.deck = { seed: next.seed, perm_index: next.perm_index };
     const game = new Game(String(s.boards.length + 1), next, {
-      timer_duration_ms: rs.timer_on ? rs.next_turn_seconds * 1000 : 0,
+      first_turn_ms: rs.timer_on ? rs.first_turn_seconds * 1000 : 0,
+      next_turn_ms: rs.timer_on ? rs.next_turn_seconds * 1000 : 0,
       enforce_timer: !!(rs.timer_on && rs.enforce_timer),
     });
     s.boards.push({ game, roles: JSON.parse(JSON.stringify(s.roles)), guesses: [] });
@@ -174,6 +206,7 @@ function setupSessions(app, db, requireAuth) {
   function view(entry, uid) {
     const s = entry.s;
     if (s.ended) return { ended: s.ended };
+    if (s.loggedOff.includes(uid)) return { logged_off: true };
     const rs = getRuleset.get(s.rulesetID);
     const present = new Set(presentIDs(entry));
     const players = getMembers.all(s.rulesetID).map((m) => ({
@@ -222,7 +255,7 @@ function setupSessions(app, db, requireAuth) {
         winning_team: g.winning_team,
         remaining: { red: g.remaining('red'), blue: g.remaining('blue') },
         round_started_at: g.round_started_at,
-        timer_duration_ms: g.timer_duration_ms,
+        timer_duration_ms: g.turnDurationMs(),
         enforce_timer: g.enforce_timer,
         guesses: board.guesses,
         can_click: mayClick(s, uid),
@@ -290,6 +323,7 @@ function setupSessions(app, db, requireAuth) {
   // Heartbeat bookkeeping shared by /join and /state.
   function checkIn(ctx, tab) {
     const { entry, s, uid } = ctx;
+    if (s.loggedOff.includes(uid)) return; // logged off: no longer counts as here
     let dirty = touch(entry, uid, tab);
     if (s.status === 'playing' && !s.roles[uid]) {
       addFloater(s, uid); // joining mid-game: start as a Floater
@@ -302,6 +336,7 @@ function setupSessions(app, db, requireAuth) {
   app.post('/api/play/:rid/join', requireAuth, (req, res) => {
     const ctx = load(req, res, true);
     if (!ctx) return;
+    ctx.s.loggedOff = ctx.s.loggedOff.filter((id) => id !== ctx.uid); // Play again rejoins
     checkIn(ctx, req.body.tab);
     res.json(view(ctx.entry, ctx.uid));
   });
@@ -312,7 +347,7 @@ function setupSessions(app, db, requireAuth) {
     if (!ctx) return;
     const { entry, s, uid } = ctx;
     checkIn(ctx, req.body.tab);
-    if (req.body.version !== s.version) return res.json(view(entry, uid));
+    if (req.body.version !== s.version || s.loggedOff.includes(uid)) return res.json(view(entry, uid));
 
     let done = false;
     const finish = () => {
@@ -346,6 +381,7 @@ function setupSessions(app, db, requireAuth) {
     app.post(`/api/play/:rid/${path}`, requireAuth, (req, res) => {
       const ctx = load(req, res);
       if (!ctx) return;
+      if (ctx.s.loggedOff.includes(ctx.uid)) return res.status(400).json({ error: "You were logged off from this game. Click Play to rejoin." });
       const err = fn(ctx, req.body || {});
       if (err) return res.status(400).json({ error: err });
       changed(ctx.entry);
@@ -370,6 +406,8 @@ function setupSessions(app, db, requireAuth) {
       ids.filter((id) => !s.roles[id]).forEach((id) => addFloater(s, id));
       s.status = 'playing';
       s.resumable = false;
+      // A Cluer who is no longer here must be replaced (new board).
+      if (ensureCluers(s, rs, entry)) dealBoard(s, rs);
       return null;
     }
     reassign(s, ids, rs);
@@ -419,9 +457,32 @@ function setupSessions(app, db, requireAuth) {
     const g = board.game;
     // The timer may end a turn from any browser once it has run out.
     const expired =
-      g.enforce_timer && Date.now() - Date.parse(g.round_started_at) >= g.timer_duration_ms;
+      g.enforce_timer && Date.now() - Date.parse(g.round_started_at) >= g.turnDurationMs();
     if (!mayClick(s, uid) && !expired) return "It isn't your turn.";
     g.nextTurn(body.round);
+    return null;
+  });
+
+  // Log Off (any player, for any player): removes them from the session at
+  // once. A departing Cluer is replaced by a teammate (fairness rules), and
+  // if too few players remain, everyone returns to the Waiting Room.
+  action('log-off', (ctx, body) => {
+    const { s, rs, entry } = ctx;
+    const target = Number(body.user_id);
+    if (!isMember.get(rs.id, target)) return 'That player is not in this game.';
+    if (!s.loggedOff.includes(target)) s.loggedOff.push(target);
+    entry.presence.delete(target);
+    const wasCluer = s.roles[target]?.role === 'cluer';
+    delete s.roles[target];
+    const board = currentBoard(s);
+    if (board) delete board.roles[target];
+    if (s.status !== 'playing') return null;
+    if (presentMembers(entry).length < rs.min_players) {
+      s.status = 'waiting';
+      s.resumable = !!(board && !board.game.winning_team);
+      return null;
+    }
+    if (wasCluer && ensureCluers(s, rs, entry)) dealBoard(s, rs);
     return null;
   });
 

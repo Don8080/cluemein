@@ -34,7 +34,7 @@ export const PlayScreen = ({ rulesetID }) => {
           const { data } = await axios.post(`${base}/state`, { tab, version: version.current });
           if (stopped) return;
           apply(data);
-          if (data.ended) return;
+          if (data.ended || data.logged_off) return;
         } catch (err) {
           if (stopped) return;
           if (err.response?.status === 404 || err.response?.status === 401) {
@@ -74,6 +74,16 @@ export const PlayScreen = ({ rulesetID }) => {
         return false;
       });
 
+  if (view?.logged_off) {
+    return (
+      <div id="start">
+        <p className="form-error">You were logged off from this game.</p>
+        <p>
+          <a href="/">Back to Start</a> (click Play there to rejoin)
+        </p>
+      </div>
+    );
+  }
   if (error || view?.ended) {
     return (
       <div id="start">

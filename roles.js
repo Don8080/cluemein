@@ -224,8 +224,30 @@ function assignRoles(stats, ids, minTeamSize) {
   return { roles, floatersCanClick: g === 0 };
 }
 
+// A Cluer left mid-game: choose which of `guessers` (their team's
+// guessers) takes over, preferring whoever keeps Cluer turns fairest, then
+// the least-repeated face-off with `otherCluer`. Records the new Cluer
+// turn, face-off and pairings. Returns the chosen user ID.
+function promoteCluer(stats, ids, guessers, otherCluer, teammates) {
+  register(stats, ids);
+  const pick = best(guessers, (c) => [
+    cluersFair(stats, ids, [c]) ? 0 : 1,
+    stats.cluerAt[c].filter((x) => x >= stats.joined[c]).length,
+    otherCluer ? stats.faceoff[pairKey(c, otherCluer)] || 0 : 0,
+    rand(),
+  ]);
+  stats.cluerAt[pick].push(stats.n);
+  if (otherCluer) stats.faceoff[pairKey(pick, otherCluer)] = (stats.faceoff[pairKey(pick, otherCluer)] || 0) + 1;
+  stats.n++;
+  teammates
+    .filter((id) => id !== pick)
+    .forEach((id) => (stats.pairs[`${pick}>${id}`] = (stats.pairs[`${pick}>${id}`] || 0) + 1));
+  return pick;
+}
+
 module.exports = {
   assignRoles,
+  promoteCluer,
   newStats,
   register,
   guessersPerTeam,

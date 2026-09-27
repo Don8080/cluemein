@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Settings, SettingsButton, SettingsPanel } from '~/ui/settings';
+import { Popup } from '~/ui/popup';
 import Timer from '~/ui/timer';
 
 const defaultFavicon =
@@ -11,30 +12,66 @@ const redTurnFavicon =
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+const roleText = (p) =>
+  !p?.role ? 'Watching' : p.role === 'floater' ? 'Floater' : `${cap(p.team)} ${p.role === 'cluer' ? 'Cluer' : 'Guesser'}`;
+
+// A clickable player name; opens that player's actions.
+const PlayerName = ({ p, me, onClick }) => (
+  <button
+    type="button"
+    className={
+      'player-name' + (p.role === 'cluer' ? ' cluer' : '') + (p.present ? '' : ' absent') + (p.user_id === me ? ' me' : '')
+    }
+    onClick={() => onClick(p)}
+  >
+    {p.name}
+  </button>
+);
+
 // Players of one team, Cluer first.
-const TeamList = ({ players, team, me }) => {
+const TeamList = ({ players, team, me, onName }) => {
   const members = players
     .filter((p) => p.team === team)
     .sort((a, b) => (a.role === 'cluer' ? -1 : b.role === 'cluer' ? 1 : 0));
   return (
     <div className={`team-list ${team}`}>
       {members.map((p) => (
-        <div
-          key={p.user_id}
-          className={(p.role === 'cluer' ? 'cluer' : 'guesser') + (p.present ? '' : ' absent') + (p.user_id === me ? ' me' : '')}
-        >
-          {p.name}
-        </div>
+        <PlayerName key={p.user_id} p={p} me={me} onClick={onName} />
       ))}
     </div>
   );
 };
 
+// Actions for a player, opened by clicking their name. Any player may do
+// these for any player.
+const PlayerActions = ({ p, isMe, act, onClose }) => (
+  <Popup title={p.name} onClose={onClose}>
+    <p className="hint">{roleText(p)}</p>
+    <div className="button-row">
+      <button
+        type="button"
+        onClick={async () => {
+          if (!confirm(isMe ? 'Log yourself off this game?' : `Log ${p.name} off this game?`)) return;
+          await act('log-off', { user_id: p.user_id });
+          onClose();
+        }}
+      >
+        Log Off
+      </button>
+      <button type="button" onClick={onClose}>
+        Close
+      </button>
+    </div>
+  </Popup>
+);
+
 // (C1) Game Board. Roles come from the server: Cluers see the colors, and
-// only the team whose turn it is (or Floaters, if allowed) can click.
+// only the team whose turn it is (or Floaters, if allowed) can click a word
+// or end the turn.
 export const Board = ({ view, act }) => {
   const [settings, setSettings] = React.useState(Settings.load());
   const [showSettings, setShowSettings] = React.useState(false);
+  const [menuFor, setMenuFor] = React.useState(null);
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
   const isCluer = me?.role === 'cluer';
@@ -82,10 +119,6 @@ export const Board = ({ view, act }) => {
     act(path);
   };
 
-  const otherTeam = board.starting_team === 'red' ? 'blue' : 'red';
-  const statusClass = over ? `${board.winning_team} win` : `${board.current_team}-turn`;
-  const status = over ? `${cap(board.winning_team)} wins!` : `${cap(board.current_team)}'s turn`;
-
   const cellLabel = (idx) => {
     let label = board.words[idx].toLowerCase();
     const color = board.layout[idx];
@@ -93,54 +126,55 @@ export const Board = ({ view, act }) => {
     return label + (board.revealed[idx] ? ', revealed word.' : ', hidden word.');
   };
 
-  const extraClasses =
-    (settings.colorBlind ? ' color-blind' : '') + (settings.fullscreen ? ' full-screen' : '');
+  // Turn banner and End Turn button sit on the current team's side:
+  // Red over columns 1–2, Blue over columns 4–5, score in the middle.
+  const turnCell = (team) => {
+    if (over) return team === board.winning_team ? <div className={`turn-banner ${team}`}>{cap(team)} wins!</div> : null;
+    return team === board.current_team ? <div className={`turn-banner ${team}`}>{cap(team)}&#39;s Turn</div> : null;
+  };
+  const endTurnCell = (team) =>
+    !over && board.can_click && team === board.current_team ? (
+      <button onClick={endTurn} className={`end-turn-btn ${team}`}>
+        End {cap(team)}&#39;s Turn
+      </button>
+    ) : null;
 
+  const statusClass = over ? `${board.winning_team} win` : `${board.current_team}-turn`;
+  const extraClasses = (settings.colorBlind ? ' color-blind' : '') + (settings.fullscreen ? ' full-screen' : '');
   const floaters = view.players.filter((p) => p.role === 'floater');
 
   return (
     <div id="play-view" className={(isCluer ? 'cluegiver' : 'player') + extraClasses}>
-      <TeamList players={view.players} team="red" me={view.me} />
+      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} />
 
       <div id="game-view">
-        <div id="infoContent">
-          <div className="board-info">
-            {view.ruleset.name} · Board {board.number}
-            {me && (
-              <span className="my-role">
-                {' '}
-                · You: {me.role === 'floater' ? 'Floater' : `${cap(me.team)} ${me.role === 'cluer' ? 'Cluer' : 'guesser'}`}
-              </span>
-            )}
-          </div>
-          {!!board.timer_duration_ms && (
-            <div id="timer">
-              <Timer
-                roundStartedAt={board.round_started_at}
-                timerDurationMs={board.timer_duration_ms}
-                handleExpiration={() => board.enforce_timer && endTurn()}
-                freezeTimer={over}
-              />
-            </div>
-          )}
+        <div className="board-info">
+          {view.ruleset.name} · Board {board.number} ·{' '}
+          <span className="my-role" title={me ? `Logged in as ${me.name}` : undefined}>
+            Your Role: {roleText(me)}
+          </span>
         </div>
+        {!!board.timer_duration_ms && (
+          <div id="timer">
+            <Timer
+              roundStartedAt={board.round_started_at}
+              timerDurationMs={board.timer_duration_ms}
+              handleExpiration={() => board.enforce_timer && endTurn()}
+              freezeTimer={over}
+            />
+          </div>
+        )}
 
-        <div id="status-line" className={statusClass}>
-          <div id="remaining">
-            <span className={board.starting_team + '-remaining'}>{board.remaining[board.starting_team]}</span>
+        <div className="status-grid">
+          <div>{endTurnCell('red')}</div>
+          <div>{turnCell('red')}</div>
+          <div className="score">
+            <span className="red-remaining">{board.remaining.red}</span>
             &nbsp;&ndash;&nbsp;
-            <span className={otherTeam + '-remaining'}>{board.remaining[otherTeam]}</span>
+            <span className="blue-remaining">{board.remaining.blue}</span>
           </div>
-          <div id="status" className="status-text">
-            {status}
-          </div>
-          <div id="end-turn-cont">
-            {board.can_click && (
-              <button onClick={endTurn} id="end-turn-btn">
-                End {cap(board.current_team)}&#39;s turn
-              </button>
-            )}
-          </div>
+          <div>{turnCell('blue')}</div>
+          <div>{endTurnCell('blue')}</div>
         </div>
 
         <div className={'board ' + statusClass}>
@@ -169,8 +203,12 @@ export const Board = ({ view, act }) => {
         </div>
 
         <div className="floater-list">
-          <span className="section-label">Floaters</span>{' '}
-          {floaters.length ? floaters.map((p) => p.name).join(', ') : 'none'}
+          <div className="section-label">Floaters</div>
+          {floaters.length ? (
+            floaters.map((p) => <PlayerName key={p.user_id} p={p} me={view.me} onClick={setMenuFor} />)
+          ) : (
+            <div className="hint">none</div>
+          )}
         </div>
 
         <form id="mode-toggle" onSubmit={(e) => e.preventDefault()}>
@@ -192,7 +230,16 @@ export const Board = ({ view, act }) => {
         </form>
       </div>
 
-      <TeamList players={view.players} team="blue" me={view.me} />
+      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} />
+
+      {menuFor && (
+        <PlayerActions
+          p={view.players.find((p) => p.user_id === menuFor.user_id) || menuFor}
+          isMe={menuFor.user_id === view.me}
+          act={act}
+          onClose={() => setMenuFor(null)}
+        />
+      )}
     </div>
   );
 };

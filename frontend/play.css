@@ -48,37 +48,142 @@
   color: #4183cc;
 }
 
-.team-list div {
-  margin-bottom: 0.25em;
+/* Player names are buttons that open the player's actions. */
+.player-name {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.1em 0;
+  margin-bottom: 0.15em;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
 }
 
-.team-list .cluer {
+.player-name:hover {
+  text-decoration: underline dotted;
+}
+
+.player-name.cluer {
   font-size: 1.3em;
   font-weight: bold;
   margin-bottom: 0.4em;
 }
 
-.team-list .absent {
+.player-name.absent {
   opacity: 0.45;
   font-style: italic;
 }
 
-.team-list .me,
-.floater-list .me {
+.player-name.me {
   text-decoration: underline;
 }
 
 .board-info {
+  text-align: center;
   color: #666;
   font-size: 0.9em;
+  margin-bottom: 0.3em;
 }
 
+.board-info .my-role {
+  cursor: help;
+}
+
+#game-view #timer {
+  text-align: center;
+  font-size: 1.3em;
+  margin-bottom: 0.3em;
+}
+
+.timer.pulse {
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* Status row lined up with the board's five columns:
+   Red End Turn | Red's Turn | score | Blue's Turn | Blue End Turn. */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 18%);
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.6em 0 0.8em;
+  min-height: 2.6em;
+}
+
+.status-grid > div {
+  display: flex;
+  justify-content: center;
+}
+
+.status-grid .score {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.status-grid .red-remaining {
+  color: #d13030;
+}
+
+.status-grid .blue-remaining {
+  color: #4183cc;
+}
+
+.turn-banner {
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  font-size: 1.3em;
+  font-weight: bold;
+  padding: 0.35em 0;
+  border-radius: 6px;
+}
+
+.turn-banner.red {
+  background: #d13030;
+}
+
+.turn-banner.blue {
+  background: #4183cc;
+}
+
+.end-turn-btn {
+  padding: 0.45em 0.6em;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #eee;
+  font-size: 0.95em;
+}
+
+.end-turn-btn.red {
+  border: 2px solid #d13030;
+}
+
+.end-turn-btn.blue {
+  border: 2px solid #4183cc;
+}
+
+/* Floaters under the board, one per line, centered. */
 .floater-list {
-  margin-top: 0.7em;
+  margin-top: 0.8em;
+  text-align: center;
 }
 
 .floater-list .section-label {
   font-weight: bold;
+  margin-bottom: 0.2em;
 }
 
 #mode-toggle {
