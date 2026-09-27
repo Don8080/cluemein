@@ -30,8 +30,41 @@ const PlayerName = ({ p, me, onClick }) => (
   </button>
 );
 
-// Players of one team, Cluer first.
-const TeamList = ({ players, team, me, onName }) => {
+// This team's guesses, one numbered line per turn, each word in the color
+// it turned out to be.
+const GuessList = ({ guesses, team }) => {
+  const turns = [];
+  let lastRound = null;
+  guesses
+    .filter((g) => g.team === team)
+    .forEach((g, i) => {
+      // Older records have no round; treat each as its own turn.
+      const round = g.round ?? `x${i}`;
+      if (round !== lastRound) turns.push([]);
+      turns[turns.length - 1].push(g);
+      lastRound = round;
+    });
+  if (!turns.length) return null;
+  return (
+    <div className="guess-list">
+      <div className="section-label">Guesses</div>
+      {turns.map((t, i) => (
+        <div key={i} className="guess-turn">
+          {i + 1}){' '}
+          {t.map((g, j) => (
+            <span key={j} className={`guess-word ${g.color}`}>
+              {j > 0 ? ', ' : ''}
+              {g.word}
+            </span>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// One team's column: players (Cluer first), then the team's guesses.
+const TeamList = ({ players, team, me, onName, guesses }) => {
   const members = players
     .filter((p) => p.team === team)
     .sort((a, b) => (a.role === 'cluer' ? -1 : b.role === 'cluer' ? 1 : 0));
@@ -40,9 +73,21 @@ const TeamList = ({ players, team, me, onName }) => {
       {members.map((p) => (
         <PlayerName key={p.user_id} p={p} me={me} onClick={onName} />
       ))}
+      <GuessList guesses={guesses} team={team} />
     </div>
   );
 };
+
+// Corner triangles for a word marked by the Red (left) and/or Blue (right)
+// team.
+const Marks = ({ red, blue }) => (
+  <>
+    {red && <span className="mark red top" />}
+    {red && <span className="mark red bottom" />}
+    {blue && <span className="mark blue top" />}
+    {blue && <span className="mark blue bottom" />}
+  </>
+);
 
 // Actions for a player, opened by clicking their name. Any player may do
 // these for any player: switch to Red/Blue/Float as appropriate (Cluers
@@ -123,10 +168,12 @@ export const Board = ({ view, act }) => {
   const [settings, setSettings] = React.useState(Settings.load());
   const [showSettings, setShowSettings] = React.useState(false);
   const [menuFor, setMenuFor] = React.useState(null);
+  const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
   const isCluer = me?.role === 'cluer';
   const over = !!board.winning_team;
+  const safeClick = !!settings.safeClick;
 
   React.useEffect(() => {
     document.body.classList.toggle('dark-mode', !!settings.darkMode);
@@ -163,6 +210,40 @@ export const Board = ({ view, act }) => {
     act('guess', { index: idx });
   };
 
+  // Right-click, or any click in Safe Click Mode, marks the word instead of
+  // guessing it.
+  const mark = (idx) => {
+    if (!board.can_mark || board.revealed[idx]) return;
+    act('mark', { index: idx });
+  };
+  const onCellClick = (idx) => (safeClick ? mark(idx) : guess(idx));
+
+  // On touch screens, dragging a finger across the board enlarges the word
+  // under it, like a mouseover.
+  const onTouch = (e) => {
+    const t = e.touches[0];
+    const cell = t && document.elementFromPoint(t.clientX, t.clientY)?.closest('.cell');
+    setTouchIdx(cell ? Number(cell.getAttribute('data-idx')) : null);
+  };
+
+  const openModifyGame = () => window.open(`/modify/${view.ruleset.id}?from=board`, '_blank');
+
+  const graffito = (() => {
+    const { graffito_message: text, graffito_url: url } = view.ruleset;
+    if (!text && !url) return null;
+    return (
+      <div className="graffito">
+        {url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            {text || url}
+          </a>
+        ) : (
+          text
+        )}
+      </div>
+    );
+  })();
+
   const endTurn = () => act('end-turn', { round: board.round });
 
   const next = (path, label) => {
@@ -197,9 +278,12 @@ export const Board = ({ view, act }) => {
   const extraClasses = (settings.colorBlind ? ' color-blind' : '') + (settings.fullscreen ? ' full-screen' : '');
   const floaters = view.players.filter((p) => p.role === 'floater');
 
+  // At the end of a game everyone sees the board as the Cluers do.
+  const viewClass = isCluer || over ? 'cluegiver' : 'player';
+
   return (
-    <div id="play-view" className={(isCluer ? 'cluegiver' : 'player') + extraClasses}>
-      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} />
+    <div id="play-view" className={viewClass + extraClasses}>
+      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} />
 
       <div id="game-view">
         <div className="board-info">
@@ -219,6 +303,28 @@ export const Board = ({ view, act }) => {
           </div>
         )}
 
+        <div className="board-toolbar">
+          <label
+            className="check"
+            title="When on, clicking a word marks it for later consideration instead of guessing it. A right-click always marks a word; marking it again clears the mark."
+          >
+            Safe Click Mode{' '}
+            <input type="checkbox" checked={safeClick} onChange={(e) => toggleSetting(null, 'safeClick')} />
+          </label>
+          <label className="check">
+            Floaters Can Click{' '}
+            <input
+              type="checkbox"
+              checked={view.floaters_can_click}
+              onChange={(e) => act('floaters-can-click', { on: e.target.checked })}
+            />
+          </label>
+          <button type="button" onClick={openModifyGame}>
+            Modify Game
+          </button>
+          <SettingsButton onClick={() => setShowSettings(true)} />
+        </div>
+
         <div className="status-grid">
           <div></div>
           <div>{turnCell('red')}</div>
@@ -231,60 +337,74 @@ export const Board = ({ view, act }) => {
           <div></div>
         </div>
 
-        <div className={'board ' + statusClass}>
-          {board.words.map((w, idx) => (
-            <div
-              key={idx}
-              className={
-                'cell ' +
-                board.layout[idx] +
-                ' ' +
-                (board.can_click ? '' : 'disabled ') +
-                (board.revealed[idx] ? 'revealed' : 'hidden-word')
-              }
-              onClick={() => guess(idx)}
-            >
-              <span
-                className="word"
-                role="button"
-                aria-disabled={!board.can_click || board.revealed[idx] || over}
-                aria-label={cellLabel(idx)}
+        <div
+          className={'board ' + statusClass}
+          onTouchStart={onTouch}
+          onTouchMove={onTouch}
+          onTouchEnd={() => setTouchIdx(null)}
+        >
+          {board.words.map((w, idx) => {
+            const clickable = safeClick ? board.can_mark : board.can_click;
+            return (
+              <div
+                key={idx}
+                data-idx={idx}
+                className={
+                  'cell ' +
+                  board.layout[idx] +
+                  ' ' +
+                  (clickable ? '' : 'disabled ') +
+                  (board.revealed[idx] ? 'revealed' : 'hidden-word') +
+                  (touchIdx === idx ? ' touched' : '')
+                }
+                onClick={() => onCellClick(idx)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  mark(idx);
+                }}
               >
-                {w}
-              </span>
-            </div>
-          ))}
+                {!board.revealed[idx] && (
+                  <Marks red={board.marks.red.includes(idx)} blue={board.marks.blue.includes(idx)} />
+                )}
+                <span
+                  className="word"
+                  role="button"
+                  aria-disabled={!clickable || board.revealed[idx] || over}
+                  aria-label={cellLabel(idx)}
+                >
+                  {w}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="floater-list">
-          <div className="section-label">Floaters</div>
-          {floaters.length ? (
-            floaters.map((p) => <PlayerName key={p.user_id} p={p} me={view.me} onClick={setMenuFor} />)
-          ) : (
-            <div className="hint">none</div>
-          )}
+        <div className="board-bottom">
+          <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
+            Prev Game
+          </button>
+          <div className="floater-list">
+            <div className="section-label">Floaters</div>
+            {floaters.length ? (
+              floaters.map((p) => <PlayerName key={p.user_id} p={p} me={view.me} onClick={setMenuFor} />)
+            ) : (
+              <div className="hint">none</div>
+            )}
+          </div>
+          <div className="next-buttons">
+            <button type="button" onClick={() => next('next-board', 'Next Board')}>
+              Next Board
+            </button>
+            <button type="button" onClick={() => next('next-game', 'Next Game')}>
+              Next Game
+            </button>
+          </div>
         </div>
 
-        <form id="mode-toggle" onSubmit={(e) => e.preventDefault()}>
-          <label className="floaters-toggle">
-            Floaters Can Click{' '}
-            <input
-              type="checkbox"
-              checked={view.floaters_can_click}
-              onChange={(e) => act('floaters-can-click', { on: e.target.checked })}
-            />
-          </label>
-          <SettingsButton onClick={() => setShowSettings(true)} />
-          <button type="button" onClick={() => next('next-board', 'Next Board')}>
-            Next Board
-          </button>
-          <button type="button" onClick={() => next('next-game', 'Next Game')}>
-            Next Game
-          </button>
-        </form>
+        {graffito}
       </div>
 
-      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} />
+      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} />
 
       {menuFor && (
         <PlayerActions

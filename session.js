@@ -176,7 +176,27 @@ function setupSessions(app, db, requireAuth) {
     return s.current >= 0 ? s.boards[s.current] : null;
   }
 
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+
+  // The game's vocabulary, re-read for each board so Modify Vocabulary
+  // edits made during a session take effect on the next board.
+  function refreshWords(s) {
+    const words = db
+      .prepare('SELECT word FROM ruleset_words WHERE ruleset_id = ? ORDER BY word')
+      .all(s.rulesetID)
+      .map((r) => r.word);
+    if (words.length >= 25 && words.join('\n') !== s.words.join('\n')) {
+      s.words = words;
+      s.deck = null; // reshuffle the new vocabulary
+    }
+  }
+
   function dealBoard(s, rs) {
+    // Remember the roles as they ended on the board being left (Prev Game
+    // restores them).
+    const leaving = currentBoard(s);
+    if (leaving) leaving.finalRoles = clone(s.roles);
+    refreshWords(s);
     const next = s.deck
       ? nextGameState({ ...s.deck, word_set: s.words })
       : randomState(s.words);
@@ -186,7 +206,8 @@ function setupSessions(app, db, requireAuth) {
       next_turn_ms: rs.timer_on ? rs.next_turn_seconds * 1000 : 0,
       enforce_timer: !!(rs.timer_on && rs.enforce_timer),
     });
-    s.boards.push({ game, roles: JSON.parse(JSON.stringify(s.roles)), guesses: [] });
+    // marks: word indexes each team's guessers flagged for later.
+    s.boards.push({ game, roles: clone(s.roles), guesses: [], marks: { red: [], blue: [] } });
     s.current = s.boards.length - 1;
     s.status = 'playing';
     s.resumable = false;
@@ -260,6 +281,10 @@ function setupSessions(app, db, requireAuth) {
         timer_duration_ms: g.turnDurationMs(),
         enforce_timer: g.enforce_timer,
         guesses: board.guesses,
+        // Marks are for guessers; Cluers don't see them.
+        marks: isCluer ? { red: [], blue: [] } : board.marks || { red: [], blue: [] },
+        can_mark: s.roles[uid]?.role === 'guesser' && !over,
+        has_prev: s.current > 0,
         can_click: mayClick(s, uid),
       };
     }
@@ -443,12 +468,53 @@ function setupSessions(app, db, requireAuth) {
     if (!mayClick(s, uid)) return "It isn't your turn to guess.";
     const board = currentBoard(s);
     const team = board.game.currentTeam();
+    const round = board.game.round;
     try {
       board.game.guess(body.index);
     } catch (err) {
       return err.message;
     }
-    board.guesses.push({ team, word: board.game.words[body.index], color: board.game.layout[body.index] });
+    // `round` groups a team's guesses by turn for the guess lists.
+    board.guesses.push({ team, round, word: board.game.words[body.index], color: board.game.layout[body.index] });
+    return null;
+  });
+
+  // Mark (right-click or Safe Click Mode): a guesser flags a word for later
+  // for their team; marking it again clears their team's mark. Floaters
+  // and Cluers can't mark.
+  action('mark', (ctx, body) => {
+    const { s, uid } = ctx;
+    const board = currentBoard(s);
+    const r = s.roles[uid];
+    if (s.status !== 'playing' || !board || board.game.winning_team) return 'No board in play.';
+    if (r?.role !== 'guesser') return 'Only guessers can mark words.';
+    const idx = body.index;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= board.game.words.length || board.game.revealed[idx]) {
+      return 'That word can not be marked.';
+    }
+    board.marks = board.marks || { red: [], blue: [] };
+    const list = board.marks[r.team];
+    const at = list.indexOf(idx);
+    if (at >= 0) list.splice(at, 1);
+    else list.push(idx);
+    return null;
+  });
+
+  // Prev Game: go back to the previous board of this session, with the
+  // roles as they were when it was left.
+  action('prev-board', (ctx) => {
+    const { s } = ctx;
+    if (s.status !== 'playing') return 'The game is not in progress.';
+    if (s.current <= 0) return 'This is the first board of the session.';
+    currentBoard(s).finalRoles = clone(s.roles);
+    s.current--;
+    const board = currentBoard(s);
+    s.roles = clone(board.finalRoles || board.roles);
+    // Players who have since left drop out; newcomers become Floaters.
+    s.loggedOff.forEach((id) => delete s.roles[id]);
+    presentMembers(ctx.entry)
+      .filter((id) => !s.roles[id])
+      .forEach((id) => addFloater(s, id));
     return null;
   });
 

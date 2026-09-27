@@ -28,7 +28,16 @@ export const ModifyGame = ({ rulesetID }) => {
     axios.get('/api/wordlists').then(({ data }) => setLists(data));
   }, []);
 
-  const goBack = () => (window.location.href = '/');
+  // Opened from the board in its own tab: close it to return to the game.
+  // (Staying on the board's tab keeps the player present in the session.)
+  const fromBoard = new URLSearchParams(window.location.search).get('from') === 'board';
+  const goBack = () => {
+    if (fromBoard) {
+      window.close();
+      return;
+    }
+    window.location.href = '/';
+  };
 
   const save = async () => {
     setError(null);
