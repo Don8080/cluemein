@@ -70,7 +70,7 @@
 .team-list .player-name,
 .floater-list .player-name {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .floater-list .player-name {
@@ -78,7 +78,7 @@
 }
 
 .team-list .player-name.cluer {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.4em;
 }
@@ -170,20 +170,20 @@
   background: #4183cc;
 }
 
-.end-turn-btn {
-  padding: 0.45em 0.6em;
-  border-radius: 5px;
+/* The banner doubles as the End Turn button for players who may click. */
+button.turn-banner.end-turn {
+  border: none;
+  font-family: inherit;
   cursor: pointer;
-  background: #eee;
-  font-size: 0.95em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.end-turn-btn.red {
-  border: 2px solid #d13030;
+button.turn-banner.end-turn:hover {
+  filter: brightness(1.12);
 }
 
-.end-turn-btn.blue {
-  border: 2px solid #4183cc;
+button.turn-banner.end-turn:active {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* Floaters under the board, one per line, centered. */

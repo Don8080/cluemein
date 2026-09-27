@@ -177,18 +177,21 @@ export const Board = ({ view, act }) => {
     return label + (board.revealed[idx] ? ', revealed word.' : ', hidden word.');
   };
 
-  // Turn banner and End Turn button sit on the current team's side:
-  // Red over columns 1–2, Blue over columns 4–5, score in the middle.
+  // Turn banner on the current team's side (Red over column 2, Blue over
+  // column 4). For players allowed to click, the banner is itself the
+  // "End Red's Turn" button.
   const turnCell = (team) => {
     if (over) return team === board.winning_team ? <div className={`turn-banner ${team}`}>{cap(team)} wins!</div> : null;
-    return team === board.current_team ? <div className={`turn-banner ${team}`}>{cap(team)}&#39;s Turn</div> : null;
+    if (team !== board.current_team) return null;
+    if (board.can_click) {
+      return (
+        <button type="button" onClick={endTurn} className={`turn-banner ${team} end-turn`}>
+          End {cap(team)}&#39;s Turn
+        </button>
+      );
+    }
+    return <div className={`turn-banner ${team}`}>{cap(team)}&#39;s Turn</div>;
   };
-  const endTurnCell = (team) =>
-    !over && board.can_click && team === board.current_team ? (
-      <button onClick={endTurn} className={`end-turn-btn ${team}`}>
-        End {cap(team)}&#39;s Turn
-      </button>
-    ) : null;
 
   const statusClass = over ? `${board.winning_team} win` : `${board.current_team}-turn`;
   const extraClasses = (settings.colorBlind ? ' color-blind' : '') + (settings.fullscreen ? ' full-screen' : '');
@@ -217,7 +220,7 @@ export const Board = ({ view, act }) => {
         )}
 
         <div className="status-grid">
-          <div>{endTurnCell('red')}</div>
+          <div></div>
           <div>{turnCell('red')}</div>
           <div className="score">
             <span className="red-remaining">{board.remaining.red}</span>
@@ -225,7 +228,7 @@ export const Board = ({ view, act }) => {
             <span className="blue-remaining">{board.remaining.blue}</span>
           </div>
           <div>{turnCell('blue')}</div>
-          <div>{endTurnCell('blue')}</div>
+          <div></div>
         </div>
 
         <div className={'board ' + statusClass}>
