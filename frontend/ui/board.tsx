@@ -23,8 +23,10 @@ const PlayerName = ({ p, me, onClick }) => (
       'player-name' + (p.role === 'cluer' ? ' cluer' : '') + (p.present ? '' : ' absent') + (p.user_id === me ? ' me' : '')
     }
     onClick={() => onClick(p)}
+    title={p.changed ? 'Role changed since this board was dealt' : undefined}
   >
     {p.name}
+    {p.changed ? '*' : ''}
   </button>
 );
 
@@ -43,27 +45,76 @@ const TeamList = ({ players, team, me, onName }) => {
 };
 
 // Actions for a player, opened by clicking their name. Any player may do
-// these for any player.
-const PlayerActions = ({ p, isMe, act, onClose }) => (
-  <Popup title={p.name} onClose={onClose}>
-    <p className="hint">{roleText(p)}</p>
-    <div className="button-row">
-      <button
-        type="button"
-        onClick={async () => {
-          if (!confirm(isMe ? 'Log yourself off this game?' : `Log ${p.name} off this game?`)) return;
-          await act('log-off', { user_id: p.user_id });
-          onClose();
-        }}
-      >
-        Log Off
-      </button>
-      <button type="button" onClick={onClose}>
-        Close
-      </button>
-    </div>
-  </Popup>
-);
+// these for any player: switch to Red/Blue/Float as appropriate (Cluers
+// can't switch teams), take over the team's Cluer role, or leave.
+const PlayerActions = ({ p, isMe, act, onClose }) => {
+  const run = async (path, body, question = null) => {
+    if (question && !confirm(question)) return;
+    if (await act(path, { user_id: p.user_id, ...body })) onClose();
+  };
+  const setRole = (to) => run('set-role', { to });
+
+  let options = null;
+  if (p.role === 'guesser') {
+    const other = p.team === 'red' ? 'blue' : 'red';
+    options = (
+      <>
+        <button type="button" onClick={() => setRole(other)}>
+          Switch to {cap(other)}
+        </button>
+        <button type="button" onClick={() => setRole('floater')}>
+          Float
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            run(
+              'set-role',
+              { to: 'cluer' },
+              `Make ${p.name} the ${cap(p.team)} Cluer? This forces a new board, and the current Cluer becomes a guesser.`
+            )
+          }
+        >
+          Become {cap(p.team)} Cluer
+        </button>
+      </>
+    );
+  } else if (p.role === 'floater') {
+    options = (
+      <>
+        <button type="button" onClick={() => setRole('red')}>
+          Switch to Red
+        </button>
+        <button type="button" onClick={() => setRole('blue')}>
+          Switch to Blue
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <Popup title={p.name} onClose={onClose}>
+      <p className="hint">
+        {roleText(p)}
+        {p.role === 'cluer' && ' (Cluers can not switch teams)'}
+      </p>
+      <div className="button-row player-actions">
+        {options}
+        <button
+          type="button"
+          onClick={() =>
+            run('log-off', {}, isMe ? 'Leave this session?' : `Remove ${p.name} from this session?`)
+          }
+        >
+          Leave the Session
+        </button>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </Popup>
+  );
+};
 
 // (C1) Game Board. Roles come from the server: Cluers see the colors, and
 // only the team whose turn it is (or Floaters, if allowed) can click a word

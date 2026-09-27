@@ -245,9 +245,22 @@ function promoteCluer(stats, ids, guessers, otherCluer, teammates) {
   return pick;
 }
 
+// A guesser chose to take over their team's Cluer role: the new
+// assignment counts toward rotation (the dropped one isn't undone).
+function recordCluer(stats, ids, cluer, otherCluer, teammates) {
+  register(stats, ids);
+  stats.cluerAt[cluer].push(stats.n);
+  if (otherCluer) stats.faceoff[pairKey(cluer, otherCluer)] = (stats.faceoff[pairKey(cluer, otherCluer)] || 0) + 1;
+  stats.n++;
+  teammates
+    .filter((id) => id !== cluer)
+    .forEach((id) => (stats.pairs[`${cluer}>${id}`] = (stats.pairs[`${cluer}>${id}`] || 0) + 1));
+}
+
 module.exports = {
   assignRoles,
   promoteCluer,
+  recordCluer,
   newStats,
   register,
   guessersPerTeam,

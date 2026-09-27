@@ -6,7 +6,7 @@
 // server restart. Browsers long-poll /state, which doubles as a presence
 // heartbeat.
 const { Game, randomState, nextGameState } = require('./game');
-const { assignRoles, newStats, promoteCluer, register } = require('./roles');
+const { assignRoles, newStats, promoteCluer, recordCluer, register } = require('./roles');
 
 // Silent this long => no longer present. PRESENCE_GRACE_MS overrides it for testing.
 const GRACE_MS = Number(process.env.PRESENCE_GRACE_MS) || 2 * 60 * 1000;
@@ -64,7 +64,7 @@ function setupSessions(app, db, requireAuth) {
       deck: null, // { seed, perm_index }: position in the shuffled vocabulary
       roles: {}, // userID -> { team: 'red'|'blue'|null, role: 'cluer'|'guesser'|'floater' }
       floatersCanClick: false,
-      boards: [], // { game, roles, guesses: [{ team, word, color }] }
+      boards: [], // { game, roles (as dealt), guesses: [{ team, word, color }] }
       current: -1,
       resumable: false, // a board was interrupted by dropping below quorum
       stats: newStats(), // role-rotation history (see roles.js)
@@ -215,6 +215,8 @@ function setupSessions(app, db, requireAuth) {
       present: present.has(m.user_id),
       team: s.roles[m.user_id]?.team ?? null,
       role: s.roles[m.user_id]?.role ?? null,
+      // Role changed since this board was dealt (shown with an asterisk).
+      changed: !!(currentBoard(s) && s.roles[m.user_id] && JSON.stringify(currentBoard(s).roles[m.user_id]) !== JSON.stringify(s.roles[m.user_id])),
     }));
     const presentCount = players.filter((p) => p.present).length;
 
@@ -381,7 +383,7 @@ function setupSessions(app, db, requireAuth) {
     app.post(`/api/play/:rid/${path}`, requireAuth, (req, res) => {
       const ctx = load(req, res);
       if (!ctx) return;
-      if (ctx.s.loggedOff.includes(ctx.uid)) return res.status(400).json({ error: "You were logged off from this game. Click Play to rejoin." });
+      if (ctx.s.loggedOff.includes(ctx.uid)) return res.status(400).json({ error: "You have left this session. Click Play to rejoin." });
       const err = fn(ctx, req.body || {});
       if (err) return res.status(400).json({ error: err });
       changed(ctx.entry);
@@ -463,9 +465,47 @@ function setupSessions(app, db, requireAuth) {
     return null;
   });
 
-  // Log Off (any player, for any player): removes them from the session at
-  // once. A departing Cluer is replaced by a teammate (fairness rules), and
-  // if too few players remain, everyone returns to the Waiting Room.
+  // Change a player's role (any player may do this for any player):
+  //   'red' / 'blue'  become a guesser on that team
+  //   'floater'       float
+  //   'cluer'         a guesser takes over their team's Cluer role; the old
+  //                   Cluer becomes a guesser on the same team and a new
+  //                   board is dealt, since the new Cluer has seen this one.
+  // Cluers can't switch teams.
+  action('set-role', (ctx, body) => {
+    const { s, rs, entry } = ctx;
+    const target = Number(body.user_id);
+    const cur = s.roles[target];
+    if (s.status !== 'playing' || !cur) return 'That player has no role in this game.';
+    if (cur.role === 'cluer') return 'Cluers can not switch teams.';
+    const to = body.to;
+    if (to === 'red' || to === 'blue') {
+      s.roles[target] = { team: to, role: 'guesser' };
+    } else if (to === 'floater') {
+      s.roles[target] = { team: null, role: 'floater' };
+    } else if (to === 'cluer') {
+      if (cur.role !== 'guesser') return 'Only a guesser can take over their team\'s Cluer role.';
+      const team = cur.team;
+      const ids = Object.keys(s.roles).map(Number);
+      const oldCluer = ids.find((id) => s.roles[id].team === team && s.roles[id].role === 'cluer');
+      if (oldCluer) s.roles[oldCluer] = { team, role: 'guesser' };
+      s.roles[target] = { team, role: 'cluer' };
+      const other = ids.find((id) => s.roles[id].team !== team && s.roles[id].role === 'cluer');
+      const teammates = ids.filter((id) => s.roles[id].team === team && s.roles[id].role === 'guesser');
+      recordCluer(s.stats, presentMembers(entry), target, other, teammates);
+      dealBoard(s, rs);
+    } else {
+      return 'Unknown role.';
+    }
+    // Floaters may click automatically when nobody is a guesser.
+    if (!Object.values(s.roles).some((r) => r.role === 'guesser')) s.floatersCanClick = true;
+    return null;
+  });
+
+  // Leave the Session (any player, for any player): removes them from the
+  // session at once. A departing Cluer is replaced by a teammate (fairness
+  // rules), and if too few players remain, everyone returns to the Waiting
+  // Room.
   action('log-off', (ctx, body) => {
     const { s, rs, entry } = ctx;
     const target = Number(body.user_id);

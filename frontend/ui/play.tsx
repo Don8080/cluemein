@@ -77,7 +77,7 @@ export const PlayScreen = ({ rulesetID }) => {
   if (view?.logged_off) {
     return (
       <div id="start">
-        <p className="form-error">You were logged off from this game.</p>
+        <p className="form-error">You have left this session.</p>
         <p>
           <a href="/">Back to Start</a> (click Play there to rejoin)
         </p>

@@ -66,8 +66,19 @@
   text-decoration: underline dotted;
 }
 
-.player-name.cluer {
-  font-size: 1.3em;
+/* Same font and size in the team lists and the Floater list. */
+.team-list .player-name,
+.floater-list .player-name {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+}
+
+.floater-list .player-name {
+  color: #000;
+}
+
+.team-list .player-name.cluer {
+  font-size: 1.3rem;
   font-weight: bold;
   margin-bottom: 0.4em;
 }
@@ -179,6 +190,10 @@
 .floater-list {
   margin-top: 0.8em;
   text-align: center;
+}
+
+.popup .player-actions button {
+  font-size: 0.9em;
 }
 
 .floater-list .section-label {
