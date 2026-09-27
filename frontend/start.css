@@ -171,24 +171,26 @@ button.link-button,
   font-size: 0.85em;
 }
 
-/* Login stands out on its own row; Close sits at the bottom right. */
+/* Login stands out on its own row; Close sits at the bottom right.
+   (#start in the selector so it outranks the Start screen's gray buttons.) */
+#start .popup button.login-button,
 .popup button.login-button {
-  width: 100%;
-  padding: 0.65em 1em;
-  background: #1e88e5;
-  border-color: #1565c0;
-  color: #fff;
-  font-size: 1.05em;
+  padding: 0.5em 2em;
+  background: lightsalmon;
+  border-color: #e9967a;
+  color: #000;
   font-weight: bold;
 }
 
+#start .popup button.login-button:hover,
 .popup button.login-button:hover {
-  background: #1976d2;
+  background: #ff9b7a;
 }
 
+#start .popup button.login-button:disabled,
 .popup button.login-button:disabled {
-  background: #90caf9;
-  color: #fff;
+  opacity: 0.6;
+  color: #000;
 }
 
 .login-form .button-row.close-row {

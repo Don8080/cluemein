@@ -257,6 +257,7 @@ function setupSessions(app, db, requireAuth) {
       players,
       quorum: { present: presentCount, needed: rs.min_players },
       resumable: s.resumable,
+      boards_played: s.boards.length, // 0 before the session's first game
       floaters_can_click: s.floatersCanClick,
       board: null,
     };

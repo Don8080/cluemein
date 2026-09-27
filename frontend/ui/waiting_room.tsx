@@ -14,10 +14,16 @@ export const WaitingRoom = ({ view, act }) => {
     <div id="start" className="waiting-room">
       <h2 className="screen-heading">Waiting Room: {view.ruleset.name}</h2>
 
-      <p className={quorum ? 'form-message' : 'hint'}>
-        {quorum ? 'Quorum reached' : 'Waiting for quorum'}: {n} of {needed} players present.
-        {view.resumable && ' The board in progress resumes when the game begins again.'}
-      </p>
+      {quorum ? (
+        <p className="form-message">
+          Quorum Reached, click Begin Game for {view.boards_played ? 'next' : 'first'} game.
+        </p>
+      ) : (
+        <p className="hint">
+          Waiting for quorum: {n} of {needed} players present.
+          {view.resumable && ' The board in progress resumes when the game begins again.'}
+        </p>
+      )}
 
       <div className="presence-lists">
         <div>
