@@ -23,7 +23,8 @@ function passwordError(password) {
 }
 
 function setupAuth(app, db) {
-  const baseURL = process.env.BASE_URL || 'http://localhost:3003';
+  // A trailing slash would make links like "//verify", which the server doesn't recognize.
+  const baseURL = (process.env.BASE_URL || 'http://localhost:3003').replace(/\/+$/, '');
 
   // Session store backed by SQLite, so logins survive server restarts.
   class SqliteSessionStore extends session.Store {
