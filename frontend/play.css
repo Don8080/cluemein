@@ -465,10 +465,26 @@ button.turn-banner.end-turn:active {
   background: #4183cc;
 }
 
-/* The other team's word: alternating red and blue. */
+/* The other team's word: its own color plus a thin black outline. */
 .history-guess.other-team {
-  background: repeating-linear-gradient(135deg, #d13030 0 6px, #4183cc 6px 12px);
-  text-shadow: 0 0 2px #000;
+  outline: 2px solid #000;
+  outline-offset: -2px;
+}
+
+.history-turn .turn-number {
+  display: inline-block;
+  min-width: 1.6em;
+  color: #555;
+}
+
+.result-team.red {
+  color: #d13030;
+  font-weight: bold;
+}
+
+.result-team.blue {
+  color: #4183cc;
+  font-weight: bold;
 }
 
 .history-guess.neutral {

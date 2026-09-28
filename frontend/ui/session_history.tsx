@@ -2,14 +2,25 @@ import * as React from 'react';
 import axios from 'axios';
 import { Popup } from '~/ui/popup';
 
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-// One guessed word, colored by what it turned out to be: the guessing
-// team's color, red-and-blue stripes for the other team's word, gray for a
-// neutral word, black for the Assassin.
+// One guessed word in the color it turned out to be (gray for neutral,
+// black for the Assassin). The other team's word also gets a thin black
+// outline.
 const Guess = ({ word, color, team }) => {
-  const kind = color === team ? team : color === 'neutral' ? 'neutral' : color === 'black' ? 'assassin' : 'other-team';
-  return <span className={`history-guess ${kind}`}>{word}</span>;
+  const kind = color === 'neutral' ? 'neutral' : color === 'black' ? 'assassin' : color;
+  const wrongTeam = (color === 'red' || color === 'blue') && color !== team;
+  return <span className={`history-guess ${kind}${wrongTeam ? ' other-team' : ''}`}>{word}</span>;
+};
+
+// "Blue by 3" / "Red by Assassination", with the winning team's name in
+// its color.
+const Result = ({ board }) => {
+  if (!board.result) return <>{board.current ? 'In progress' : 'Not finished'}</>;
+  const [team, ...rest] = board.result.split(' ');
+  return (
+    <>
+      <span className={`result-team ${board.winner}`}>{team}</span> {rest.join(' ')}
+    </>
+  );
 };
 
 const Names = ({ list }) => (
@@ -74,7 +85,6 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
             <thead>
               <tr>
                 <th>Game #</th>
-                <th>First Cluer</th>
                 <th>Red Team</th>
                 <th>Blue Team</th>
                 <th>Floaters</th>
@@ -90,7 +100,6 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
                       Game {b.number}
                     </button>
                   </td>
-                  <td className={b.first_team}>{cap(b.first_team)}</td>
                   <td className="red">
                     <Names list={b.red} />
                   </td>
@@ -103,13 +112,16 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
                   <td>
                     {b.turns.map((t, i) => (
                       <div key={i} className="history-turn">
+                        {t.number && <span className="turn-number">{t.number})</span>}
                         {t.guesses.map((g, j) => (
                           <Guess key={j} word={g.word} color={g.color} team={t.team} />
                         ))}
                       </div>
                     ))}
                   </td>
-                  <td>{b.result || (b.current ? 'In progress' : 'Not finished')}</td>
+                  <td>
+                    <Result board={b} />
+                  </td>
                 </tr>
               ))}
             </tbody>

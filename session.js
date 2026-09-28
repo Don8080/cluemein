@@ -582,7 +582,7 @@ function setupSessions(app, db, requireAuth) {
       const turns = [];
       b.guesses.forEach((x, j) => {
         const prev = b.guesses[j - 1];
-        if (!prev || prev.round !== x.round || prev.team !== x.team) turns.push({ team: x.team, guesses: [] });
+        if (!prev || prev.round !== x.round || prev.team !== x.team) turns.push({ team: x.team, number: x.round !== undefined ? x.round + 1 : null, guesses: [] });
         turns[turns.length - 1].guesses.push({ word: x.word, color: x.color });
       });
       return {
@@ -594,6 +594,7 @@ function setupSessions(app, db, requireAuth) {
         floaters: members((r) => r.role === 'floater'),
         turns,
         result: boardResult(b)?.text || null,
+        winner: g.winning_team || null,
         final_board: {
           words: g.words,
           layout: g.layout.map((c, k) => (over || sawColors || g.revealed[k] ? c : 'hidden')),

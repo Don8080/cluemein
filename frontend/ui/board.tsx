@@ -31,8 +31,9 @@ const PlayerName = ({ p, me, onClick }) => (
   </button>
 );
 
-// This team's guesses, one numbered line per turn, each word in the color
-// it turned out to be.
+// This team's guesses, one line per turn, each word in the color it turned
+// out to be. Turns are numbered in one sequence for the whole board, so the
+// team that went first has the odd numbers and the other team the even.
 const GuessList = ({ guesses, team }) => {
   const turns = [];
   let lastRound = null;
@@ -41,8 +42,8 @@ const GuessList = ({ guesses, team }) => {
     .forEach((g, i) => {
       // Older records have no round; treat each as its own turn.
       const round = g.round ?? `x${i}`;
-      if (round !== lastRound) turns.push([]);
-      turns[turns.length - 1].push(g);
+      if (round !== lastRound) turns.push({ number: g.round !== undefined ? g.round + 1 : null, guesses: [] });
+      turns[turns.length - 1].guesses.push(g);
       lastRound = round;
     });
   if (!turns.length) return null;
@@ -51,8 +52,8 @@ const GuessList = ({ guesses, team }) => {
       <div className="section-label">Guesses</div>
       {turns.map((t, i) => (
         <div key={i} className="guess-turn">
-          {i + 1}){' '}
-          {t.map((g, j) => (
+          {t.number ?? i + 1}){' '}
+          {t.guesses.map((g, j) => (
             <span key={j} className={`guess-word ${g.color}`}>
               {j > 0 ? ', ' : ''}
               {g.word}
