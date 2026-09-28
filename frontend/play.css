@@ -1,15 +1,45 @@
 /* Waiting Room (A2) and the board layout (C1). */
 
-.waiting-room .presence-lists {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1em;
+/* Present | Absent | Status, as a ruled table with centered contents. */
+.presence-table {
+  width: 100%;
+  border-collapse: collapse;
   margin: 1em 0 1.5em;
+  text-align: center;
 }
 
-.waiting-room .section-label {
-  font-weight: bold;
-  margin-bottom: 0.3em;
+.presence-table th,
+.presence-table td {
+  border: 1px solid #ccc;
+  padding: 0.5em 0.8em;
+  vertical-align: top;
+}
+
+.presence-table th {
+  background: #f4f4f4;
+}
+
+.presence-table td div {
+  margin: 0.15em 0;
+}
+
+/* Account status beside emails on Create/Modify Game. */
+.players-table .account-status {
+  font-size: 0.85em;
+  white-space: nowrap;
+  color: #777;
+}
+
+.players-table .account-status.none {
+  color: #c62828;
+}
+
+.players-table .account-status.pending {
+  color: #e65100;
+}
+
+.players-table .account-status.verified {
+  color: #2e7d32;
 }
 
 .waiting-room .me {

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import axios from 'axios';
 import WordSetToggle from '~/ui/wordset_toggle';
 
 // Settings shared by Create Game (B1) and Modify Game (B2). The parent owns
@@ -37,7 +38,7 @@ export function settingsFromRuleset(rs) {
     max_session_hours: String(rs.max_session_hours),
     min_players: String(rs.min_players),
     min_team_size: String(rs.min_team_size),
-    players: [...rs.players.map((p) => ({ name: p.name, email: p.email })), emptyPlayer()],
+    players: [...rs.players.map((p) => ({ name: p.name, email: p.email, status: p.status })), emptyPlayer()],
     video_url: rs.video_url,
     graffito_message: rs.graffito_message,
     graffito_url: rs.graffito_url,
@@ -56,7 +57,7 @@ export function settingsToRequest(s) {
     max_session_hours: s.max_session_hours,
     min_players: s.min_players,
     min_team_size: s.min_team_size,
-    players: s.players.filter((p) => !isBlank(p)),
+    players: s.players.filter((p) => !isBlank(p)).map((p) => ({ name: p.name, email: p.email })),
     video_url: s.video_url,
     graffito_message: s.graffito_message,
     graffito_url: s.graffito_url,
@@ -86,10 +87,29 @@ export function settingsProblem(s, needLists) {
   return null;
 }
 
+const STATUS_LABELS = { none: 'No Account', pending: 'Pending', verified: 'Verified' };
+const looksLikeEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
 // Player rows. A spare blank row is added when one gets focus, keeping at
-// most two blank rows.
+// most two blank rows. Each email's account status (No Account / Pending /
+// Verified) is looked up when you tab out of it.
 const PlayerRows = ({ players, onChange, removable }) => {
   const set = (i, field, value) => onChange(players.map((p, j) => (j === i ? { ...p, [field]: value } : p)));
+  // email (lowercase) -> 'none' | 'pending' | 'verified'
+  const [statuses, setStatuses] = React.useState(() =>
+    Object.fromEntries(players.filter((p) => p.status).map((p) => [p.email.toLowerCase(), p.status]))
+  );
+  const lookUp = (email) => {
+    const key = email.trim().toLowerCase();
+    if (!looksLikeEmail(key) || statuses[key]) return;
+    axios
+      .get('/api/account-status', { params: { email: key } })
+      .then(({ data }) => setStatuses((s) => ({ ...s, [key]: data.status })));
+  };
+  // Emails already filled in when the form opens (e.g. your own on Create Game).
+  React.useEffect(() => {
+    players.forEach((p) => p.email && lookUp(p.email));
+  }, []);
   const onFocus = (i) => {
     if (!isBlank(players[i])) return;
     if (players.filter(isBlank).length < 2) onChange([...players, emptyPlayer()]);
@@ -105,11 +125,14 @@ const PlayerRows = ({ players, onChange, removable }) => {
         <tr>
           <th>*Player Name</th>
           <th>*Email</th>
+          <th>Status</th>
           {removable && <th></th>}
         </tr>
       </thead>
       <tbody>
-        {players.map((p, i) => (
+        {players.map((p, i) => {
+          const status = statuses[p.email.trim().toLowerCase()];
+          return (
           <tr key={i}>
             <td>
               <input value={p.name} onFocus={() => onFocus(i)} onChange={(e) => set(i, 'name', e.target.value)} />
@@ -120,8 +143,10 @@ const PlayerRows = ({ players, onChange, removable }) => {
                 value={p.email}
                 onFocus={() => onFocus(i)}
                 onChange={(e) => set(i, 'email', e.target.value)}
+                onBlur={(e) => lookUp(e.target.value)}
               />
             </td>
+            <td className={`account-status ${status || ''}`}>{status ? STATUS_LABELS[status] : ''}</td>
             {removable && (
               <td>
                 {!isBlank(p) && (
@@ -132,7 +157,8 @@ const PlayerRows = ({ players, onChange, removable }) => {
               </td>
             )}
           </tr>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   );

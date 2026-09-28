@@ -93,12 +93,14 @@ function initDb() {
       last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Players in a RuleSet. The player name is per RuleSet.
+    -- Players in a RuleSet, by email, so a player can be added before they
+    -- have an account (they join automatically when they sign up with
+    -- that email). The player name is per RuleSet.
     CREATE TABLE IF NOT EXISTS ruleset_members (
       ruleset_id INTEGER NOT NULL REFERENCES rulesets(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      email TEXT NOT NULL COLLATE NOCASE,
       player_name TEXT NOT NULL COLLATE NOCASE,
-      PRIMARY KEY (ruleset_id, user_id),
+      PRIMARY KEY (ruleset_id, email),
       UNIQUE (ruleset_id, player_name)
     );
 
@@ -157,6 +159,26 @@ function initDb() {
   if (!hasColumn('rulesets', 'last_session_ended_at')) {
     // Epoch ms; the Start screen shows "Previous session ended ...".
     db.exec('ALTER TABLE rulesets ADD COLUMN last_session_ended_at INTEGER');
+  }
+  if (hasColumn('ruleset_members', 'user_id')) {
+    // Members used to be keyed by account; now by email (see the table).
+    db.exec(`
+      BEGIN;
+      CREATE TABLE ruleset_members_new (
+        ruleset_id INTEGER NOT NULL REFERENCES rulesets(id) ON DELETE CASCADE,
+        email TEXT NOT NULL COLLATE NOCASE,
+        player_name TEXT NOT NULL COLLATE NOCASE,
+        PRIMARY KEY (ruleset_id, email),
+        UNIQUE (ruleset_id, player_name)
+      );
+      INSERT INTO ruleset_members_new (ruleset_id, email, player_name)
+        SELECT m.ruleset_id, u.email, m.player_name
+          FROM ruleset_members m JOIN users u ON u.id = m.user_id ORDER BY m.rowid;
+      DROP TABLE ruleset_members;
+      ALTER TABLE ruleset_members_new RENAME TO ruleset_members;
+      COMMIT;
+    `);
+    console.log('Converted game memberships to email');
   }
 
   seedWordlists(db);

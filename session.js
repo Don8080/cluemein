@@ -21,9 +21,14 @@ function setupSessions(app, db, requireAuth) {
 
   const getRuleset = db.prepare('SELECT * FROM rulesets WHERE id = ?');
   const getMembers = db.prepare(
-    'SELECT user_id, player_name AS name FROM ruleset_members WHERE ruleset_id = ? ORDER BY rowid'
+    // Members are stored by email; user_id is null until they have an account.
+    `SELECT u.id AS user_id, m.email, m.player_name AS name, u.email_verified
+       FROM ruleset_members m LEFT JOIN users u ON u.email = m.email
+      WHERE m.ruleset_id = ? ORDER BY m.rowid`
   );
-  const isMember = db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND user_id = ?');
+  const isMember = db.prepare(
+    'SELECT 1 FROM ruleset_members m JOIN users u ON u.email = m.email WHERE m.ruleset_id = ? AND u.id = ?'
+  );
   const saveStmt = db.prepare(
     'INSERT INTO play_sessions (ruleset_id, state) VALUES (?, ?) ON CONFLICT(ruleset_id) DO UPDATE SET state = excluded.state'
   );
@@ -237,7 +242,10 @@ function setupSessions(app, db, requireAuth) {
     const present = new Set(presentIDs(entry));
     const players = getMembers.all(s.rulesetID).map((m) => ({
       user_id: m.user_id,
+      email: m.email,
       name: m.name,
+      // 'none' (No Account), 'pending' (not verified yet) or 'verified'.
+      status: m.user_id === null ? 'none' : m.email_verified ? 'verified' : 'pending',
       present: present.has(m.user_id),
       team: s.roles[m.user_id]?.team ?? null,
       role: s.roles[m.user_id]?.role ?? null,
@@ -732,21 +740,21 @@ function setupSessions(app, db, requireAuth) {
     return null;
   });
 
-  // Add Player (P1): permanently adds a registered player to the RuleSet.
+  // Add Player (P1): permanently adds a player to the RuleSet by email;
+  // they need not have an account yet.
   action('add-player', (ctx, body) => {
     const email = String(body.email || '').trim().toLowerCase();
     const name = String(body.name || '').trim();
     if (!email || !name) return 'Enter both an email and a name.';
-    const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (!user) return `${email} doesn't have a Clue Me In account yet. They need to create one first.`;
-    if (isMember.get(ctx.rs.id, user.id)) return `${email} is already a player in this game.`;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return `${email} is not a valid email address.`;
+    if (db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND email = ?').get(ctx.rs.id, email)) {
+      return `${email} is already a player in this game.`;
+    }
     const taken = db
       .prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND player_name = ?')
       .get(ctx.rs.id, name);
     if (taken) return `The name "${name}" is already used in this game.`;
-    db.prepare('INSERT INTO ruleset_members (ruleset_id, user_id, player_name) VALUES (?, ?, ?)').run(
-      ctx.rs.id, user.id, name
-    );
+    db.prepare('INSERT INTO ruleset_members (ruleset_id, email, player_name) VALUES (?, ?, ?)').run(ctx.rs.id, email, name);
     return null;
   });
 }

@@ -5,14 +5,21 @@ const { normalizeWord } = require('./db');
 class InputError extends Error {}
 
 function setupRulesets(app, db, requireAuth) {
-  const isMember = db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND user_id = ?');
+  // Members are stored by email; the logged-in player is matched by theirs.
+  const isMember = db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND email = ?');
+  const accountStatus = db.prepare('SELECT email_verified FROM users WHERE email = ?');
+  // 'none' (No Account), 'pending' (not verified yet) or 'verified'.
+  const statusOf = (email) => {
+    const u = accountStatus.get(email);
+    return !u ? 'none' : u.email_verified ? 'verified' : 'pending';
+  };
   const getRuleset = db.prepare('SELECT * FROM rulesets WHERE id = ?');
 
   // Loads the RuleSet in :id if the logged-in user belongs to it.
   function memberRuleset(req, res) {
     const id = Number(req.params.id);
     const rs = Number.isInteger(id) && getRuleset.get(id);
-    if (!rs || !isMember.get(id, req.session.userID)) {
+    if (!rs || !isMember.get(id, req.session.email)) {
       res.status(404).json({ error: 'Game not found.' });
       return null;
     }
@@ -22,11 +29,11 @@ function setupRulesets(app, db, requireAuth) {
   function details(rs) {
     const players = db
       .prepare(
-        `SELECT u.id AS user_id, u.email, m.player_name AS name
-           FROM ruleset_members m JOIN users u ON u.id = m.user_id
+        `SELECT m.email, m.player_name AS name FROM ruleset_members m
           WHERE m.ruleset_id = ? ORDER BY m.rowid`
       )
-      .all(rs.id);
+      .all(rs.id)
+      .map((p) => ({ ...p, status: statusOf(p.email) }));
     const wordlistIDs = db
       .prepare('SELECT wordlist_id FROM ruleset_wordlists WHERE ruleset_id = ?')
       .all(rs.id)
@@ -99,18 +106,10 @@ function setupRulesets(app, db, requireAuth) {
     const dupEmail = emails.find((e, i) => emails.indexOf(e) !== i);
     if (dupEmail) throw new InputError(`${dupEmail} is listed twice.`);
 
-    const findUser = db.prepare('SELECT id FROM users WHERE email = ?');
-    const missing = [];
-    for (const p of players) {
-      const u = findUser.get(p.email);
-      if (u) p.user_id = u.id;
-      else missing.push(p.email);
-    }
-    if (missing.length) {
-      throw new InputError(
-        `These emails don't have Clue Me In accounts yet: ${missing.join(', ')}. Each player must create an account first.`
-      );
-    }
+    // Players may be added before they have an account; they join the game
+    // when they sign up with that email.
+    const bad = players.find((p) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email));
+    if (bad) throw new InputError(`${bad.email} is not a valid email address.`);
 
     return {
       description: description || null,
@@ -147,8 +146,8 @@ function setupRulesets(app, db, requireAuth) {
     );
     // Replace the player list, keeping the order given.
     db.prepare('DELETE FROM ruleset_members WHERE ruleset_id = ?').run(id);
-    const add = db.prepare('INSERT INTO ruleset_members (ruleset_id, user_id, player_name) VALUES (?, ?, ?)');
-    for (const p of s.players) add.run(id, p.user_id, p.name);
+    const add = db.prepare('INSERT INTO ruleset_members (ruleset_id, email, player_name) VALUES (?, ?, ?)');
+    for (const p of s.players) add.run(id, p.email, p.name);
   }
 
   // Adds standard lists to a RuleSet, copying their words. A word already in
@@ -195,11 +194,17 @@ function setupRulesets(app, db, requireAuth) {
       db
         .prepare(
           `SELECT r.id, r.name, r.description, r.video_url FROM rulesets r
-             JOIN ruleset_members m ON m.ruleset_id = r.id AND m.user_id = ?
+             JOIN ruleset_members m ON m.ruleset_id = r.id AND m.email = ?
             ORDER BY r.name`
         )
-        .all(req.session.userID)
+        .all(req.session.email)
     );
+  });
+
+  // Account status for an email typed into a player list (B1/B2):
+  // 'none' (No Account), 'pending' or 'verified'.
+  app.get('/api/account-status', requireAuth, (req, res) => {
+    res.json({ status: statusOf(String(req.query.email || '').trim().toLowerCase()) });
   });
 
   app.get('/api/rulesets/:id', requireAuth, (req, res) => {
@@ -212,7 +217,7 @@ function setupRulesets(app, db, requireAuth) {
     const id = inTransaction(res, () => {
       const name = checkName(req.body.name);
       const s = cleanSettings(req.body);
-      if (!s.players.some((p) => p.user_id === req.session.userID)) {
+      if (!s.players.some((p) => p.email === String(req.session.email).toLowerCase())) {
         throw new InputError('Include yourself in the player list, or you won\'t be able to open this game.');
       }
       const listIDs = listIDsOf(req.body);
@@ -249,8 +254,8 @@ function setupRulesets(app, db, requireAuth) {
       // A description typed in Create Game replaces the copied one.
       if (description) db.prepare('UPDATE rulesets SET description = ? WHERE id = ?').run(description, newID);
       db.prepare(
-        `INSERT INTO ruleset_members (ruleset_id, user_id, player_name)
-         SELECT ?, user_id, player_name FROM ruleset_members WHERE ruleset_id = ? ORDER BY rowid`
+        `INSERT INTO ruleset_members (ruleset_id, email, player_name)
+         SELECT ?, email, player_name FROM ruleset_members WHERE ruleset_id = ? ORDER BY rowid`
       ).run(newID, src.id);
       db.prepare(
         'INSERT INTO ruleset_wordlists (ruleset_id, wordlist_id) SELECT ?, wordlist_id FROM ruleset_wordlists WHERE ruleset_id = ?'

@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { Popup } from '~/ui/popup';
 
+const STATUS_LABELS = { none: 'No Account', pending: 'Pending', verified: 'Verified' };
+
 // (A2) Waiting Room. Begin Game is enabled once enough players are here;
 // clicking it takes everyone present to the board.
 export const WaitingRoom = ({ view, act }) => {
   const [adding, setAdding] = React.useState(false);
   const present = view.players.filter((p) => p.present);
-  const missing = view.players.filter((p) => !p.present);
+  const absent = view.players.filter((p) => !p.present);
+  const unverified = view.players.filter((p) => p.status !== 'verified');
   const { present: n, needed } = view.quorum;
   const quorum = n >= needed;
 
@@ -25,22 +28,39 @@ export const WaitingRoom = ({ view, act }) => {
         </p>
       )}
 
-      <div className="presence-lists">
-        <div>
-          <div className="section-label">Present</div>
-          {present.map((p) => (
-            <div key={p.user_id} className={p.user_id === view.me ? 'me' : ''}>
-              {p.name}
-            </div>
-          ))}
-        </div>
-        <div>
-          <div className="section-label">Missing</div>
-          {missing.map((p) => (
-            <div key={p.user_id}>{p.name}</div>
-          ))}
-        </div>
-      </div>
+      <table className="presence-table">
+        <thead>
+          <tr>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              {present.map((p) => (
+                <div key={p.email} className={p.user_id === view.me ? 'me' : ''}>
+                  {p.name}
+                </div>
+              ))}
+            </td>
+            <td>
+              {absent.map((p) => (
+                <div key={p.email}>{p.name}</div>
+              ))}
+            </td>
+            <td>
+              {/* Players without a verified account, e.g. "Laura, Pending". */}
+              {unverified.map((p) => (
+                <div key={p.email}>
+                  {p.name}, {STATUS_LABELS[p.status]}
+                </div>
+              ))}
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       <div className="start-row">
         <button onClick={() => setAdding(true)}>Add Player</button>
