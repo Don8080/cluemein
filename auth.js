@@ -65,6 +65,12 @@ function setupAuth(app, db) {
     db.prepare('DELETE FROM auth_tokens WHERE expires_at < ?').run(Date.now());
   }, 60 * 60 * 1000).unref();
 
+  // On Railway a missing secret would make every login forgeable, so refuse to start.
+  if (process.env.RAILWAY_ENVIRONMENT_NAME && !process.env.SESSION_SECRET) {
+    console.error('SESSION_SECRET is not set; refusing to start.');
+    process.exit(1);
+  }
+
   app.use(
     session({
       store: new SqliteSessionStore(),
