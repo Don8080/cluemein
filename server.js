@@ -3,7 +3,7 @@
 require('dotenv').config({ quiet: true, path: require('path').join(__dirname, '.env') });
 const path = require('path');
 const express = require('express');
-const { initDb } = require('./db');
+const { initDb, deleteExpired } = require('./db');
 const { setupAuth } = require('./auth');
 const { setupRulesets } = require('./rulesets');
 const { setupSessions } = require('./session');
@@ -11,6 +11,10 @@ const { setupSessions } = require('./session');
 const PORT = process.env.PORT || 3003;
 
 const db = initDb();
+
+// Retention rules (db.js): at startup and then daily.
+deleteExpired(db);
+setInterval(() => deleteExpired(db), 24 * 60 * 60 * 1000).unref();
 
 const INDEX_HTML = `<!DOCTYPE html>
 <html>

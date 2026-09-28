@@ -14,6 +14,8 @@ const CLOSING_TAB_MS = 15 * 1000; // after a tab closes (long enough for a reloa
 const LONG_POLL_MS = 15 * 1000;
 const SWEEP_MS = 5 * 1000;
 
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 function setupSessions(app, db, requireAuth) {
   const live = new Map(); // rulesetID -> entry
 
@@ -479,9 +481,60 @@ function setupSessions(app, db, requireAuth) {
       return err.message;
     }
     // `round` groups a team's guesses by turn for the guess lists.
-    board.guesses.push({ team, round, word: board.game.words[body.index], color: board.game.layout[body.index] });
+    const word = board.game.words[body.index];
+    const sameTurn = board.guesses.filter((g) => g.round === round && g.team === team);
+    board.guesses.push({ team, round, word, color: board.game.layout[body.index] });
+    countPairs(word, sameTurn.map((g) => g.word));
+    if (board.game.winning_team) recordResult(ctx, board);
     return null;
   });
+
+  // Word-pair tally (all games): each new guess pairs with every earlier
+  // guess of the same turn.
+  const addPair = db.prepare(
+    `INSERT INTO word_pairs (word_a, word_b, count) VALUES (?, ?, 1)
+     ON CONFLICT(word_a, word_b) DO UPDATE SET count = count + 1`
+  );
+  function countPairs(word, earlier) {
+    for (const other of earlier) {
+      const [a, b] = word < other ? [word, other] : [other, word];
+      addPair.run(a, b);
+    }
+  }
+
+  // Outcome of a finished board: "Blue by 3" (3 unguessed Red words left)
+  // or "Red by Assassination" (Blue guessed the Assassin).
+  function boardResult(board) {
+    const g = board.game;
+    if (!g.winning_team) return null;
+    const loser = g.winning_team === 'red' ? 'blue' : 'red';
+    const assassinated = board.guesses.some((x) => x.color === 'black');
+    return {
+      winner: g.winning_team,
+      by_assassination: assassinated,
+      margin: assassinated ? null : g.remaining(loser),
+      text: assassinated ? `${cap(g.winning_team)} by Assassination` : `${cap(g.winning_team)} by ${g.remaining(loser)}`,
+    };
+  }
+
+  // Player history: one row per Cluer and guesser (not Floaters) when a
+  // board is played to completion, using the final role configuration.
+  const addHistory = db.prepare(
+    `INSERT INTO player_history (ruleset_id, user_id, role, won, by_assassination, margin)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  function recordResult(ctx, board) {
+    if (board.recorded) return;
+    board.recorded = true;
+    const result = boardResult(board);
+    for (const [id, r] of Object.entries(ctx.s.roles)) {
+      if (r.role === 'floater' || !r.team) continue;
+      addHistory.run(
+        ctx.rs.id, Number(id), r.role, r.team === result.winner ? 1 : 0,
+        result.by_assassination ? 1 : 0, result.margin
+      );
+    }
+  }
 
   // Mark (right-click or Safe Click Mode): a guesser flags a word for later
   // for their team; marking it again clears their team's mark. Floaters
@@ -502,6 +555,55 @@ function setupSessions(app, db, requireAuth) {
     if (at >= 0) list.splice(at, 1);
     else list.push(idx);
     return null;
+  });
+
+  // (D1) Session History: every board of this session with its teams,
+  // guesses by turn, result and final board. Unfinished boards keep their
+  // unrevealed colors hidden (except from that board's Cluers), since play
+  // can return to them with Prev Game.
+  app.post('/api/play/:rid/history', requireAuth, (req, res) => {
+    const ctx = load(req, res);
+    if (!ctx) return;
+    const { s, uid } = ctx;
+    const names = new Map(getMembers.all(s.rulesetID).map((m) => [m.user_id, m.name]));
+    const nameOf = (id) => names.get(Number(id)) || 'Former player';
+    const boards = s.boards.map((b, i) => {
+      const g = b.game;
+      // Final roles: as left, or live for the current board.
+      const roles = i === s.current ? s.roles : b.finalRoles || b.roles;
+      const members = (pred) =>
+        Object.entries(roles)
+          .filter(([, r]) => pred(r))
+          .sort(([, a], [, b2]) => (a.role === 'cluer' ? -1 : b2.role === 'cluer' ? 1 : 0))
+          .map(([id, r]) => ({ name: nameOf(id), cluer: r.role === 'cluer' }));
+      const over = !!g.winning_team;
+      const sawColors = roles[uid]?.role === 'cluer';
+      // Guesses grouped into turns.
+      const turns = [];
+      b.guesses.forEach((x, j) => {
+        const prev = b.guesses[j - 1];
+        if (!prev || prev.round !== x.round || prev.team !== x.team) turns.push({ team: x.team, guesses: [] });
+        turns[turns.length - 1].guesses.push({ word: x.word, color: x.color });
+      });
+      return {
+        number: i + 1,
+        current: i === s.current,
+        first_team: g.starting_team,
+        red: members((r) => r.team === 'red'),
+        blue: members((r) => r.team === 'blue'),
+        floaters: members((r) => r.role === 'floater'),
+        turns,
+        result: boardResult(b)?.text || null,
+        final_board: {
+          words: g.words,
+          layout: g.layout.map((c, k) => (over || sawColors || g.revealed[k] ? c : 'hidden')),
+          revealed: g.revealed,
+          remaining: { red: g.remaining('red'), blue: g.remaining('blue') },
+          winning_team: g.winning_team,
+        },
+      };
+    });
+    res.json({ boards });
   });
 
   // Prev Game: go back to the previous board of this session, with the

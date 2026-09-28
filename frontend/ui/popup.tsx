@@ -2,7 +2,7 @@ import * as React from 'react';
 
 // Every popup is draggable by its title bar and closes when the user
 // clicks outside it.
-export const Popup = ({ title, onClose, children, wide = false }) => {
+export const Popup = ({ title, onClose, children, wide = false, extraWide = false }) => {
   const [offset, setOffset] = React.useState({ x: 0, y: 0 });
   const drag = React.useRef(null);
 
@@ -26,7 +26,7 @@ export const Popup = ({ title, onClose, children, wide = false }) => {
       }}
     >
       <div
-        className={'popup' + (wide ? ' wide' : '')}
+        className={'popup' + (wide ? ' wide' : '') + (extraWide ? ' extra-wide' : '')}
         role="dialog"
         aria-label={'Clue Me In: ' + title}
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}

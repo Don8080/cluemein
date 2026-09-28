@@ -269,6 +269,8 @@ function setupRulesets(app, db, requireAuth) {
     if (!rs) return;
     const ok = inTransaction(res, () => {
       saveSettings(rs.id, cleanSettings(req.body));
+      // Modifying a game counts as using it (for the one-year retention).
+      db.prepare("UPDATE rulesets SET last_used_at = datetime('now') WHERE id = ?").run(rs.id);
       addWordlists(rs.id, listIDsOf(req.body));
       return true;
     });

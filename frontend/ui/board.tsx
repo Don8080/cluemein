@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Settings, SettingsButton, SettingsPanel } from '~/ui/settings';
 import { Popup } from '~/ui/popup';
+import { SessionHistory } from '~/ui/session_history';
 import Timer from '~/ui/timer';
 
 const defaultFavicon =
@@ -168,6 +169,7 @@ export const Board = ({ view, act }) => {
   const [settings, setSettings] = React.useState(Settings.load());
   const [showSettings, setShowSettings] = React.useState(false);
   const [menuFor, setMenuFor] = React.useState(null);
+  const [showHistory, setShowHistory] = React.useState(false);
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
@@ -319,6 +321,9 @@ export const Board = ({ view, act }) => {
           <button type="button" onClick={openModifyGame}>
             Modify Game
           </button>
+          <button type="button" onClick={() => setShowHistory(true)}>
+            Session History
+          </button>
           <SettingsButton onClick={() => setShowSettings(true)} />
         </div>
 
@@ -402,6 +407,8 @@ export const Board = ({ view, act }) => {
       </div>
 
       <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} />
+
+      {showHistory && <SessionHistory rulesetID={view.ruleset.id} onClose={() => setShowHistory(false)} />}
 
       {menuFor && (
         <PlayerActions

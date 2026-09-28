@@ -385,6 +385,165 @@ button.turn-banner.end-turn:active {
   color: #fff;
 }
 
+/* Session History (D1). */
+.popup.extra-wide {
+  width: min(1000px, calc(100vw - 32px));
+}
+
+.history-scroll {
+  max-height: 65vh;
+  overflow: auto;
+}
+
+.history-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9em;
+}
+
+.history-table th {
+  position: sticky;
+  top: 0;
+  background: #f4f4f4;
+  text-align: left;
+  font-weight: normal;
+  padding: 0.35em 0.5em;
+}
+
+.history-table td {
+  padding: 0.4em 0.5em;
+  border-top: 1px solid #e4e4e4;
+  vertical-align: top;
+}
+
+.history-table td.red {
+  color: #d13030;
+}
+
+.history-table td.blue {
+  color: #4183cc;
+}
+
+.history-table .history-cluer {
+  font-weight: bold;
+}
+
+.history-table td button,
+.popup.extra-wide .button-row button,
+.popup.wide .button-row.centered button {
+  padding: 0.3em 0.7em;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  background: #eee;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.popup .button-row.centered {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.8em;
+}
+
+.history-turn {
+  margin-bottom: 0.3em;
+}
+
+.history-guess {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  margin: 0 0.2em 0.2em 0;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.history-guess.red {
+  background: #d13030;
+}
+
+.history-guess.blue {
+  background: #4183cc;
+}
+
+/* The other team's word: alternating red and blue. */
+.history-guess.other-team {
+  background: repeating-linear-gradient(135deg, #d13030 0 6px, #4183cc 6px 12px);
+  text-shadow: 0 0 2px #000;
+}
+
+.history-guess.neutral {
+  background: #9e9e9e;
+}
+
+.history-guess.assassin {
+  background: #000;
+}
+
+/* Final board popup: a small read-only board as the Cluers see it. */
+.final-board-summary {
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 0.6em;
+}
+
+.final-board-summary .red-remaining {
+  color: #d13030;
+}
+
+.final-board-summary .blue-remaining {
+  color: #4183cc;
+}
+
+.final-board-summary .final-result {
+  color: #333;
+  font-weight: normal;
+}
+
+.mini-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.mini-cell {
+  background: #e8e8e8;
+  padding: 0.9em 0.2em;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.mini-cell.red.unrevealed {
+  color: #d13030;
+}
+.mini-cell.blue.unrevealed {
+  color: #4183cc;
+}
+.mini-cell.black.unrevealed {
+  background: #444;
+  color: #fff;
+}
+.mini-cell.red.revealed {
+  background: #d13030;
+  color: #fff;
+}
+.mini-cell.blue.revealed {
+  background: #4183cc;
+  color: #fff;
+}
+.mini-cell.neutral.revealed {
+  background: #ede2cc;
+}
+.mini-cell.black.revealed {
+  background: #000;
+  color: #fff;
+}
+.mini-cell.hidden {
+  color: #333;
+}
+
 .graffito {
   text-align: right;
   margin: 1.5em 0 1em;

@@ -127,6 +127,15 @@ function initDb() {
       state TEXT NOT NULL
     );
 
+    -- Words guessed in the same turn, counted across all games. The pair
+    -- is stored in alphabetical order (word_a < word_b). Kept permanently.
+    CREATE TABLE IF NOT EXISTS word_pairs (
+      word_a TEXT NOT NULL,
+      word_b TEXT NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (word_a, word_b)
+    );
+
     -- One row per non-floater player per completed board.
     CREATE TABLE IF NOT EXISTS player_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -200,4 +209,25 @@ function seedWordlists(db) {
   }
 }
 
-module.exports = { initDb, normalizeWord };
+// Retention: a RuleSet is deleted (with its players, vocabulary and
+// history) one year after it was last used; a player's history is deleted
+// one year after they last finished a board. Boards and session details
+// are already gone when a session ends. Word-pair counts are kept.
+function deleteExpired(db) {
+  const rulesets = db
+    .prepare(
+      `DELETE FROM rulesets WHERE last_used_at < datetime('now', '-365 days')
+         AND id NOT IN (SELECT ruleset_id FROM play_sessions)`
+    )
+    .run().changes;
+  const history = db
+    .prepare(
+      `DELETE FROM player_history WHERE user_id IN (
+         SELECT user_id FROM player_history GROUP BY user_id
+         HAVING MAX(played_at) < datetime('now', '-365 days'))`
+    )
+    .run().changes;
+  if (rulesets || history) console.log(`[retention] deleted ${rulesets} game(s), ${history} history row(s)`);
+}
+
+module.exports = { initDb, normalizeWord, deleteExpired };
