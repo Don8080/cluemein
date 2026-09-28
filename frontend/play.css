@@ -152,6 +152,11 @@
   background: #ffcdd2;
 }
 
+.timer.expired {
+  background: #000;
+  color: #fff;
+}
+
 /* Status row lined up with the board's five columns:
    Red End Turn | Red's Turn | score | Blue's Turn | Blue End Turn. */
 .status-grid {
@@ -311,7 +316,7 @@ button.turn-banner.end-turn:active {
   color: #4183cc;
 }
 .guess-word.neutral {
-  color: #9a8a66;
+  color: #000;
 }
 .guess-word.black {
   color: #000;
@@ -389,6 +394,21 @@ button.turn-banner.end-turn:active {
 
 .popup .player-actions button {
   font-size: 0.9em;
+}
+
+/* Switch to Red / Blue buttons in their team colors. */
+#start .popup .player-actions button.switch-red,
+.popup .player-actions button.switch-red {
+  background: #d13030;
+  border-color: #a82424;
+  color: #fff;
+}
+
+#start .popup .player-actions button.switch-blue,
+.popup .player-actions button.switch-blue {
+  background: #4183cc;
+  border-color: #2f68a8;
+  color: #fff;
 }
 
 .floater-list .section-label {

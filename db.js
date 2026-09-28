@@ -145,6 +145,10 @@ function initDb() {
   if (!hasColumn('rulesets', 'description')) {
     db.exec('ALTER TABLE rulesets ADD COLUMN description TEXT');
   }
+  if (!hasColumn('rulesets', 'last_session_ended_at')) {
+    // Epoch ms; the Start screen shows "Previous session ended ...".
+    db.exec('ALTER TABLE rulesets ADD COLUMN last_session_ended_at INTEGER');
+  }
 
   seedWordlists(db);
   return db;

@@ -104,7 +104,7 @@ const PlayerActions = ({ p, isMe, act, onClose }) => {
     const other = p.team === 'red' ? 'blue' : 'red';
     options = (
       <>
-        <button type="button" onClick={() => setRole(other)}>
+        <button type="button" className={`switch-${other}`} onClick={() => setRole(other)}>
           Switch to {cap(other)}
         </button>
         <button type="button" onClick={() => setRole('floater')}>
@@ -127,10 +127,10 @@ const PlayerActions = ({ p, isMe, act, onClose }) => {
   } else if (p.role === 'floater') {
     options = (
       <>
-        <button type="button" onClick={() => setRole('red')}>
+        <button type="button" className="switch-red" onClick={() => setRole('red')}>
           Switch to Red
         </button>
-        <button type="button" onClick={() => setRole('blue')}>
+        <button type="button" className="switch-blue" onClick={() => setRole('blue')}>
           Switch to Blue
         </button>
       </>

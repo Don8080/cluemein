@@ -92,6 +92,8 @@ function setupSessions(app, db, requireAuth) {
     live.delete(entry.s.rulesetID);
     db.prepare('DELETE FROM play_sessions WHERE ruleset_id = ?').run(entry.s.rulesetID);
     entry.s.ended = reason;
+    entry.s.endedAt = Date.now();
+    db.prepare('UPDATE rulesets SET last_session_ended_at = ? WHERE id = ?').run(entry.s.endedAt, entry.s.rulesetID);
     const waiters = [...entry.waiters];
     entry.waiters.clear();
     waiters.forEach((fn) => fn());
@@ -141,6 +143,7 @@ function setupSessions(app, db, requireAuth) {
     const { roles, floatersCanClick } = assignRoles(s.stats, ids, rs.min_team_size);
     s.roles = roles;
     s.floatersCanClick = floatersCanClick;
+    s.floatersAuto = floatersCanClick; // switched on automatically, not by a player
   }
 
   // Every team needs a present Cluer. When one is missing, promote one of
@@ -226,7 +229,7 @@ function setupSessions(app, db, requireAuth) {
 
   function view(entry, uid) {
     const s = entry.s;
-    if (s.ended) return { ended: s.ended };
+    if (s.ended) return { ended: s.ended, ended_at: s.endedAt };
     if (s.loggedOff.includes(uid)) return { logged_off: true };
     const rs = getRuleset.get(s.rulesetID);
     const present = new Set(presentIDs(entry));
@@ -342,7 +345,7 @@ function setupSessions(app, db, requireAuth) {
       }
     }
     if (!entry) {
-      res.json({ ended: 'none' });
+      res.json({ ended: 'none', ended_at: rs.last_session_ended_at || null });
       return null;
     }
     return { entry, s: entry.s, rs, uid };
@@ -565,7 +568,17 @@ function setupSessions(app, db, requireAuth) {
       return 'Unknown role.';
     }
     // Floaters may click automatically when nobody is a guesser.
-    if (!Object.values(s.roles).some((r) => r.role === 'guesser')) s.floatersCanClick = true;
+    // Floaters Can Click follows the roles while it was set automatically:
+    // on when nobody is a guesser, off again once both teams have a guesser.
+    const roles = Object.values(s.roles);
+    const hasGuesser = (team) => roles.some((r) => r.role === 'guesser' && r.team === team);
+    if (!hasGuesser('red') && !hasGuesser('blue')) {
+      s.floatersCanClick = true;
+      s.floatersAuto = true;
+    } else if (s.floatersAuto && hasGuesser('red') && hasGuesser('blue')) {
+      s.floatersCanClick = false;
+      s.floatersAuto = false;
+    }
     return null;
   });
 
@@ -595,6 +608,7 @@ function setupSessions(app, db, requireAuth) {
 
   action('floaters-can-click', (ctx, body) => {
     ctx.s.floatersCanClick = !!body.on;
+    ctx.s.floatersAuto = false; // a player chose; leave it alone from now on
     return null;
   });
 

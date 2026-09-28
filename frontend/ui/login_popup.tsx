@@ -90,7 +90,7 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
         {error && <div className="form-error">{error}</div>}
         {message && <div className="form-message">{message}</div>}
 
-        <div className="button-row">
+        <div className="button-row login-row">
           <button type="submit" className="login-button" disabled={busy}>
             Login
           </button>

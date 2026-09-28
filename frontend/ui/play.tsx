@@ -3,12 +3,6 @@ import axios from 'axios';
 import { WaitingRoom } from '~/ui/waiting_room';
 import { Board } from '~/ui/board';
 
-const ENDED = {
-  time: 'This session reached its maximum duration and has ended.',
-  empty: 'Everyone left, so the session ended.',
-  none: 'This game has no session running.',
-};
-
 // A game's live session: the Waiting Room (A2) until play begins, then the
 // board (C1). Keeps a long-poll open, which also tells the server this
 // player is still here.
@@ -74,20 +68,28 @@ export const PlayScreen = ({ rulesetID }) => {
         return false;
       });
 
+  // A finished session goes straight back to Start, which shows when it ended.
+  React.useEffect(() => {
+    if (view?.ended) window.location.href = view.ended_at ? `/?ended=${view.ended_at}` : '/';
+  }, [view?.ended]);
+
+  if (view?.ended) return <p className="loading">Session ended&hellip;</p>;
+
   if (view?.logged_off) {
     return (
       <div id="start">
         <p className="form-error">You have left this session.</p>
         <p>
-          <a href="/">Back to Start</a> (click Play there to rejoin)
+          <a href="/">Back to Start</a> (click Join Session there to rejoin)
         </p>
       </div>
     );
   }
-  if (error || view?.ended) {
+
+  if (error) {
     return (
       <div id="start">
-        <p className="form-error">{error || ENDED[view.ended]}</p>
+        <p className="form-error">{error}</p>
         <p>
           <a href="/">Back to Start</a>
         </p>

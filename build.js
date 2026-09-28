@@ -12,6 +12,7 @@ fs.mkdirSync(dist, { recursive: true });
 for (const css of ['game.css', 'lobby.css', 'start.css', 'play.css']) {
   fs.copyFileSync(path.join(src, css), path.join(dist, css));
 }
+fs.cpSync(path.join(src, 'sounds'), path.join(dist, 'sounds'), { recursive: true });
 
 const options = {
   entryPoints: [path.join(src, 'app.tsx')],

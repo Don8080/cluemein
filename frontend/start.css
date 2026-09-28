@@ -176,21 +176,25 @@ button.link-button,
 #start .popup button.login-button,
 .popup button.login-button {
   padding: 0.5em 2em;
-  background: lightsalmon;
-  border-color: #e9967a;
-  color: #000;
+  background: crimson;
+  border-color: #a50e2d;
+  color: #fff;
   font-weight: bold;
 }
 
 #start .popup button.login-button:hover,
 .popup button.login-button:hover {
-  background: #ff9b7a;
+  background: #c8102e;
 }
 
 #start .popup button.login-button:disabled,
 .popup button.login-button:disabled {
   opacity: 0.6;
-  color: #000;
+  color: #fff;
+}
+
+.login-form .button-row.login-row {
+  justify-content: center;
 }
 
 .login-form .button-row.close-row {

@@ -10,13 +10,23 @@ const MESSAGES = {
   'link-expired': 'That link has expired or was already used.',
 };
 
+// "Previous session ended mm/dd/yy hh:mm" from ?ended=<epoch ms>.
+function endedNotice(ms) {
+  const d = ms && new Date(Number(ms));
+  if (!d || isNaN(d.getTime())) return null;
+  const p = (n) => String(n).padStart(2, '0');
+  return `Previous session ended ${p(d.getMonth() + 1)}/${p(d.getDate())}/${p(d.getFullYear() % 100)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 // (A1) Start. Shows who is logged in, the game (RuleSet) picker and the
 // main buttons.
 export const Start = ({ account, setAccount, openLogin }) => {
   const [games, setGames] = React.useState(null); // [{ id, name, video_url }]
   const [gameID, setGameID] = React.useState(null);
   const params = new URLSearchParams(window.location.search);
-  const [notice, setNotice] = React.useState(MESSAGES[params.get('message')] || null);
+  const [notice, setNotice] = React.useState(
+    MESSAGES[params.get('message')] || endedNotice(params.get('ended')) || null
+  );
   // null | { kind: 'login', notice? } | { kind: 'change', email } | { kind: 'reset', token }
   const [popup, setPopup] = React.useState(
     params.get('reset')
@@ -96,7 +106,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
           </button>
           {' · '}
           <button className="link-button" onClick={() => setPopup({ kind: 'login' })}>
-            Logon
+            Login
           </button>
         </span>
         {pendingNote && <span className="account-note">{pendingNote}</span>}
@@ -105,7 +115,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
   } else {
     accountArea = (
       <div className="account">
-        <button onClick={() => setPopup({ kind: 'login' })}>Logon</button>
+        <button onClick={() => setPopup({ kind: 'login' })}>Login</button>
       </div>
     );
   }
@@ -142,7 +152,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
       </div>
       <div className="start-row">
         <button disabled={!chosen} onClick={() => (window.location.href = `/play/${chosen.id}`)}>
-          Play
+          Join Session
         </button>
         <button
           disabled={!chosen?.video_url}

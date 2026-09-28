@@ -11,36 +11,15 @@ function getTimeRemaining(endTime: number) {
   };
 }
 
-// A short gong, synthesized so no sound file is needed: a few decaying,
-// slightly inharmonic partials.
-let audio: AudioContext | null = null;
-function playGong() {
-  try {
-    audio = audio || new (window.AudioContext || (window as any).webkitAudioContext)();
-    const now = audio.currentTime;
-    const master = audio.createGain();
-    master.gain.setValueAtTime(0.35, now);
-    master.connect(audio.destination);
-    for (const [freq, level, decay] of [
-      [110, 1, 2.5],
-      [165, 0.6, 2.0],
-      [233, 0.45, 1.6],
-      [311, 0.3, 1.2],
-      [467, 0.2, 0.8],
-    ]) {
-      const osc = audio.createOscillator();
-      const gain = audio.createGain();
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(level, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
-      osc.connect(gain).connect(master);
-      osc.start(now);
-      osc.stop(now + decay);
-    }
-  } catch {
-    // No audio available: the colored timer is warning enough.
-  }
+// Gongs: one at the 30-second mark, another when time runs out.
+const sounds = {
+  warning: '/static/sounds/gong-30s.mp3',
+  end: '/static/sounds/gong-end.mp3',
+};
+function playGong(which: 'warning' | 'end') {
+  // Browsers may block sound until the player has clicked on the page;
+  // the timer's colors still show.
+  new Audio(sounds[which]).play().catch(() => {});
 }
 
 interface TimerProps {
@@ -51,8 +30,9 @@ interface TimerProps {
 }
 
 // "Timer mm:ss". In the last 30 seconds of a turn its background turns
-// orange (red for the last 10) and a gong sounds once at the 30-second
-// mark. Without an enforced timer it rests at 0:00 until the turn ends.
+// orange (red for the last 10), then black with white text at 0:00. Gongs
+// sound at the 30-second mark and at 0:00. Without an enforced timer it
+// rests at 0:00 until the turn ends.
 const Timer: React.FunctionComponent<TimerProps> = ({
   roundStartedAt,
   timerDurationMs,
@@ -82,19 +62,21 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     lastTotal.current = null; // new turn
   }, [endTime]);
 
-  // Gong when the countdown crosses 30 seconds (not when a page is opened
-  // with less than 30 seconds already left).
+  // Gongs as the countdown crosses 30 seconds and 0 (not when a page is
+  // opened with the time already past those points).
   React.useEffect(() => {
     const total = timeRemaining?.total;
     if (total === undefined || freezeTimer) return;
-    if (lastTotal.current !== null && lastTotal.current > 30 && total <= 30) playGong();
+    const prev = lastTotal.current;
+    if (prev !== null && prev > 30 && total <= 30) playGong('warning');
+    if (prev !== null && prev > 0 && total <= 0) playGong('end');
     lastTotal.current = total;
   }, [timeRemaining?.total]);
 
   if (!timeRemaining?.total && timeRemaining?.total !== 0) return null;
 
   const total = Math.max(timeRemaining.total, 0);
-  const level = freezeTimer ? '' : total <= 10 ? ' urgent' : total <= 30 ? ' warning' : '';
+  const level = freezeTimer ? '' : total === 0 ? ' expired' : total <= 10 ? ' urgent' : total <= 30 ? ' warning' : '';
   return (
     <span
       className={'timer' + level}
