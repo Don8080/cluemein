@@ -292,6 +292,8 @@ function setupSessions(app, db, requireAuth) {
         can_mark: s.roles[uid]?.role === 'guesser' && !over,
         has_prev: s.current > 0,
         can_click: mayClick(s, uid),
+        // A turn can only be ended after at least one guess.
+        guessed_this_turn: board.guesses.some((x) => x.round === g.round),
       };
     }
     return out;
@@ -634,6 +636,8 @@ function setupSessions(app, db, requireAuth) {
     const expired =
       g.enforce_timer && Date.now() - Date.parse(g.round_started_at) >= g.turnDurationMs();
     if (!mayClick(s, uid) && !expired) return "It isn't your turn.";
+    // Ending a turn without guessing isn't allowed (the timer may still end it).
+    if (!expired && !board.guesses.some((x) => x.round === g.round)) return "Make at least one guess before ending the turn.";
     g.nextTurn(body.round);
     return null;
   });

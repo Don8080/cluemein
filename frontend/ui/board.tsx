@@ -266,7 +266,13 @@ export const Board = ({ view, act }) => {
     if (team !== board.current_team) return null;
     if (board.can_click) {
       return (
-        <button type="button" onClick={endTurn} className={`turn-banner ${team} end-turn`}>
+        <button
+          type="button"
+          onClick={endTurn}
+          className={`turn-banner ${team} end-turn`}
+          disabled={!board.guessed_this_turn}
+          title={board.guessed_this_turn ? undefined : 'Make at least one guess before ending the turn'}
+        >
           End {cap(team)}&#39;s Turn
         </button>
       );
