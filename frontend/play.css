@@ -392,6 +392,14 @@ button.turn-banner.end-turn:active {
   font-size: 1.05em;
 }
 
+/* Player popup: buttons centered, with space between them. */
+.popup .player-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em;
+}
+
 .popup .player-actions button {
   font-size: 0.9em;
 }
