@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Settings, SettingsButton, SettingsPanel } from '~/ui/settings';
 import { Popup } from '~/ui/popup';
 import { SessionHistory } from '~/ui/session_history';
+import { setLastRuleset } from '~/ui/prefs';
 import Timer from '~/ui/timer';
 
 const defaultFavicon =
@@ -229,7 +230,10 @@ export const Board = ({ view, act }) => {
     setTouchIdx(cell ? Number(cell.getAttribute('data-idx')) : null);
   };
 
-  const openModifyGame = () => window.open(`/modify/${view.ruleset.id}?from=board`, '_blank');
+  const openModifyGame = () => {
+    setLastRuleset(view.ruleset.id); // the new tab finds the game through this cookie
+    window.open('/modify?from=board', '_blank');
+  };
 
   const graffito = (() => {
     const { graffito_message: text, graffito_url: url } = view.ruleset;

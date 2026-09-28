@@ -151,7 +151,10 @@ export const Start = ({ account, setAccount, openLogin }) => {
         </label>
       </div>
       <div className="start-row">
-        <button disabled={!chosen} onClick={() => (window.location.href = `/play/${chosen.id}`)}>
+        <button disabled={!chosen} onClick={() => {
+            setLastRuleset(chosen.id);
+            window.location.href = '/play';
+          }}>
           Join Session
         </button>
         <button
@@ -166,7 +169,10 @@ export const Start = ({ account, setAccount, openLogin }) => {
         <button disabled={!user} onClick={() => (window.location.href = '/create')}>
           Create Game
         </button>
-        <button disabled={!chosen} onClick={() => (window.location.href = `/modify/${chosen.id}`)}>
+        <button disabled={!chosen} onClick={() => {
+            setLastRuleset(chosen.id);
+            window.location.href = '/modify';
+          }}>
           Modify Game
         </button>
       </div>

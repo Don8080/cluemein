@@ -37,7 +37,7 @@ export const CreateGame = ({ user }) => {
         description: settings.description,
       });
       setLastRuleset(data.id);
-      window.location.href = `/modify/${data.id}`;
+      window.location.href = '/modify';
     } catch (err) {
       setError(errorText(err));
       setBusy(false);
