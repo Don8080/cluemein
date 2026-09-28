@@ -412,7 +412,7 @@ function setupSessions(app, db, requireAuth) {
     app.post(`/api/play/:rid/${path}`, requireAuth, (req, res) => {
       const ctx = load(req, res);
       if (!ctx) return;
-      if (ctx.s.loggedOff.includes(ctx.uid)) return res.status(400).json({ error: "You have left this session. Click Play to rejoin." });
+      if (ctx.s.loggedOff.includes(ctx.uid)) return res.status(400).json({ error: "You have left this session. Click Join Session to rejoin." });
       const err = fn(ctx, req.body || {});
       if (err) return res.status(400).json({ error: err });
       changed(ctx.entry);
