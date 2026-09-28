@@ -303,9 +303,10 @@ export const Board = ({ view, act }) => {
             <Timer
               roundStartedAt={board.round_started_at}
               timerDurationMs={board.timer_duration_ms}
-              handleExpiration={() => board.enforce_timer && endTurn()}
+              handleExpiration={() => board.enforce_timer && !board.last_guess && endTurn()}
               freezeTimer={over}
             />
+            {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>
         )}
 

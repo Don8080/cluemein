@@ -294,6 +294,8 @@ function setupSessions(app, db, requireAuth) {
         can_click: mayClick(s, uid),
         // A turn can only be ended after at least one guess.
         guessed_this_turn: board.guesses.some((x) => x.round === g.round),
+        // Time ran out with no guess: one guess allowed, then the turn ends.
+        last_guess: board.lastGuessRound === g.round,
       };
     }
     return out;
@@ -488,6 +490,11 @@ function setupSessions(app, db, requireAuth) {
     board.guesses.push({ team, round, word, color: board.game.layout[body.index] });
     countPairs(word, sameTurn.map((g) => g.word));
     if (board.game.winning_team) recordResult(ctx, board);
+    // Time ran out before this turn's first guess: that one guess ends it.
+    else if (board.lastGuessRound === round) {
+      board.game.nextTurn(round); // no effect if a wrong guess already ended it
+      board.lastGuessRound = null;
+    }
     return null;
   });
 
@@ -636,8 +643,14 @@ function setupSessions(app, db, requireAuth) {
     const expired =
       g.enforce_timer && Date.now() - Date.parse(g.round_started_at) >= g.turnDurationMs();
     if (!mayClick(s, uid) && !expired) return "It isn't your turn.";
-    // Ending a turn without guessing isn't allowed (the timer may still end it).
-    if (!expired && !board.guesses.some((x) => x.round === g.round)) return "Make at least one guess before ending the turn.";
+    // A turn needs at least one guess. If an enforced timer runs out before
+    // any guess, the team gets exactly one more guess and then the turn
+    // ends (see 'guess').
+    if (!board.guesses.some((x) => x.round === g.round)) {
+      if (!expired) return 'Make at least one guess before ending the turn.';
+      if (body.round === g.round) board.lastGuessRound = g.round;
+      return null;
+    }
     g.nextTurn(body.round);
     return null;
   });
