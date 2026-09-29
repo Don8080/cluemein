@@ -1,6 +1,7 @@
 import * as React from 'react';
 import axios from 'axios';
 import WordSetToggle from '~/ui/wordset_toggle';
+import { Popup } from '~/ui/popup';
 
 // Settings shared by Create Game (B1) and Modify Game (B2). The parent owns
 // the values; timer durations are edited in minutes.
@@ -28,6 +29,7 @@ export function defaultSettings(myEmail) {
     first_turn_minutes: '5',
     next_turn_minutes: '2',
     enforce_timer: false,
+    team_mode: 'random',
   };
 }
 
@@ -47,6 +49,7 @@ export function settingsFromRuleset(rs) {
     first_turn_minutes: String(rs.first_turn_seconds / 60),
     next_turn_minutes: String(rs.next_turn_seconds / 60),
     enforce_timer: rs.enforce_timer,
+    team_mode: rs.team_mode,
   };
 }
 
@@ -66,6 +69,7 @@ export function settingsToRequest(s) {
     first_turn_seconds: Math.round(Number(s.first_turn_minutes) * 60),
     next_turn_seconds: Math.round(Number(s.next_turn_minutes) * 60),
     enforce_timer: s.enforce_timer,
+    team_mode: s.team_mode,
   };
 }
 
@@ -202,9 +206,44 @@ export const DescriptionInput = ({ value, onChange }) => (
   </span>
 );
 
+export const TEAM_MODES = [
+  ['fixed_teams', 'Fixed Teams'],
+  ['fixed_roles', 'Fixed Roles'],
+  ['random', 'Random'],
+];
+
+// The "?" next to Team Assignment Mode.
+const TeamModeHelp = ({ onClose }) => (
+  <Popup title="Team Assignment Mode" onClose={onClose} wide>
+    <ol className="team-mode-help">
+      <li>
+        <b>Fixed Teams:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
+        will not change team members, but the Cluer roles are selected randomly taking care to keep roles fairly
+        distributed. Players can make manual changes at any time.
+      </li>
+      <li>
+        <b>Fixed Roles:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
+        will not change team members or roles. The assigned Cluers remain Cluers. Players can make manual changes at
+        any time.
+      </li>
+      <li>
+        <b>Random:</b> Roles and team membership are assigned randomly at every game, taking care to keep roles
+        fairly distributed.
+      </li>
+    </ol>
+    <p>In all cases, changing a Cluer forces a new board.</p>
+    <div className="button-row centered">
+      <button type="button" onClick={onClose}>
+        Close
+      </button>
+    </div>
+  </Popup>
+);
+
 export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], beforeWordLists = null }) => {
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+  const [showModeHelp, setShowModeHelp] = React.useState(false);
 
   // Mouseover text for the label and its field.
   const tips = {
@@ -239,7 +278,21 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
           <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
           <span className="hint">Includes Cluers and Floaters</span>
         </span>
+        <label>Team Assignment Mode</label>
+        <span>
+          <select value={value.team_mode} onChange={set('team_mode')}>
+            {TEAM_MODES.map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>{' '}
+          <button type="button" className="help-button" title="What do these mean?" onClick={() => setShowModeHelp(true)}>
+            ?
+          </button>
+        </span>
       </div>
+      {showModeHelp && <TeamModeHelp onClose={() => setShowModeHelp(false)} />}
 
       <PlayerRows
         players={value.players}

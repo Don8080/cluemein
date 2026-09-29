@@ -6,7 +6,7 @@
 // server restart. Browsers long-poll /state, which doubles as a presence
 // heartbeat.
 const { Game, randomState, nextGameState } = require('./game');
-const { assignRoles, newStats, promoteCluer, recordCluer, register } = require('./roles');
+const { assignRoles, chooseTeamCluers, newStats, promoteCluer, recordCluer, register } = require('./roles');
 
 // Silent this long => no longer present. PRESENCE_GRACE_MS overrides it for testing.
 const GRACE_MS = Number(process.env.PRESENCE_GRACE_MS) || 2 * 60 * 1000;
@@ -153,6 +153,51 @@ function setupSessions(app, db, requireAuth) {
     s.floatersAuto = floatersCanClick; // switched on automatically, not by a player
   }
 
+  // Floaters Can Click follows the roles while it was set automatically:
+  // on when nobody is a guesser, off again once both teams have a guesser.
+  function autoFloaters(s) {
+    const roles = Object.values(s.roles);
+    const hasGuesser = (team) => roles.some((r) => r.role === 'guesser' && r.team === team);
+    if (!hasGuesser('red') && !hasGuesser('blue')) {
+      s.floatersCanClick = true;
+      s.floatersAuto = true;
+    } else if (s.floatersAuto && hasGuesser('red') && hasGuesser('blue')) {
+      s.floatersCanClick = false;
+      s.floatersAuto = false;
+    }
+  }
+
+  // Roles for a new game (Next Game, or Begin Game after the first), by the
+  // game's Team Assignment Mode:
+  //   random       everyone is reassigned (roles.js, all three goals)
+  //   fixed_teams  teams stay; each team gets a new Cluer (goals 1 and 2)
+  //   fixed_roles  nothing changes
+  // The session's first game, or one where a team has nobody present, is
+  // assigned at random. Players without a role start as Floaters.
+  function nextGameRoles(s, ids, rs, entry) {
+    const mode = rs.team_mode || 'random';
+    const onTeam = (team) => ids.filter((id) => s.roles[id]?.team === team);
+    if (mode === 'random' || !s.boards.length || !onTeam('red').length || !onTeam('blue').length) {
+      reassign(s, ids, rs);
+      return;
+    }
+    register(s.stats, ids);
+    const roles = {};
+    for (const id of ids) roles[id] = s.roles[id] ? { ...s.roles[id] } : { team: null, role: 'floater' };
+    if (mode === 'fixed_teams') {
+      const red = onTeam('red');
+      const blue = onTeam('blue');
+      const [redCluer, blueCluer] = chooseTeamCluers(s.stats, ids, red, blue);
+      red.forEach((id) => (roles[id] = { team: 'red', role: id === redCluer ? 'cluer' : 'guesser' }));
+      blue.forEach((id) => (roles[id] = { team: 'blue', role: id === blueCluer ? 'cluer' : 'guesser' }));
+      s.roles = roles;
+    } else {
+      s.roles = roles;
+      ensureCluers(s, rs, entry); // a Cluer who left is replaced
+    }
+    autoFloaters(s);
+  }
+
   // Every team needs a present Cluer. When one is missing, promote one of
   // that team's guessers by the fairness rules, as long as the team still
   // reaches the minimum team size; otherwise reassign everyone. A new Cluer
@@ -263,6 +308,7 @@ function setupSessions(app, db, requireAuth) {
         name: rs.name,
         description: rs.description || '',
         min_players: rs.min_players,
+        team_mode: rs.team_mode,
         video_url: rs.video_url || '',
         graffito_message: rs.graffito_message || '',
         graffito_url: rs.graffito_url || '',
@@ -462,7 +508,7 @@ function setupSessions(app, db, requireAuth) {
       if (ensureCluers(s, rs, entry)) dealBoard(s, rs);
       return null;
     }
-    reassign(s, ids, rs);
+    nextGameRoles(s, ids, rs, entry);
     dealBoard(s, rs);
     return null;
   });
@@ -477,13 +523,13 @@ function setupSessions(app, db, requireAuth) {
     return null;
   });
 
-  // Next Game: new player assignments and new words.
+  // Next Game: new words, and player assignments by the Team Assignment Mode.
   action('next-game', (ctx) => {
     const { s, rs, entry } = ctx;
     if (s.status !== 'playing') return 'The game is not in progress.';
     const err = requireQuorum(ctx);
     if (err) return err;
-    reassign(s, presentMembers(entry), rs);
+    nextGameRoles(s, presentMembers(entry), rs, entry);
     dealBoard(s, rs);
     return null;
   });
@@ -702,18 +748,7 @@ function setupSessions(app, db, requireAuth) {
     } else {
       return 'Unknown role.';
     }
-    // Floaters may click automatically when nobody is a guesser.
-    // Floaters Can Click follows the roles while it was set automatically:
-    // on when nobody is a guesser, off again once both teams have a guesser.
-    const roles = Object.values(s.roles);
-    const hasGuesser = (team) => roles.some((r) => r.role === 'guesser' && r.team === team);
-    if (!hasGuesser('red') && !hasGuesser('blue')) {
-      s.floatersCanClick = true;
-      s.floatersAuto = true;
-    } else if (s.floatersAuto && hasGuesser('red') && hasGuesser('blue')) {
-      s.floatersCanClick = false;
-      s.floatersAuto = false;
-    }
+    autoFloaters(s);
     return null;
   });
 

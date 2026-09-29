@@ -164,6 +164,10 @@ function initDb() {
     // 0 after Delete (B2): the game is hidden everywhere but kept in the database.
     db.exec('ALTER TABLE rulesets ADD COLUMN active INTEGER NOT NULL DEFAULT 1');
   }
+  if (!hasColumn('rulesets', 'team_mode')) {
+    // How Next Game assigns players: 'fixed_teams', 'fixed_roles' or 'random'.
+    db.exec("ALTER TABLE rulesets ADD COLUMN team_mode TEXT NOT NULL DEFAULT 'random'");
+  }
   if (hasColumn('ruleset_members', 'user_id')) {
     // Members used to be keyed by account; now by email (see the table).
     db.exec(`

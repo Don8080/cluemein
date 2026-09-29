@@ -456,3 +456,23 @@ button.link-button,
   gap: 0.5em;
   margin-top: 0.8em;
 }
+
+/* The "?" next to Team Assignment Mode (B1/B2). */
+#ruleset-screen button.help-button {
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.team-mode-help {
+  padding-left: 1.3em;
+  line-height: 1.4;
+}
+
+.team-mode-help li {
+  margin-bottom: 0.6em;
+}

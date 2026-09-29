@@ -408,9 +408,12 @@ export const Board = ({ view, act }) => {
             )}
           </div>
           <div className="next-buttons">
-            <button type="button" onClick={() => next('next-board')}>
-              Next Board
-            </button>
+            {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
+            {view.ruleset.team_mode !== 'fixed_roles' && (
+              <button type="button" onClick={() => next('next-board')}>
+                Next Board
+              </button>
+            )}
             <button type="button" onClick={() => next('next-game')}>
               Next Game
             </button>

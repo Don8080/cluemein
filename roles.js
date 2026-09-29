@@ -224,6 +224,29 @@ function assignRoles(stats, ids, minTeamSize) {
   return { roles, floatersCanClick: g === 0 };
 }
 
+// Fixed Teams: the teams stay as they are; pick one new Cluer from each
+// (`red` and `blue` are the present members of each team) by goals 1 and 2
+// only: keep Cluer turns even where the teams allow, then the least-repeated
+// face-off, then whoever has had the fewest turns, then at random. Records
+// the turns, face-off and pairings. Returns [redCluer, blueCluer].
+function chooseTeamCluers(stats, ids, red, blue) {
+  register(stats, ids);
+  const recent = (id) => stats.cluerAt[id].filter((x) => x >= stats.joined[id]).length;
+  const options = [];
+  red.forEach((r) => blue.forEach((b) => options.push([r, b])));
+  const [redCluer, blueCluer] = best(options, (p) => {
+    applyCluers(stats, p);
+    const face = faceoffScore(stats, ids);
+    undoCluers(stats, p);
+    return [cluersFair(stats, ids, p) ? 0 : 1, face[0], recent(p[0]) + recent(p[1]), face[1], rand()];
+  });
+  applyCluers(stats, [redCluer, blueCluer]);
+  const inc = (key) => (stats.pairs[key] = (stats.pairs[key] || 0) + 1);
+  red.filter((id) => id !== redCluer).forEach((id) => inc(`${redCluer}>${id}`));
+  blue.filter((id) => id !== blueCluer).forEach((id) => inc(`${blueCluer}>${id}`));
+  return [redCluer, blueCluer];
+}
+
 // A Cluer left mid-game: choose which of `guessers` (their team's
 // guessers) takes over, preferring whoever keeps Cluer turns fairest, then
 // the least-repeated face-off with `otherCluer`. Records the new Cluer
@@ -259,6 +282,7 @@ function recordCluer(stats, ids, cluer, otherCluer, teammates) {
 
 module.exports = {
   assignRoles,
+  chooseTeamCluers,
   promoteCluer,
   recordCluer,
   newStats,

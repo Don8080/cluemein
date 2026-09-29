@@ -4,6 +4,9 @@ const { normalizeWord } = require('./db');
 
 class InputError extends Error {}
 
+// Team Assignment Mode (see session.js nextGameRoles).
+const TEAM_MODES = ['fixed_teams', 'fixed_roles', 'random'];
+
 function setupRulesets(app, db, requireAuth) {
   // Members are stored by email; the logged-in player is matched by theirs.
   const isMember = db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND email = ?');
@@ -54,6 +57,7 @@ function setupRulesets(app, db, requireAuth) {
       first_turn_seconds: rs.first_turn_seconds,
       next_turn_seconds: rs.next_turn_seconds,
       enforce_timer: !!rs.enforce_timer,
+      team_mode: rs.team_mode,
       players,
       wordlist_ids: wordlistIDs,
       word_count: n,
@@ -93,6 +97,9 @@ function setupRulesets(app, db, requireAuth) {
     const next = Math.round(num(body.next_turn_seconds));
     if (timerOn && !(first > 0 && next > 0)) throw new InputError('Enter both turn durations for the timer.');
 
+    const teamMode = body.team_mode || 'random';
+    if (!TEAM_MODES.includes(teamMode)) throw new InputError('Choose a Team Assignment Mode.');
+
     const players = (body.players || [])
       .map((p) => ({ name: String(p.name || '').trim(), email: String(p.email || '').trim().toLowerCase() }))
       .filter((p) => p.name || p.email);
@@ -124,6 +131,7 @@ function setupRulesets(app, db, requireAuth) {
       first_turn_seconds: first > 0 ? first : 300,
       next_turn_seconds: next > 0 ? next : 120,
       enforce_timer: body.enforce_timer ? 1 : 0,
+      team_mode: teamMode,
       players,
     };
   }
@@ -143,10 +151,10 @@ function setupRulesets(app, db, requireAuth) {
     db.prepare(
       `UPDATE rulesets SET description = ?, max_session_hours = ?, min_players = ?, min_team_size = ?,
          video_url = ?, graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
-         next_turn_seconds = ?, enforce_timer = ? WHERE id = ?`
+         next_turn_seconds = ?, enforce_timer = ?, team_mode = ? WHERE id = ?`
     ).run(
       s.description, s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
-      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, id
+      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, id
     );
     // Replace the player list, keeping the order given.
     db.prepare('DELETE FROM ruleset_members WHERE ruleset_id = ?').run(id);
@@ -250,9 +258,9 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, created_by)
+             enforce_timer, team_mode, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
-             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, ?
+             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.
