@@ -247,7 +247,7 @@ function setupSessions(app, db, requireAuth) {
   }
 
   function dealBoard(s, rs) {
-    // Remember the roles as they ended on the board being left (Prev Game
+    // Remember the roles as they ended on the board being left (Prev Board
     // restores them).
     const leaving = currentBoard(s);
     if (leaving) leaving.finalRoles = clone(s.roles);
@@ -630,7 +630,7 @@ function setupSessions(app, db, requireAuth) {
   // (D1) Session History: every board of this session with its teams,
   // guesses by turn, result and final board. Unfinished boards keep their
   // unrevealed colors hidden (except from that board's Cluers), since play
-  // can return to them with Prev Game.
+  // can return to them with Prev Board.
   app.post('/api/play/:rid/history', requireAuth, (req, res) => {
     const ctx = load(req, res);
     if (!ctx) return;
@@ -677,7 +677,7 @@ function setupSessions(app, db, requireAuth) {
     res.json({ boards });
   });
 
-  // Prev Game: go back to the previous board of this session, with the
+  // Prev Board: go back to the previous board of this session, with the
   // roles as they were when it was left.
   action('prev-board', (ctx) => {
     const { s } = ctx;

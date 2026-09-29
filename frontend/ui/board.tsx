@@ -399,7 +399,7 @@ export const Board = ({ view, act }) => {
 
         <div className="board-bottom">
           <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
-            Prev Game
+            Prev Board
           </button>
           <div className={'floater-list' + (over ? '' : ` turn-${board.current_team}`)}>
             <div className="section-label">Floaters</div>
