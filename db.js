@@ -21,7 +21,26 @@ function normalizeWord(w) {
   return String(w).trim().replace(/\s+/g, ' ').toUpperCase();
 }
 
+// On Railway the database must live on the attached volume; anywhere else it
+// is thrown away at every deploy. Railway sets RAILWAY_VOLUME_MOUNT_PATH when
+// a volume is attached. Refuse to start rather than run with a throwaway DB.
+function checkVolume() {
+  if (!process.env.RAILWAY_ENVIRONMENT_NAME) return;
+  const mount = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  const onVolume = mount && path.resolve(DB_PATH).startsWith(path.resolve(mount) + path.sep);
+  if (!onVolume) {
+    console.error(
+      `Database ${DB_PATH} is not on a Railway volume (volume: ${mount || 'none attached'}). ` +
+        'Attach a volume and set DB_PATH to a file on it, e.g. /data/cluemein.db. Refusing to start.'
+    );
+    process.exit(1);
+  }
+}
+
 function initDb() {
+  checkVolume();
+  const isNew = !fs.existsSync(DB_PATH);
+  console.log(`Database: ${DB_PATH}${isNew ? ' (new, empty)' : ''}`);
   const dbDir = path.dirname(DB_PATH);
   if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
