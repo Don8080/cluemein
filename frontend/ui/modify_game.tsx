@@ -51,6 +51,20 @@ export const ModifyGame = ({ rulesetID }) => {
     }
   };
 
+  // Turns the game's Active flag off; it disappears once this page closes.
+  const remove = async () => {
+    if (!window.confirm(`Delete "${ruleset.name}" for all of its players?`)) return;
+    setError(null);
+    setBusy(true);
+    try {
+      await axios.post(`/api/rulesets/${rulesetID}/delete`);
+      goBack();
+    } catch (err) {
+      setError(errorText(err));
+      setBusy(false);
+    }
+  };
+
   if (!settings) {
     return <div id="ruleset-screen">{error ? <div className="form-error">{error}</div> : <p>Loading…</p>}</div>;
   }
@@ -86,6 +100,9 @@ export const ModifyGame = ({ rulesetID }) => {
         </button>
         <button type="button" onClick={goBack}>
           Cancel
+        </button>
+        <button type="button" className="delete-game" disabled={busy} onClick={remove}>
+          Delete
         </button>
       </div>
 

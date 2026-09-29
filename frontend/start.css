@@ -347,6 +347,12 @@ button.link-button,
   margin-top: 1em;
 }
 
+/* Delete (B2) sits apart from Save and Cancel, at the right. */
+#ruleset-screen .button-row button.delete-game {
+  margin-left: auto;
+  color: #b00020;
+}
+
 @media (max-width: 520px) {
   #ruleset-screen .form-grid {
     grid-template-columns: 1fr;

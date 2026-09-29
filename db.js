@@ -160,6 +160,10 @@ function initDb() {
     // Epoch ms; the Start screen shows "Previous session ended ...".
     db.exec('ALTER TABLE rulesets ADD COLUMN last_session_ended_at INTEGER');
   }
+  if (!hasColumn('rulesets', 'active')) {
+    // 0 after Delete (B2): the game is hidden everywhere but kept in the database.
+    db.exec('ALTER TABLE rulesets ADD COLUMN active INTEGER NOT NULL DEFAULT 1');
+  }
   if (hasColumn('ruleset_members', 'user_id')) {
     // Members used to be keyed by account; now by email (see the table).
     db.exec(`

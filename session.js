@@ -349,6 +349,13 @@ function setupSessions(app, db, requireAuth) {
       res.status(404).json({ error: 'Game not found.' });
       return null;
     }
+    // A deleted game: end its session, which sends everyone back to Start.
+    if (!rs.active) {
+      const running = getEntry(rid);
+      if (running) endSession(running, 'deleted');
+      res.json({ ended: 'deleted', ended_at: null });
+      return null;
+    }
     let entry = getEntry(rid);
     if (!entry && create) {
       try {

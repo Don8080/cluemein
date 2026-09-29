@@ -19,7 +19,7 @@ function setupRulesets(app, db, requireAuth) {
   function memberRuleset(req, res) {
     const id = Number(req.params.id);
     const rs = Number.isInteger(id) && getRuleset.get(id);
-    if (!rs || !isMember.get(id, req.session.email)) {
+    if (!rs || !rs.active || !isMember.get(id, req.session.email)) {
       res.status(404).json({ error: 'Game not found.' });
       return null;
     }
@@ -130,8 +130,12 @@ function setupRulesets(app, db, requireAuth) {
   function checkName(name, exceptID) {
     const n = String(name || '').trim();
     if (!n) throw new InputError('Enter a Name of Game.');
-    const other = db.prepare('SELECT id FROM rulesets WHERE name = ?').get(n);
-    if (other && other.id !== exceptID) throw new InputError(`There is already a game named "${n}".`);
+    const other = db.prepare('SELECT id, active FROM rulesets WHERE name = ?').get(n);
+    if (other && other.id !== exceptID) {
+      if (other.active) throw new InputError(`There is already a game named "${n}".`);
+      // A deleted game gives up its name.
+      db.prepare('UPDATE rulesets SET name = ? WHERE id = ?').run(`${n} (deleted #${other.id})`, other.id);
+    }
     return n;
   }
 
@@ -195,6 +199,7 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `SELECT r.id, r.name, r.description, r.video_url FROM rulesets r
              JOIN ruleset_members m ON m.ruleset_id = r.id AND m.email = ?
+            WHERE r.active = 1
             ORDER BY r.name`
         )
         .all(req.session.email)
@@ -280,6 +285,16 @@ function setupRulesets(app, db, requireAuth) {
       return true;
     });
     if (ok) res.json(details(getRuleset.get(rs.id)));
+  });
+
+  // (B2) Delete: turns the game's Active flag off. Nothing is erased; the
+  // game just disappears for everyone. A running session ends on its next
+  // request (see session.js).
+  app.post('/api/rulesets/:id/delete', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    db.prepare('UPDATE rulesets SET active = 0 WHERE id = ?').run(rs.id);
+    res.json({ ok: true });
   });
 
   // (P2) The RuleSet's vocabulary with each word's source.
