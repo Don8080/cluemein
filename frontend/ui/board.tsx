@@ -311,6 +311,7 @@ export const Board = ({ view, act }) => {
               timerDurationMs={board.timer_duration_ms}
               handleExpiration={() => board.enforce_timer && !board.last_guess && endTurn()}
               freezeTimer={over}
+              warningGongSeconds={view.ruleset.warning_gong_seconds}
             />
             {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>

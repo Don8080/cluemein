@@ -16,10 +16,27 @@ const sounds = {
   warning: '/static/sounds/gong-30s.mp3',
   end: '/static/sounds/gong-end.mp3',
 };
-function playGong(which: 'warning' | 'end') {
+// `seconds` cuts the sound short (with a quick fade); 0 means silent.
+function playGong(which: 'warning' | 'end', seconds?: number) {
+  if (seconds === 0) return;
+  const audio = new Audio(sounds[which]);
   // Browsers may block sound until the player has clicked on the page;
   // the timer's colors still show.
-  new Audio(sounds[which]).play().catch(() => {});
+  audio.play().catch(() => {});
+  if (seconds === undefined) return;
+  const fadeMs = 250;
+  setTimeout(() => {
+    const start = Date.now();
+    const fade = setInterval(() => {
+      const left = 1 - (Date.now() - start) / fadeMs;
+      if (left <= 0) {
+        clearInterval(fade);
+        audio.pause();
+      } else {
+        audio.volume = left;
+      }
+    }, 25);
+  }, Math.max(seconds * 1000 - fadeMs, 0));
 }
 
 interface TimerProps {
@@ -27,6 +44,7 @@ interface TimerProps {
   timerDurationMs: number;
   handleExpiration: () => void;
   freezeTimer: boolean;
+  warningGongSeconds?: number;
 }
 
 // "Timer mm:ss". In the last 30 seconds of a turn its background turns
@@ -38,6 +56,7 @@ const Timer: React.FunctionComponent<TimerProps> = ({
   timerDurationMs,
   handleExpiration,
   freezeTimer = false,
+  warningGongSeconds,
 }) => {
   const [timeRemaining, setTimeRemaining] = React.useState(undefined);
   const lastTotal = React.useRef(null);
@@ -68,7 +87,7 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     const total = timeRemaining?.total;
     if (total === undefined || freezeTimer) return;
     const prev = lastTotal.current;
-    if (prev !== null && prev > 30 && total <= 30) playGong('warning');
+    if (prev !== null && prev > 30 && total <= 30) playGong('warning', warningGongSeconds);
     if (prev !== null && prev > 0 && total <= 0) playGong('end');
     lastTotal.current = total;
   }, [timeRemaining?.total]);

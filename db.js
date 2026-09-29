@@ -187,6 +187,10 @@ function initDb() {
     // How Next Game assigns players: 'fixed_teams', 'fixed_roles' or 'random'.
     db.exec("ALTER TABLE rulesets ADD COLUMN team_mode TEXT NOT NULL DEFAULT 'random'");
   }
+  if (!hasColumn('rulesets', 'warning_gong_seconds')) {
+    // How long the 30-second warning gong plays (0 = silent). Set in B2.
+    db.exec('ALTER TABLE rulesets ADD COLUMN warning_gong_seconds REAL NOT NULL DEFAULT 7');
+  }
   if (hasColumn('ruleset_members', 'user_id')) {
     // Members used to be keyed by account; now by email (see the table).
     db.exec(`

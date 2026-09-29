@@ -58,6 +58,7 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: rs.next_turn_seconds,
       enforce_timer: !!rs.enforce_timer,
       team_mode: rs.team_mode,
+      warning_gong_seconds: rs.warning_gong_seconds,
       players,
       wordlist_ids: wordlistIDs,
       word_count: n,
@@ -100,6 +101,12 @@ function setupRulesets(app, db, requireAuth) {
     const teamMode = body.team_mode || 'random';
     if (!TEAM_MODES.includes(teamMode)) throw new InputError('Choose a Team Assignment Mode.');
 
+    // Warning Gong play time (B2 only; Create Game keeps the default).
+    let gong = body.warning_gong_seconds === undefined ? 7 : Number(body.warning_gong_seconds);
+    if (!(gong >= 0 && gong <= 7) || !Number.isInteger(gong * 2)) {
+      throw new InputError('Warning Gong play time must be 0 to 7 seconds, in half seconds.');
+    }
+
     const players = (body.players || [])
       .map((p) => ({ name: String(p.name || '').trim(), email: String(p.email || '').trim().toLowerCase() }))
       .filter((p) => p.name || p.email);
@@ -132,6 +139,7 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: next > 0 ? next : 120,
       enforce_timer: body.enforce_timer ? 1 : 0,
       team_mode: teamMode,
+      warning_gong_seconds: gong,
       players,
     };
   }
@@ -151,10 +159,10 @@ function setupRulesets(app, db, requireAuth) {
     db.prepare(
       `UPDATE rulesets SET description = ?, max_session_hours = ?, min_players = ?, min_team_size = ?,
          video_url = ?, graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
-         next_turn_seconds = ?, enforce_timer = ?, team_mode = ? WHERE id = ?`
+         next_turn_seconds = ?, enforce_timer = ?, team_mode = ?, warning_gong_seconds = ? WHERE id = ?`
     ).run(
       s.description, s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
-      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, id
+      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, s.warning_gong_seconds, id
     );
     // Replace the player list, keeping the order given.
     db.prepare('DELETE FROM ruleset_members WHERE ruleset_id = ?').run(id);
@@ -258,9 +266,9 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, team_mode, created_by)
+             enforce_timer, team_mode, warning_gong_seconds, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
-             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, ?
+             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, warning_gong_seconds, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.
