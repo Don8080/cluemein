@@ -703,3 +703,26 @@ button.turn-banner.end-turn:disabled {
 .dark-mode .board-info {
   color: #ccc;
 }
+
+/* The disabled End Turn banner with its "?" beside it. */
+.end-turn-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.end-turn-wrap .turn-banner {
+  flex: 1;
+}
+
+button.end-turn-help {
+  flex: none;
+  width: 1.7em;
+  height: 1.7em;
+  padding: 0;
+  border: 1px solid #999;
+  border-radius: 50%;
+  background: #eee;
+  font-weight: bold;
+  cursor: pointer;
+}

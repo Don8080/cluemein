@@ -176,6 +176,7 @@ export const Board = ({ view, act }) => {
   const [menuFor, setMenuFor] = React.useState(null);
   const [showHistory, setShowHistory] = React.useState(false);
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
+  const [showEndTurnHelp, setShowEndTurnHelp] = React.useState(false);
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
   const isCluer = me?.role === 'cluer';
@@ -272,7 +273,7 @@ export const Board = ({ view, act }) => {
     if (over) return team === board.winning_team ? <div className={`turn-banner ${team}`}>{cap(team)} wins!</div> : null;
     if (team !== board.current_team) return null;
     if (board.can_click) {
-      return (
+      const endButton = (
         <button
           type="button"
           onClick={endTurn}
@@ -282,6 +283,16 @@ export const Board = ({ view, act }) => {
         >
           End {cap(team)}&#39;s Turn
         </button>
+      );
+      if (board.guessed_this_turn) return endButton;
+      // While disabled, a "?" beside it explains why (touch screens can't hover).
+      return (
+        <div className="end-turn-wrap">
+          {endButton}
+          <button type="button" className="end-turn-help" onClick={() => setShowEndTurnHelp(true)}>
+            ?
+          </button>
+        </div>
       );
     }
     return <div className={`turn-banner ${team}`}>{cap(team)}&#39;s Turn</div>;
@@ -426,6 +437,17 @@ export const Board = ({ view, act }) => {
       </div>
 
       <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} />
+
+      {showEndTurnHelp && (
+        <Popup title="End Turn" onClose={() => setShowEndTurnHelp(false)}>
+          <p>Make at least one guess before ending the turn</p>
+          <div className="button-row centered">
+            <button type="button" onClick={() => setShowEndTurnHelp(false)}>
+              Close
+            </button>
+          </div>
+        </Popup>
+      )}
 
       {showHistory && <SessionHistory rulesetID={view.ruleset.id} onClose={() => setShowHistory(false)} />}
 
