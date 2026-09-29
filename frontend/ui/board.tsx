@@ -399,7 +399,7 @@ export const Board = ({ view, act }) => {
           <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
             Prev Game
           </button>
-          <div className="floater-list">
+          <div className={'floater-list' + (over ? '' : ` turn-${board.current_team}`)}>
             <div className="section-label">Floaters</div>
             {floaters.length ? (
               floaters.map((p) => <PlayerName key={p.user_id} p={p} me={view.me} onClick={setMenuFor} />)

@@ -106,22 +106,44 @@
   }
 }
 
-/* Player names are buttons that open the player's actions. */
+/* Player names are buttons that open the player's actions: the team color
+   as background with white text; Floaters are light gray with text in the
+   color of the team whose turn it is. The logged-in player's button has a
+   black border (every button reserves the border's space, so sizes match). */
 .player-name {
-  display: block;
-  width: 100%;
-  border: none;
-  background: none;
-  padding: 0.1em 0;
-  margin-bottom: 0.15em;
-  color: inherit;
+  display: table; /* a block that is only as wide as the name */
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: #888;
+  color: #fff;
+  padding: 0.05em 0.5em;
+  margin-bottom: 0.3em;
   font: inherit;
-  text-align: inherit;
+  font-weight: bold;
+  text-align: center;
   cursor: pointer;
 }
 
 .player-name:hover {
-  text-decoration: underline dotted;
+  filter: brightness(1.12);
+}
+
+/* Soft tints, so the vivid turn banner stands out; dark text in the team color. */
+/* Beside the board, names hug the board: Red's to the right, Blue's to the left. */
+.team-list.red .player-name {
+  margin-left: auto;
+}
+
+.team-list.red .player-name,
+.floater-list.turn-red .player-name {
+  background: #ffcdb8; /* a light orangered */
+  color: #a8300f;
+}
+
+.team-list.blue .player-name,
+.floater-list.turn-blue .player-name {
+  background: #cfdff2;
+  color: #245a96;
 }
 
 /* Same font and size in the team lists and the Floater list. */
@@ -132,13 +154,14 @@
 }
 
 .floater-list .player-name {
+  margin: 0 auto 0.3em;
+  background: #e2e2e2;
   color: #000;
 }
 
 .team-list .player-name.cluer {
   font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.4em;
+  margin-bottom: 0.3em;
 }
 
 .player-name.absent {
@@ -147,7 +170,7 @@
 }
 
 .player-name.me {
-  text-decoration: underline;
+  border-color: #000;
 }
 
 .board-info {
@@ -662,3 +685,14 @@ button.turn-banner.end-turn:disabled {
   gap: 0.4em;
 }
 
+
+/* Side by side above the board (narrow screens): Red's names at the left
+   edge, Blue's at the right. (Last in the file so it wins over the rules above.) */
+@media (max-width: 1100px) {
+  .team-list.red .player-name {
+    margin-left: 0;
+  }
+  .team-list.blue .player-name {
+    margin-left: auto;
+  }
+}
