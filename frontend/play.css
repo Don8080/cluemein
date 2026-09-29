@@ -544,14 +544,31 @@ button.turn-banner.end-turn:disabled {
 
 /* The other team's word: its own color plus a thin black outline. */
 .history-guess.other-team {
-  outline: 2px solid #000;
-  outline-offset: -2px;
+  outline: 3px solid #000;
+  outline-offset: -3px;
+}
+
+.history-guess.other-team.by-red {
+  outline-color: #d13030;
+}
+
+.history-guess.other-team.by-blue {
+  outline-color: #4183cc;
 }
 
 .history-turn .turn-number {
   display: inline-block;
   min-width: 1.6em;
   color: #555;
+  font-weight: bold;
+}
+
+.history-turn .turn-number.red {
+  color: #d13030;
+}
+
+.history-turn .turn-number.blue {
+  color: #4183cc;
 }
 
 .result-team.red {
@@ -702,27 +719,4 @@ button.turn-banner.end-turn:disabled {
 /* Dark mode: the subtitle matches the title. */
 .dark-mode .board-info {
   color: #ccc;
-}
-
-/* The disabled End Turn banner with its "?" beside it. */
-.end-turn-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-}
-
-.end-turn-wrap .turn-banner {
-  flex: 1;
-}
-
-button.end-turn-help {
-  flex: none;
-  width: 1.7em;
-  height: 1.7em;
-  padding: 0;
-  border: 1px solid #999;
-  border-radius: 50%;
-  background: #eee;
-  font-weight: bold;
-  cursor: pointer;
 }

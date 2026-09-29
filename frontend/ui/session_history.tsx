@@ -3,12 +3,12 @@ import axios from 'axios';
 import { Popup } from '~/ui/popup';
 
 // One guessed word in the color it turned out to be (gray for neutral,
-// black for the Assassin). The other team's word also gets a thin black
-// outline.
+// black for the Assassin). The other team's word gets an outline in the
+// color of the team that guessed it (a Red word guessed on Blue's turn: blue).
 const Guess = ({ word, color, team }) => {
   const kind = color === 'neutral' ? 'neutral' : color === 'black' ? 'assassin' : color;
   const wrongTeam = (color === 'red' || color === 'blue') && color !== team;
-  return <span className={`history-guess ${kind}${wrongTeam ? ' other-team' : ''}`}>{word}</span>;
+  return <span className={`history-guess ${kind}${wrongTeam ? ` other-team by-${team}` : ''}`}>{word}</span>;
 };
 
 // "Blue by 3" / "Red by Assassination", with the winning team's name in
@@ -112,7 +112,7 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
                   <td>
                     {b.turns.map((t, i) => (
                       <div key={i} className="history-turn">
-                        {t.number && <span className="turn-number">{t.number})</span>}
+                        {t.number && <span className={`turn-number ${t.team}`}>{t.number})</span>}
                         {t.guesses.map((g, j) => (
                           <Guess key={j} word={g.word} color={g.color} team={t.team} />
                         ))}
