@@ -55,6 +55,7 @@ export const ModifyGame = ({ rulesetID }) => {
   // Restore Game until the page closes.
   const [deleted, setDeleted] = React.useState(false);
   const toggleDeleted = async () => {
+    if (!deleted && !window.confirm(`Delete "${ruleset.name}" for all of its players?`)) return;
     setError(null);
     setBusy(true);
     try {
