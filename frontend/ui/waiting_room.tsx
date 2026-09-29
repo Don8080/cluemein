@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Popup } from '~/ui/popup';
 
-const STATUS_LABELS = { none: 'No Account', pending: 'Pending', verified: 'Verified' };
+const STATUS_LABELS = { none: 'No Account', pending: 'Unverified', verified: 'Verified' };
 
 // (A2) Waiting Room. Begin Game is enabled once enough players are here;
 // clicking it takes everyone present to the board.
@@ -33,7 +33,7 @@ export const WaitingRoom = ({ view, act }) => {
           <tr>
             <th>Present</th>
             <th>Absent</th>
-            <th>Status</th>
+            <th>Pending</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +51,7 @@ export const WaitingRoom = ({ view, act }) => {
               ))}
             </td>
             <td>
-              {/* Players without a verified account, e.g. "Laura, Pending". */}
+              {/* Players without a verified account, e.g. "Laura, Unverified". */}
               {unverified.map((p) => (
                 <div key={p.email}>
                   {p.name}, {STATUS_LABELS[p.status]}
