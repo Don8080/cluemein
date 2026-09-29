@@ -101,7 +101,7 @@ export const ModifyGame = ({ rulesetID }) => {
           Save
         </button>
         <button type="button" onClick={goBack}>
-          Cancel
+          {deleted ? 'Return' : 'Cancel'}
         </button>
         <button type="button" className={deleted ? 'restore-game' : 'delete-game'} disabled={busy} onClick={toggleDeleted}>
           {deleted ? 'Restore Game' : 'Delete'}
