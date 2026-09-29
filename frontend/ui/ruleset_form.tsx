@@ -313,6 +313,21 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         <input value={value.graffito_message} onChange={set('graffito_message')} />
         <label>Graffito URL</label>
         <input value={value.graffito_url} onChange={set('graffito_url')} />
+        {mode === 'modify' && (
+          <>
+            <label>Warning Gong play time</label>
+            <span>
+              <select value={value.warning_gong_seconds} onChange={set('warning_gong_seconds')}>
+                {GONG_SECONDS.map((x) => (
+                  <option key={x} value={String(x)}>
+                    {x}
+                  </option>
+                ))}
+              </select>{' '}
+              Seconds
+            </span>
+          </>
+        )}
       </div>
 
       {beforeWordLists}
@@ -346,21 +361,6 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
             <span>
               <input type="checkbox" checked={value.enforce_timer} onChange={set('enforce_timer')} />
             </span>
-            {mode === 'modify' && (
-              <>
-                <label>Warning Gong play time</label>
-                <span>
-                  <select value={value.warning_gong_seconds} onChange={set('warning_gong_seconds')}>
-                    {GONG_SECONDS.map((x) => (
-                      <option key={x} value={String(x)}>
-                        {x}
-                      </option>
-                    ))}
-                  </select>{' '}
-                  Seconds
-                </span>
-              </>
-            )}
           </div>
         )}
       </div>
