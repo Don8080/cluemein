@@ -114,6 +114,10 @@
   cursor: not-allowed !important;
 }
 
+.cell.mark-only {
+  cursor: context-menu !important;
+}
+
 .board {
   display: flex;
   flex-wrap: wrap;

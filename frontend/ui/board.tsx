@@ -359,6 +359,8 @@ export const Board = ({ view, act }) => {
         >
           {board.words.map((w, idx) => {
             const clickable = safeClick ? board.can_mark : board.can_click;
+            // Off-turn guessers can't guess, but can still mark by right-clicking.
+            const markOnly = !clickable && board.can_mark;
             return (
               <div
                 key={idx}
@@ -367,7 +369,7 @@ export const Board = ({ view, act }) => {
                   'cell ' +
                   board.layout[idx] +
                   ' ' +
-                  (clickable ? '' : 'disabled ') +
+                  (clickable ? '' : markOnly ? 'mark-only ' : 'disabled ') +
                   (board.revealed[idx] ? 'revealed' : 'hidden-word') +
                   (touchIdx === idx ? ' touched' : '')
                 }
