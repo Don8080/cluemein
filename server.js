@@ -2,6 +2,7 @@
 // accounts, games (RuleSets) and live sessions are ours.
 require('dotenv').config({ quiet: true, path: require('path').join(__dirname, '.env') });
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const { initDb, deleteExpired } = require('./db');
 const { setupAuth } = require('./auth');
@@ -16,17 +17,26 @@ const db = initDb();
 deleteExpired(db);
 setInterval(() => deleteExpired(db), 24 * 60 * 60 * 1000).unref();
 
+// A fingerprint of the built front end, added to each file's address so
+// browsers (and Railway's edge cache) fetch new copies after every deploy.
+const DIST = path.join(__dirname, 'frontend', 'dist');
+const VERSION = require('crypto')
+  .createHash('sha1')
+  .update(['app.js', 'game.css', 'lobby.css', 'start.css', 'play.css'].map((f) => fs.readFileSync(path.join(DIST, f))).join(''))
+  .digest('hex')
+  .slice(0, 10);
+
 const INDEX_HTML = `<!DOCTYPE html>
 <html>
   <head>
     <title>Clue Me In</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="/static/app.js" type="text/javascript"></script>
+    <script src="/static/app.js?v=${VERSION}" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="/static/game.css" />
-    <link rel="stylesheet" type="text/css" href="/static/lobby.css" />
-    <link rel="stylesheet" type="text/css" href="/static/start.css" />
-    <link rel="stylesheet" type="text/css" href="/static/play.css" />
+    <link rel="stylesheet" type="text/css" href="/static/game.css?v=${VERSION}" />
+    <link rel="stylesheet" type="text/css" href="/static/lobby.css?v=${VERSION}" />
+    <link rel="stylesheet" type="text/css" href="/static/start.css?v=${VERSION}" />
+    <link rel="stylesheet" type="text/css" href="/static/play.css?v=${VERSION}" />
     <link rel="shortcut icon" type="image/png" id="favicon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA8SURBVHgB7dHBDQAgCAPA1oVkBWdzPR84kW4AD0LCg36bXJqUcLL2eVY/EEwDFQBeEfPnqUpkLmigAvABK38Grs5TfaMAAAAASUVORK5CYII="/>
   </head>
   <body>
@@ -60,7 +70,7 @@ app.get('/api/wordlists', requireAuth, (req, res) => {
 // ("/", "/create", "/modify/:id", "/play/:id").
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-  res.type('html').send(INDEX_HTML);
+  res.set('Cache-Control', 'no-cache').type('html').send(INDEX_HTML);
 });
 
 app.listen(PORT, () => console.log(`Clue Me In listening on http://localhost:${PORT}`));
