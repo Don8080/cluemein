@@ -132,10 +132,9 @@ function setupRulesets(app, db, requireAuth) {
     const n = String(name || '').trim();
     if (!n) throw new InputError('Enter a Name of Game.');
     const other = db.prepare('SELECT id, active FROM rulesets WHERE name = ?').get(n);
+    // Deleted games keep their names, so they can be restored.
     if (other && other.id !== exceptID) {
-      if (other.active) throw new InputError(`There is already a game named "${n}".`);
-      // A deleted game gives up its name.
-      db.prepare('UPDATE rulesets SET name = ? WHERE id = ?').run(`${n} (deleted #${other.id})`, other.id);
+      throw new InputError(`There is already a ${other.active ? '' : 'deleted '}game named "${n}".`);
     }
     return n;
   }
@@ -302,10 +301,7 @@ function setupRulesets(app, db, requireAuth) {
   app.post('/api/rulesets/:id/restore', requireAuth, (req, res) => {
     const rs = memberRuleset(req, res, true);
     if (!rs) return;
-    // If a new game took its name meanwhile, it keeps "Name (deleted #id)".
-    const original = rs.name.replace(new RegExp(` \\(deleted #${rs.id}\\)$`), '');
-    const taken = original !== rs.name && db.prepare('SELECT 1 FROM rulesets WHERE name = ?').get(original);
-    db.prepare('UPDATE rulesets SET active = 1, name = ? WHERE id = ?').run(taken ? rs.name : original, rs.id);
+    db.prepare('UPDATE rulesets SET active = 1 WHERE id = ?').run(rs.id);
     res.json({ ok: true });
   });
 
