@@ -251,13 +251,12 @@ function setupRulesets(app, db, requireAuth) {
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
              enforce_timer, created_by)
-           SELECT ?, description, max_session_hours, min_players, min_team_size, video_url, graffito_message,
+           SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
              graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, ?
              FROM rulesets WHERE id = ?`
         )
-        .run(name, req.session.userID, src.id);
-      // A description typed in Create Game replaces the copied one.
-      if (description) db.prepare('UPDATE rulesets SET description = ? WHERE id = ?').run(description, newID);
+        // The description isn't copied: only one typed in Create Game is used.
+        .run(name, description || null, req.session.userID, src.id);
       db.prepare(
         `INSERT INTO ruleset_members (ruleset_id, email, player_name)
          SELECT ?, email, player_name FROM ruleset_members WHERE ruleset_id = ? ORDER BY rowid`
