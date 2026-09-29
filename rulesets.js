@@ -16,10 +16,11 @@ function setupRulesets(app, db, requireAuth) {
   const getRuleset = db.prepare('SELECT * FROM rulesets WHERE id = ?');
 
   // Loads the RuleSet in :id if the logged-in user belongs to it.
-  function memberRuleset(req, res) {
+  // Deleted games are refused unless `allowDeleted` (Restore Game).
+  function memberRuleset(req, res, allowDeleted = false) {
     const id = Number(req.params.id);
     const rs = Number.isInteger(id) && getRuleset.get(id);
-    if (!rs || !rs.active || !isMember.get(id, req.session.email)) {
+    if (!rs || (!rs.active && !allowDeleted) || !isMember.get(id, req.session.email)) {
       res.status(404).json({ error: 'Game not found.' });
       return null;
     }
@@ -294,6 +295,17 @@ function setupRulesets(app, db, requireAuth) {
     const rs = memberRuleset(req, res);
     if (!rs) return;
     db.prepare('UPDATE rulesets SET active = 0 WHERE id = ?').run(rs.id);
+    res.json({ ok: true });
+  });
+
+  // (B2) Restore Game, offered on the same page right after Delete.
+  app.post('/api/rulesets/:id/restore', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res, true);
+    if (!rs) return;
+    // If a new game took its name meanwhile, it keeps "Name (deleted #id)".
+    const original = rs.name.replace(new RegExp(` \\(deleted #${rs.id}\\)$`), '');
+    const taken = original !== rs.name && db.prepare('SELECT 1 FROM rulesets WHERE name = ?').get(original);
+    db.prepare('UPDATE rulesets SET active = 1, name = ? WHERE id = ?').run(taken ? rs.name : original, rs.id);
     res.json({ ok: true });
   });
 

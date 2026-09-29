@@ -348,8 +348,12 @@ button.link-button,
 }
 
 /* Delete (B2) sits apart from Save and Cancel, at the right. */
-#ruleset-screen .button-row button.delete-game {
+#ruleset-screen .button-row button.delete-game,
+#ruleset-screen .button-row button.restore-game {
   margin-left: auto;
+}
+
+#ruleset-screen .button-row button.delete-game {
   color: #b00020;
 }
 

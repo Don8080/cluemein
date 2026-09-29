@@ -51,18 +51,19 @@ export const ModifyGame = ({ rulesetID }) => {
     }
   };
 
-  // Turns the game's Active flag off; it disappears once this page closes.
-  const remove = async () => {
-    if (!window.confirm(`Delete "${ruleset.name}" for all of its players?`)) return;
+  // Delete turns the game's Active flag off and stays here, offering
+  // Restore Game until the page closes.
+  const [deleted, setDeleted] = React.useState(false);
+  const toggleDeleted = async () => {
     setError(null);
     setBusy(true);
     try {
-      await axios.post(`/api/rulesets/${rulesetID}/delete`);
-      goBack();
+      await axios.post(`/api/rulesets/${rulesetID}/${deleted ? 'restore' : 'delete'}`);
+      setDeleted(!deleted);
     } catch (err) {
       setError(errorText(err));
-      setBusy(false);
     }
+    setBusy(false);
   };
 
   if (!settings) {
@@ -83,7 +84,7 @@ export const ModifyGame = ({ rulesetID }) => {
         addedListIDs={ruleset.wordlist_ids}
         beforeWordLists={
           <div className="form-section">
-            <button type="button" onClick={() => setShowVocabulary(true)}>
+            <button type="button" disabled={deleted} onClick={() => setShowVocabulary(true)}>
               Modify Vocabulary
             </button>{' '}
             <span className="hint">{ruleset.word_count} words in this game</span>
@@ -95,14 +96,14 @@ export const ModifyGame = ({ rulesetID }) => {
       {!error && problem && <div className="form-hint">{problem}</div>}
 
       <div className="button-row">
-        <button type="button" className="primary" disabled={busy || !!problem} onClick={save}>
+        <button type="button" className="primary" disabled={busy || deleted || !!problem} onClick={save}>
           Save
         </button>
         <button type="button" onClick={goBack}>
           Cancel
         </button>
-        <button type="button" className="delete-game" disabled={busy} onClick={remove}>
-          Delete
+        <button type="button" className={deleted ? 'restore-game' : 'delete-game'} disabled={busy} onClick={toggleDeleted}>
+          {deleted ? 'Restore Game' : 'Delete'}
         </button>
       </div>
 
