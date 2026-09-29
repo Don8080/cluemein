@@ -219,19 +219,18 @@ const TeamModeHelp = ({ onClose }) => (
       <li>
         <b>Fixed Teams:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
         will not change team members, but the Cluer roles are selected randomly taking care to keep roles fairly
-        distributed. Players can make manual changes at any time.
+        distributed.
       </li>
       <li>
         <b>Fixed Roles:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
-        will not change team members or roles. The assigned Cluers remain Cluers. Players can make manual changes at
-        any time.
+        will not change team members or roles. The assigned Cluers remain Cluers.
       </li>
       <li>
         <b>Random:</b> Roles and team membership are assigned randomly at every game, taking care to keep roles
         fairly distributed.
       </li>
     </ol>
-    <p>In all cases, changing a Cluer forces a new board.</p>
+    <p>In all cases, changing a Cluer forces a new board. Players can make manual changes at any time.</p>
     <div className="button-row centered">
       <button type="button" onClick={onClose}>
         Close
@@ -283,7 +282,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
           <select value={value.team_mode} onChange={set('team_mode')}>
             {TEAM_MODES.map(([id, label]) => (
               <option key={id} value={id}>
-                {label}
+                {TEAM_MODES.findIndex(([m]) => m === id) + 1}. {label}
               </option>
             ))}
           </select>{' '}

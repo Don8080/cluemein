@@ -52,7 +52,9 @@
 #play-view {
   display: grid;
   grid-template-columns: 9em minmax(0, 700px) 9em;
-  grid-template-areas: 'red board blue';
+  grid-template-areas:
+    'info info info'
+    'red board blue';
   justify-content: center;
   align-items: start;
   column-gap: 1.5em;
@@ -71,7 +73,7 @@
 }
 
 .team-list {
-  padding-top: 5.5em;
+  padding-top: 4.1em;
 }
 
 .team-list.red {
@@ -91,6 +93,7 @@
   #play-view.full-screen {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
+      'info info'
       'red blue'
       'board board';
     row-gap: 0.8em;
@@ -173,15 +176,14 @@
   border-color: #000;
 }
 
+/* Subtitle under "Clue Me In", about 75% of its size. */
 .board-info {
+  grid-area: info;
   text-align: center;
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 0.3em;
-}
-
-.board-info .my-role {
-  cursor: help;
+  color: #000;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 0.4em;
 }
 
 #game-view #timer {
@@ -695,4 +697,9 @@ button.turn-banner.end-turn:disabled {
   .team-list.blue .player-name {
     margin-left: auto;
   }
+}
+
+/* Dark mode: the subtitle matches the title. */
+.dark-mode .board-info {
+  color: #ccc;
 }

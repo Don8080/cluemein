@@ -4,6 +4,7 @@ import { Popup } from '~/ui/popup';
 import { SessionHistory } from '~/ui/session_history';
 import { setLastRuleset } from '~/ui/prefs';
 import Timer from '~/ui/timer';
+import { TEAM_MODES } from '~/ui/ruleset_form';
 
 const defaultFavicon =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA8SURBVHgB7dHBDQAgCAPA1oVkBWdzPR84kW4AD0LCg36bXJqUcLL2eVY/EEwDFQBeEfPnqUpkLmigAvABK38Grs5TfaMAAAAASUVORK5CYII=';
@@ -11,6 +12,8 @@ const blueTurnFavicon =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAmSURBVHgB7cxBAQAABATBo5ls6ulEiPt47ASYqJ6VIWUiICD4Ehyi7wKv/xtOewAAAABJRU5ErkJggg==';
 const redTurnFavicon =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAmSURBVHgB7cwxAQAACMOwgaL5d4EiELGHoxGQGnsVaIUICAi+BAci2gJQFUhklQAAAABJRU5ErkJggg==';
+
+const MODE_NAMES = Object.fromEntries(TEAM_MODES);
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -295,13 +298,12 @@ export const Board = ({ view, act }) => {
     <div id="play-view" className={viewClass + extraClasses}>
       <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} />
 
+      {/* Subtitle under "Clue Me In". */}
+      <div className="board-info">
+        Game: {view.ruleset.name} - {MODE_NAMES[view.ruleset.team_mode] || 'Random'} Mode - Board {board.number}
+      </div>
+
       <div id="game-view">
-        <div className="board-info">
-          {view.ruleset.name} · Board {board.number} ·{' '}
-          <span className="my-role" title={me ? `Logged in as ${me.name}` : undefined}>
-            Your Role: {roleText(me)}
-          </span>
-        </div>
         {!!board.timer_duration_ms && (
           <div id="timer">
             <Timer
