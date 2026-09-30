@@ -151,13 +151,14 @@ export const Start = ({ account, setAccount, openLogin }) => {
         </label>
       </div>
       <div className="start-row">
-        <button disabled={!chosen} onClick={() => {
+        <button className="join-session" disabled={!chosen} onClick={() => {
             setLastRuleset(chosen.id);
             window.location.href = '/play';
           }}>
           Join Session
         </button>
         <button
+          className="join-video"
           disabled={!chosen?.video_url}
           title={chosen && !chosen.video_url ? 'This game has no Video Chat URL' : undefined}
           onClick={() => window.open(chosen.video_url, '_blank', 'noopener')}
