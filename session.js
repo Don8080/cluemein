@@ -8,8 +8,12 @@
 const { Game, randomState, nextGameState } = require('./game');
 const { assignRoles, chooseTeamCluers, newStats, promoteCluer, recordCluer, register } = require('./roles');
 
+// Automatic absence detection (a silent browser or a closed tab makes the
+// player absent) is switched OFF for now: players stay present until they
+// choose Leave the Session. Set PRESENCE_TIMEOUTS=on to switch it back on.
+const PRESENCE_TIMEOUTS = process.env.PRESENCE_TIMEOUTS === 'on';
 // Silent this long => no longer present. PRESENCE_GRACE_MS overrides it for testing.
-const GRACE_MS = Number(process.env.PRESENCE_GRACE_MS) || 2 * 60 * 1000;
+const GRACE_MS = PRESENCE_TIMEOUTS ? Number(process.env.PRESENCE_GRACE_MS) || 2 * 60 * 1000 : Infinity;
 const CLOSING_TAB_MS = 15 * 1000; // after a tab closes (long enough for a reload)
 const LONG_POLL_MS = 15 * 1000;
 const SWEEP_MS = 5 * 1000;
@@ -471,7 +475,7 @@ function setupSessions(app, db, requireAuth) {
     const entry = live.get(Number(req.params.rid));
     const tabs = entry && req.session.userID && entry.presence.get(req.session.userID);
     const tab = String(req.body || '');
-    if (tabs && tabs.has(tab)) tabs.set(tab, Math.min(tabs.get(tab), Date.now() + CLOSING_TAB_MS));
+    if (PRESENCE_TIMEOUTS && tabs && tabs.has(tab)) tabs.set(tab, Math.min(tabs.get(tab), Date.now() + CLOSING_TAB_MS));
     res.status(204).end();
   });
 
