@@ -142,7 +142,10 @@ function setupAuth(app, db) {
   // pending sign-up becomes a login once its email has been verified.
   app.get('/api/me', (req, res) => {
     const s = req.session;
-    if (s.userID) return res.json({ user: { id: s.userID, email: s.email } });
+    if (s.userID) {
+      const phone = db.prepare('SELECT phone FROM users WHERE id = ?').get(s.userID)?.phone || '';
+      return res.json({ user: { id: s.userID, email: s.email, phone } });
+    }
     if (s.pendingUserID) {
       const user = findUserByID.get(s.pendingUserID);
       if (!user) return res.json({});
@@ -298,6 +301,18 @@ function setupAuth(app, db) {
     }
     db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, user.id);
     res.json({ ok: true });
+  });
+
+  // Add, change or clear the logged-in player's phone number (Start page).
+  app.post('/api/account/phone', (req, res) => {
+    if (!req.session.userID) return res.status(401).json({ error: 'Not logged in' });
+    const phone = String(req.body.phone || '').trim().replace(/s+/g, ' ');
+    const digits = phone.replace(/D/g, '').length;
+    if (phone && (!/^[0-9+()-. ]{1,25}$/.test(phone) || digits < 7 || digits > 15)) {
+      return res.status(400).json({ error: 'Enter a phone number using digits (spaces, +, -, ( ) and . are fine).' });
+    }
+    db.prepare('UPDATE users SET phone = ? WHERE id = ?').run(phone || null, req.session.userID);
+    res.json({ phone });
   });
 
   function requireAuth(req, res, next) {

@@ -2,6 +2,7 @@ import * as React from 'react';
 import axios from 'axios';
 import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
+import { AccountPopup } from '~/ui/account_popup';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 import { gameLabel } from '~/ui/ruleset_form';
 
@@ -27,7 +28,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
   const [notice, setNotice] = React.useState(
     MESSAGES[params.get('message')] || endedNotice(params.get('ended')) || null
   );
-  // null | { kind: 'login', notice? } | { kind: 'change', email } | { kind: 'reset', token }
+  // null | { kind: 'login', notice? } | { kind: 'change', email, fromAccount? } | { kind: 'reset', token } | { kind: 'account' }
   const [popup, setPopup] = React.useState(
     params.get('reset')
       ? { kind: 'reset', token: params.get('reset') }
@@ -91,7 +92,13 @@ export const Start = ({ account, setAccount, openLogin }) => {
   if (user) {
     accountArea = (
       <div className="account">
-        <span className="account-email">{user.email}</span>
+        <button
+          className="link-button account-email"
+          title="Phone number and password"
+          onClick={() => setPopup({ kind: 'account' })}
+        >
+          {user.email}
+        </button>
         <button className="link-button" onClick={logout}>
           Log out
         </button>
@@ -194,11 +201,29 @@ export const Start = ({ account, setAccount, openLogin }) => {
           onChangePassword={(email) => setPopup({ kind: 'change', email })}
         />
       )}
-      {popup?.kind === 'change' && (
-        <ChangePassword
-          email={popup.email}
-          onSaved={() => setPopup({ kind: 'login', notice: 'Password changed. You can log in now.' })}
-          onCancel={() => setPopup({ kind: 'login' })}
+      {popup?.kind === 'change' &&
+        (popup.fromAccount ? (
+          // From the account popup while logged in: back to it afterwards.
+          <ChangePassword
+            email={popup.email}
+            onSaved={() => {
+              setPopup(null);
+              setNotice('Password changed.');
+            }}
+            onCancel={() => setPopup({ kind: 'account' })}
+          />
+        ) : (
+          <ChangePassword
+            email={popup.email}
+            onSaved={() => setPopup({ kind: 'login', notice: 'Password changed. You can log in now.' })}
+            onCancel={() => setPopup({ kind: 'login' })}
+          />
+        ))}
+      {popup?.kind === 'account' && user && (
+        <AccountPopup
+          email={user.email}
+          onChangePassword={() => setPopup({ kind: 'change', email: user.email, fromAccount: true })}
+          onClose={() => setPopup(null)}
         />
       )}
       {popup?.kind === 'reset' && (

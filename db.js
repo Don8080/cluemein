@@ -191,6 +191,10 @@ function initDb() {
     // How long the 30-second warning gong plays (0 = silent). Set in B2.
     db.exec('ALTER TABLE rulesets ADD COLUMN warning_gong_seconds REAL NOT NULL DEFAULT 7');
   }
+  if (!hasColumn('users', 'phone')) {
+    // Optional; set from the Start page's account popup, shown in the Waiting Room.
+    db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+  }
   if (hasColumn('ruleset_members', 'user_id')) {
     // Members used to be keyed by account; now by email (see the table).
     db.exec(`

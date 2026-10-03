@@ -34,6 +34,7 @@ export const WaitingRoom = ({ view, act }) => {
             <th>Present</th>
             <th>Absent</th>
             <th>Pending</th>
+            <th>All Players</th>
           </tr>
         </thead>
         <tbody>
@@ -55,6 +56,15 @@ export const WaitingRoom = ({ view, act }) => {
               {unverified.map((p) => (
                 <div key={p.email}>
                   {p.name}, {STATUS_LABELS[p.status]}
+                </div>
+              ))}
+            </td>
+            <td>
+              {/* Everyone in the game, with phone numbers where known. */}
+              {view.players.map((p) => (
+                <div key={p.email}>
+                  {p.name}
+                  {p.phone ? `, ${p.phone}` : ''}
                 </div>
               ))}
             </td>

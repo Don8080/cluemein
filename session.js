@@ -26,7 +26,7 @@ function setupSessions(app, db, requireAuth) {
   const getRuleset = db.prepare('SELECT * FROM rulesets WHERE id = ?');
   const getMembers = db.prepare(
     // Members are stored by email; user_id is null until they have an account.
-    `SELECT u.id AS user_id, m.email, m.player_name AS name, u.email_verified
+    `SELECT u.id AS user_id, m.email, m.player_name AS name, u.email_verified, u.phone
        FROM ruleset_members m LEFT JOIN users u ON u.email = m.email
       WHERE m.ruleset_id = ? ORDER BY m.rowid`
   );
@@ -295,6 +295,7 @@ function setupSessions(app, db, requireAuth) {
       name: m.name,
       // 'none' (No Account), 'pending' (not verified yet) or 'verified'.
       status: m.user_id === null ? 'none' : m.email_verified ? 'verified' : 'pending',
+      phone: m.phone || '',
       present: present.has(m.user_id),
       team: s.roles[m.user_id]?.team ?? null,
       role: s.roles[m.user_id]?.role ?? null,
