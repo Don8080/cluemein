@@ -21,6 +21,7 @@ export const CreateGame = ({ user }) => {
   const [lists, setLists] = React.useState([]);
   const [settings, setSettings] = React.useState(defaultSettings(user.email));
   const [error, setError] = React.useState(null);
+  const [copyError, setCopyError] = React.useState(null); // shown under Copy From
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
@@ -30,6 +31,7 @@ export const CreateGame = ({ user }) => {
 
   const copy = async () => {
     setError(null);
+    setCopyError(null);
     setBusy(true);
     try {
       const { data } = await axios.post(`/api/rulesets/${copyFrom}/copy`, {
@@ -39,7 +41,7 @@ export const CreateGame = ({ user }) => {
       setLastRuleset(data.id);
       window.location.href = '/modify';
     } catch (err) {
-      setError(errorText(err));
+      setCopyError(errorText(err));
       setBusy(false);
     }
   };
@@ -65,7 +67,14 @@ export const CreateGame = ({ user }) => {
 
       <div className="form-grid">
         <label>*Name of Game</label>
-        <input value={name} autoFocus onChange={(e) => setName(e.target.value)} />
+        <input
+          value={name}
+          autoFocus
+          onChange={(e) => {
+            setName(e.target.value);
+            setCopyError(null);
+          }}
+        />
         <label>Game Description</label>
         <DescriptionInput
           value={settings.description}
@@ -85,6 +94,12 @@ export const CreateGame = ({ user }) => {
             Copy
           </button>
         </span>
+        {copyError && (
+          <>
+            <span />
+            <div className="form-error copy-error">{copyError}</div>
+          </>
+        )}
       </div>
 
       <div className="or-divider">OR</div>

@@ -519,3 +519,8 @@ button.link-button,
   font-size: 1em;
   width: 14em;
 }
+
+/* Copy From errors (e.g. a duplicate name) appear right under the dropdown. */
+#ruleset-screen .copy-error {
+  margin: -0.2em 0 0;
+}
