@@ -401,10 +401,14 @@ button.link-button,
   font-size: 0.85em;
 }
 
+/* The chosen starting letter: bold blue text, like the selected list in
+   Examine Word Lists (#ruleset-screen outranks the general gray button rule). */
+#ruleset-screen .vocab-letters button.letter.active,
 .popup.wide .vocab-letters button.letter.active {
-  background: #2a6ebb;
-  border-color: #2a6ebb;
-  color: #fff;
+  font-weight: bold;
+  color: #1f5fa8;
+  border-color: #1f5fa8;
+  background: #eef4fb;
 }
 
 .vocabulary .vocab-add {
