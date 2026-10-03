@@ -42,6 +42,7 @@ export const AccountPopup = ({ email, onChangePassword, onClose }) => {
           Phone Number
           <input type="text" inputMode="tel" autoFocus value={phone} onChange={(e) => setPhone(e.target.value)} />
         </label>
+        <p className="hint phone-note">Your Phone number will appear in the Waiting Room.</p>
         {error && <div className="form-error">{error}</div>}
         {message && <div className="form-message">{message}</div>}
         <div className="button-row">

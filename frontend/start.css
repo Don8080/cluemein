@@ -524,3 +524,8 @@ button.link-button,
 #ruleset-screen .copy-error {
   margin: -0.2em 0 0;
 }
+
+.login-form .phone-note {
+  margin: -0.4em 0 0.8em;
+  font-size: 0.85em;
+}
