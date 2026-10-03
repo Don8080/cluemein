@@ -529,3 +529,40 @@ button.link-button,
   margin: -0.4em 0 0.8em;
   font-size: 0.85em;
 }
+
+/* Examine Word Lists (B1/B2): button beside the section label, and the popup. */
+#ruleset-screen .section-label .examine-button {
+  margin-left: 0.6em;
+  font-weight: normal;
+  font-size: 0.85em;
+}
+
+.examine-lists .examine-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
+  margin-bottom: 0.5em;
+}
+
+.popup.wide .examine-lists button.examine-list {
+  padding: 0.2em 0.5em;
+  font-size: 0.85em;
+}
+
+.popup.wide .examine-lists button.examine-list.active {
+  background: #2a6ebb;
+  border-color: #2a6ebb;
+  color: #fff;
+}
+
+.examine-lists .vocab-search {
+  margin-top: 0.4em;
+}
+
+.examine-lists .examine-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9em, 1fr));
+  gap: 0.15em 0.8em;
+  padding: 0.4em 0.6em;
+  min-height: 6em;
+}

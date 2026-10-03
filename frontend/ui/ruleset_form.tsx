@@ -2,6 +2,7 @@ import * as React from 'react';
 import axios from 'axios';
 import WordSetToggle from '~/ui/wordset_toggle';
 import { Popup } from '~/ui/popup';
+import { ExamineWordLists } from '~/ui/examine_lists';
 
 // Settings shared by Create Game (B1) and Modify Game (B2). The parent owns
 // the values; timer durations are edited in minutes.
@@ -251,6 +252,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const [showModeHelp, setShowModeHelp] = React.useState(false);
+  const [examining, setExamining] = React.useState(false);
 
   // Mouseover text for the label and its field.
   const tips = {
@@ -339,7 +341,13 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
       {beforeWordLists}
 
       <div className="form-section">
-        <div className="section-label">{mode === 'create' ? '*Build Word List' : 'Add Word Lists'}</div>
+        <div className="section-label">
+          {mode === 'create' ? '*Build Word List' : 'Add Word Lists'}{' '}
+          <button type="button" className="examine-button" onClick={() => setExamining(true)}>
+            Examine Word Lists
+          </button>
+        </div>
+        {examining && <ExamineWordLists lists={lists} onClose={() => setExamining(false)} />}
         <WordListPicker
           lists={lists}
           selected={value.wordlist_ids}

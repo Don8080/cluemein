@@ -66,6 +66,12 @@ app.get('/api/wordlists', requireAuth, (req, res) => {
   );
 });
 
+// One standard list's words (Examine Word Lists in B1/B2).
+app.get('/api/wordlists/:id/words', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT word FROM standard_words WHERE wordlist_id = ? ORDER BY word').all(Number(req.params.id));
+  res.json(rows.map((r) => r.word));
+});
+
 // The single page; the front end picks the screen from the path
 // ("/", "/create", "/modify/:id", "/play/:id").
 app.get('*', (req, res) => {
