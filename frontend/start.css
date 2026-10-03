@@ -578,3 +578,9 @@ button.link-button,
   padding: 0.05em 0;
   overflow-wrap: anywhere;
 }
+
+/* Required-field asterisks (B1/B2). */
+#ruleset-screen .required {
+  color: #d00000;
+  font-weight: bold;
+}

@@ -7,6 +7,7 @@ import {
   gameLabel,
   settingsProblem,
   settingsToRequest,
+  Req,
 } from '~/ui/ruleset_form';
 import { setLastRuleset } from '~/ui/prefs';
 
@@ -66,7 +67,7 @@ export const CreateGame = ({ user }) => {
       <h2 className="screen-heading">Create Game</h2>
 
       <div className="form-grid">
-        <label>*Name of Game</label>
+        <label><Req />Name of Game</label>
         <input
           value={name}
           autoFocus

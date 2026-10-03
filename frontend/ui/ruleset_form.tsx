@@ -12,6 +12,9 @@ const isBlank = (p) => !p.name.trim() && !p.email.trim();
 
 export const DESCRIPTION_MAX = 75;
 
+// The red asterisk marking a required field.
+export const Req = () => <span className="required">*</span>;
+
 // How a game appears in dropdowns: its name and description.
 export const gameLabel = (g) => (g.description ? `${g.name} — ${g.description}` : g.name);
 
@@ -132,8 +135,8 @@ const PlayerRows = ({ players, onChange, removable }) => {
     <table className="players-table">
       <thead>
         <tr>
-          <th>*Player Name</th>
-          <th>*Email</th>
+          <th><Req />Player Name</th>
+          <th><Req />Email</th>
           <th>Status</th>
           {removable && <th></th>}
         </tr>
@@ -274,20 +277,20 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
             <DescriptionInput value={value.description} onChange={set('description')} />
           </>
         )}
-        <label title={tips.sessionDuration}>*Maximum Session Duration</label>
+        <label title={tips.sessionDuration}><Req />Maximum Session Duration</label>
         <span title={tips.sessionDuration}>
           <input className="short" type="number" min="0.5" max="24" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
         </span>
-        <label title={tips.minPlayers}>*Minimum Number of Players</label>
+        <label title={tips.minPlayers}><Req />Minimum Number of Players</label>
         <span title={tips.minPlayers}>
           <input className="short" type="number" min="3" value={value.min_players} onChange={set('min_players')} />
         </span>
-        <label title={tips.minTeamSize}>*Minimum Team Size</label>
+        <label title={tips.minTeamSize}><Req />Minimum Team Size</label>
         <span title={tips.minTeamSize}>
           <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
           <span className="hint">Includes Cluers and Floaters</span>
         </span>
-        <label>*Team Assignment Mode</label>
+        <label><Req />Team Assignment Mode</label>
         <span>
           <select value={value.team_mode} onChange={set('team_mode')}>
             {!value.team_mode && (
@@ -342,7 +345,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
 
       <div className="form-section">
         <div className="section-label">
-          {mode === 'create' ? '*Build Word List' : 'Add Word Lists'}{' '}
+          {mode === 'create' ? <><Req />Build Word List</> : 'Add Word Lists'}{' '}
           <button type="button" className="examine-button" onClick={() => setExamining(true)}>
             Examine Word Lists
           </button>
