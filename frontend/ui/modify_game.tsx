@@ -2,6 +2,45 @@ import * as React from 'react';
 import axios from 'axios';
 import { RulesetForm, settingsFromRuleset, settingsProblem, settingsToRequest } from '~/ui/ruleset_form';
 import { Vocabulary } from '~/ui/vocabulary';
+import { Popup } from '~/ui/popup';
+
+// (B2) Rename popup: "Rename <old name> to ____". Saves at once.
+const RenamePopup = ({ rulesetID, oldName, onRenamed, onClose }) => {
+  const [name, setName] = React.useState('');
+  const [error, setError] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const rename = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      const { data } = await axios.post(`/api/rulesets/${rulesetID}/rename`, { name });
+      onRenamed(data.name);
+    } catch (err) {
+      setError(errorText(err));
+      setBusy(false);
+    }
+  };
+  return (
+    <Popup title="Rename Game" onClose={onClose}>
+      <form className="login-form rename-form" onSubmit={rename}>
+        <label>
+          Rename {oldName} to
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        {error && <div className="form-error">{error}</div>}
+        <div className="button-row">
+          <button type="submit" disabled={busy || !name.trim() || name.trim() === oldName}>
+            Rename
+          </button>
+          <button type="button" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Popup>
+  );
+};
 
 const errorText = (err) => err.response?.data?.error || 'Something went wrong. Please try again.';
 
@@ -54,6 +93,7 @@ export const ModifyGame = ({ rulesetID }) => {
   // Delete turns the game's Active flag off and stays here, offering
   // Restore Game until the page closes.
   const [deleted, setDeleted] = React.useState(false);
+  const [renaming, setRenaming] = React.useState(false);
   const toggleDeleted = async () => {
     if (!deleted && !window.confirm(`Delete "${ruleset.name}" for all of its players?`)) return;
     setError(null);
@@ -76,6 +116,11 @@ export const ModifyGame = ({ rulesetID }) => {
   return (
     <div id="ruleset-screen">
       <h2 className="screen-heading">Modify Game: {ruleset.name}</h2>
+      <div className="rename-row">
+        <button type="button" disabled={busy || deleted} onClick={() => setRenaming(true)}>
+          Rename
+        </button>
+      </div>
 
       <RulesetForm
         value={settings}
@@ -107,6 +152,18 @@ export const ModifyGame = ({ rulesetID }) => {
           {deleted ? 'Restore Game' : 'Delete'}
         </button>
       </div>
+
+      {renaming && (
+        <RenamePopup
+          rulesetID={rulesetID}
+          oldName={ruleset.name}
+          onClose={() => setRenaming(false)}
+          onRenamed={(name) => {
+            setRuleset({ ...ruleset, name });
+            setRenaming(false);
+          }}
+        />
+      )}
 
       {showVocabulary && (
         <Vocabulary

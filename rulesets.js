@@ -320,6 +320,21 @@ function setupRulesets(app, db, requireAuth) {
     res.json({ ok: true });
   });
 
+  // (B2) Rename: takes effect at once, like Delete. Names stay unique,
+  // including the names of deleted games.
+  app.post('/api/rulesets/:id/rename', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    try {
+      const name = checkName(req.body.name, rs.id);
+      db.prepare('UPDATE rulesets SET name = ? WHERE id = ?').run(name, rs.id);
+      res.json({ name });
+    } catch (err) {
+      if (!(err instanceof InputError)) throw err;
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // (P2) The RuleSet's vocabulary with each word's source.
   const vocabulary = db.prepare(
     `SELECT w.word, COALESCE(l.name, 'Manual') AS source
