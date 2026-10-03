@@ -563,16 +563,18 @@ button.link-button,
   margin-top: 0.4em;
 }
 
-/* Three columns filled top to bottom: the first third of the words in
-   column 1, the next third in column 2, the last third in column 3. */
+/* Exactly three columns (the first, middle and last third of the words),
+   scrolling vertically together. */
 .examine-lists .examine-words {
-  column-count: 3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 1.2em;
+  align-items: start;
   padding: 0.4em 0.6em;
   min-height: 6em;
 }
 
-.examine-lists .examine-words > div {
-  break-inside: avoid;
+.examine-lists .examine-column > div {
   padding: 0.05em 0;
+  overflow-wrap: anywhere;
 }

@@ -28,6 +28,9 @@ export const ExamineWordLists = ({ lists, onClose }) => {
 
   const q = filter.trim().toLowerCase();
   const shown = (words || []).filter((w) => !q || w.toLowerCase().includes(q));
+  // Three columns read top to bottom: first third, middle third, last third.
+  const per = Math.ceil(shown.length / 3);
+  const columns = [0, 1, 2].map((i) => shown.slice(i * per, (i + 1) * per));
   const row = (n) => (
     <div className="examine-row">
       {lists
@@ -61,8 +64,12 @@ export const ExamineWordLists = ({ lists, onClose }) => {
             : 'Loading…'}
         </div>
         <div className="vocab-list examine-words">
-          {shown.map((w) => (
-            <div key={w}>{w}</div>
+          {columns.map((col, i) => (
+            <div key={i} className="examine-column">
+              {col.map((w) => (
+                <div key={w}>{w}</div>
+              ))}
+            </div>
           ))}
         </div>
         <div className="button-row">
