@@ -72,7 +72,11 @@ export const Start = ({ account, setAccount, openLogin }) => {
   const resend = async () => {
     try {
       await axios.post('/api/resend-verification');
-      setPendingNote('Sent again. Check your inbox and Spam folder.');
+      const now = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      setPendingNote(
+        `An additional email was sent at ${p(now.getHours())}:${p(now.getMinutes())}. You may find your messages in a spam folder.`
+      );
     } catch (err) {
       setPendingNote(err.response?.data?.error || 'Could not send the email.');
     }
