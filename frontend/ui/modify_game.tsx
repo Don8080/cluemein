@@ -25,8 +25,8 @@ const RenamePopup = ({ rulesetID, oldName, onRenamed, onClose }) => {
     <Popup title="Rename Game" onClose={onClose}>
       <form className="login-form rename-form" onSubmit={rename}>
         <label>
-          Rename {oldName} to
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+          Rename {oldName} to{' '}
+          <input className="rename-input" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         {error && <div className="form-error">{error}</div>}
         <div className="button-row">

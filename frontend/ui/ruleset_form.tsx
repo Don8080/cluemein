@@ -29,7 +29,7 @@ export function defaultSettings(myEmail) {
     first_turn_minutes: '5',
     next_turn_minutes: '2',
     enforce_timer: false,
-    team_mode: 'random',
+    team_mode: '', // no default: Create Game requires a choice
   };
 }
 
@@ -90,6 +90,7 @@ export function settingsProblem(s, needLists) {
     return 'Every player needs both a name and an email.';
   }
   if (complete < 3) return 'Enter at least 3 players.';
+  if (!s.team_mode) return 'Choose a Team Assignment Mode.';
   if (needLists && !s.wordlist_ids.length) return 'Choose at least one word list.';
   return null;
 }
@@ -284,9 +285,14 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
           <input className="short" type="number" min="2" value={value.min_team_size} onChange={set('min_team_size')} />{' '}
           <span className="hint">Includes Cluers and Floaters</span>
         </span>
-        <label>Team Assignment Mode</label>
+        <label>*Team Assignment Mode</label>
         <span>
           <select value={value.team_mode} onChange={set('team_mode')}>
+            {!value.team_mode && (
+              <option value="" disabled>
+                Choose…
+              </option>
+            )}
             {TEAM_MODES.map(([id, label]) => (
               <option key={id} value={id}>
                 {TEAM_MODES.findIndex(([m]) => m === id) + 1}. {label}
