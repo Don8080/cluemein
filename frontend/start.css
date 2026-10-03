@@ -549,20 +549,30 @@ button.link-button,
   font-size: 0.85em;
 }
 
+/* The list being shown: bold blue text (#ruleset-screen outranks the
+   general gray button rule). */
+#ruleset-screen .examine-lists button.examine-list.active,
 .popup.wide .examine-lists button.examine-list.active {
-  background: #2a6ebb;
-  border-color: #2a6ebb;
-  color: #fff;
+  font-weight: bold;
+  color: #1f5fa8;
+  border-color: #1f5fa8;
+  background: #eef4fb;
 }
 
 .examine-lists .vocab-search {
   margin-top: 0.4em;
 }
 
+/* Three columns filled top to bottom: the first third of the words in
+   column 1, the next third in column 2, the last third in column 3. */
 .examine-lists .examine-words {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9em, 1fr));
-  gap: 0.15em 0.8em;
+  column-count: 3;
+  column-gap: 1.2em;
   padding: 0.4em 0.6em;
   min-height: 6em;
+}
+
+.examine-lists .examine-words > div {
+  break-inside: avoid;
+  padding: 0.05em 0;
 }
