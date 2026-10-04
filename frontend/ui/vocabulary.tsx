@@ -8,8 +8,7 @@ const firstLetter = (w) => Array.from(w)[0] || '';
 // Changes apply to this game only, never to the standard lists.
 export const Vocabulary = ({ rulesetID, onClose }) => {
   const [words, setWords] = React.useState(null); // [{ word, source }]
-  const [searchText, setSearchText] = React.useState('');
-  const [search, setSearch] = React.useState(''); // applied search
+  const [search, setSearch] = React.useState(''); // narrows the list as you type
   const [letter, setLetter] = React.useState(null);
   const [toDelete, setToDelete] = React.useState(new Set());
   const [addText, setAddText] = React.useState('');
@@ -21,10 +20,7 @@ export const Vocabulary = ({ rulesetID, onClose }) => {
     axios.get(`/api/rulesets/${rulesetID}/words`).then(({ data }) => {
       setWords(data);
       // Start filtered on the first word alphabetically so the list is short.
-      if (data.length) {
-        setSearchText(data[0].word);
-        setSearch(data[0].word);
-      }
+      if (data.length) setSearch(data[0].word);
     });
   }, []);
 
@@ -78,19 +74,9 @@ export const Vocabulary = ({ rulesetID, onClose }) => {
   return (
     <Popup title="Change Vocabulary" onClose={onClose} wide>
       <div className="vocabulary">
-        <form
-          className="vocab-search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearch(searchText);
-          }}
-        >
-          <label>
-            Search String{' '}
-            <input value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-          </label>
-          <button type="submit">Search</button>
-        </form>
+        <label className="vocab-search">
+          Search String <input value={search} onChange={(e) => setSearch(e.target.value)} />
+        </label>
 
         <div className="vocab-letters">
           <span className="hint">Starting Letter</span>
