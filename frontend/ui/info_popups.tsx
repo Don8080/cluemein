@@ -19,7 +19,9 @@ export const GettingStarted = ({ onClose }) => (
         will see your game listed in the dropdown list of games to choose from. As a newcomer, there will most likely be
         only one entry. If the dropdown list is empty, contact the person who invited you.
       </p>
-      <p>Assuming you find the game listed, click Join Session. Then:</p>
+      <p>
+        Assuming you find the game listed, click <u>Join Session</u>. Then:
+      </p>
       <ul>
         <li>
           If there is a session in progress, you will be added as a floater, someone who helps both teams decide what
@@ -28,12 +30,14 @@ export const GettingStarted = ({ onClose }) => (
         <li>
           If there is no session in progress, or there are not enough players who have joined the session, you will be
           shown the Waiting Room, where you can see all the game’s players, and you can see who has joined the session
-          and who has not joined yet. When a quorum is reached, anyone can click Begin Game to produce the first board.
+          and who has not joined yet. When a quorum is reached, anyone can click <u>Begin Game</u> to produce the first
+          board.
         </li>
       </ul>
       <p>
-        If you have NOT been invited to join an existing group of players, click Create Game to start a game, add
-        players’ names and email addresses, and make choices about the vocabulary to use, and the default mode of play.
+        If you have NOT been invited to join an existing group of players, click <u>Create Game</u> to define a game,
+        add players’ names and email addresses, and make choices about the vocabulary to use, and the default mode of
+        play.
       </p>
     </div>
     <CloseRow onClose={onClose} />
@@ -52,13 +56,13 @@ export const HowToPlay = ({ onClose }) => (
       <ol>
         <li>
           <b>Fixed Teams:</b> In the first game, teams and roles are randomly assigned. Players can make any changes
-          they like. Next Game will not change team members, but the Cluer roles are selected randomly taking care to
-          keep roles fairly distributed (see below).
+          they like. Clicking <u>Next Game</u> will not change team members, but the Cluer roles are selected randomly
+          taking care to keep roles fairly distributed (see below).
         </li>
         <li>
           <b>Fixed Roles:</b> In the first game, teams and roles are randomly assigned. Players can make any changes
-          they like. Next Game will not change team members or roles. The assigned Cluers remain Cluers until manually
-          changed.
+          they like. Clicking <u>Next Game</u> will not change team members or roles. The assigned Cluers remain Cluers
+          until manually changed.
         </li>
         <li>
           <b>Random:</b> Roles and team membership are assigned randomly at every game, taking care to keep roles fairly
@@ -87,9 +91,9 @@ export const HowToPlay = ({ onClose }) => (
 
       <h3>Next Board vs Next Game</h3>
       <p>
-        If Cluers agree, for any reason, to reject a particular set of 25 words, they can click Next Board to retrieve
-        another random set of words without changing any team assignments or roles. Clicking Next Game will produce both
-        a new board and new assignments (depending on the Team Assignment mode).
+        If Cluers agree, for any reason, to reject a particular set of 25 words, they can click <u>Next Board</u> to
+        retrieve another random set of words without changing any team assignments or roles. Clicking <u>Next Game</u>{' '}
+        will produce both a new board and new assignments (depending on the Team Assignment mode).
       </p>
     </div>
     <CloseRow onClose={onClose} />

@@ -222,12 +222,12 @@ const TeamModeHelp = ({ onClose }) => (
   <Popup title="Team Assignment Mode" onClose={onClose} wide>
     <ol className="team-mode-help">
       <li>
-        <b>Fixed Teams:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
+        <b>Fixed Teams:</b> In the first game, teams and roles are randomly assigned. Players can make any changes they like. Clicking Next Game
         will not change team members, but the Cluer roles are selected randomly taking care to keep roles fairly
         distributed.
       </li>
       <li>
-        <b>Fixed Roles:</b> The first game is randomly assigned. Players can make any changes they like. Next Game
+        <b>Fixed Roles:</b> In the first game, teams and roles are randomly assigned. Players can make any changes they like. Clicking Next Game
         will not change team members or roles. The assigned Cluers remain Cluers.
       </li>
       <li>
