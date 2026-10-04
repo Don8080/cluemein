@@ -616,8 +616,8 @@ button.link-button,
   margin: 0;
 }
 
-/* Create Game and Modify Game: blue and indigo (brighter than the gray
-   default, distinct from the green/teal Join buttons). */
+/* Create Game and Modify Game: blue (brighter than the gray default,
+   distinct from the green/teal Join buttons). */
 #start button.create-game,
 #start button.modify-game,
 #start button.info-button {
@@ -636,10 +636,10 @@ button.link-button,
 }
 
 #start button.modify-game {
-  background: #5a4fcf;
+  background: #2f6fd6;
 }
 
-/* Information row: amber, with dark text for readability. */
+/* Information row: a soft amber, with dark text for readability. */
 #start .info-row {
   align-items: center;
 }
@@ -651,7 +651,7 @@ button.link-button,
 }
 
 #start button.info-button {
-  background: #f2a51a;
+  background: #e9c46a;
   color: #2b1d00;
 }
 
