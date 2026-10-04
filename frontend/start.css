@@ -615,3 +615,76 @@ button.link-button,
   flex-basis: 100%;
   margin: 0;
 }
+
+/* Create Game and Modify Game: blue and indigo (brighter than the gray
+   default, distinct from the green/teal Join buttons). */
+#start button.create-game,
+#start button.modify-game,
+#start button.info-button {
+  border: none;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+#start button.create-game,
+#start button.modify-game {
+  color: #fff;
+}
+
+#start button.create-game {
+  background: #2f6fd6;
+}
+
+#start button.modify-game {
+  background: #5a4fcf;
+}
+
+/* Information row: amber, with dark text for readability. */
+#start .info-row {
+  align-items: center;
+}
+
+#start .info-label {
+  font-weight: bold;
+  color: #555;
+  margin-right: 0.2em;
+}
+
+#start button.info-button {
+  background: #f2a51a;
+  color: #2b1d00;
+}
+
+#start button.create-game:hover:not(:disabled),
+#start button.modify-game:hover:not(:disabled),
+#start button.info-button:hover {
+  filter: brightness(1.1);
+}
+
+#start button.create-game:disabled,
+#start button.modify-game:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  color: #fff;
+}
+
+/* Getting Started / How to Play text. */
+.info-text {
+  max-height: 60vh;
+  overflow-y: auto;
+  line-height: 1.45;
+  padding-right: 0.4em;
+}
+
+.info-text h3 {
+  margin: 1em 0 0.3em;
+  font-size: 1.05em;
+}
+
+.info-text p {
+  margin: 0.4em 0;
+}
+
+.info-text li {
+  margin-bottom: 0.4em;
+}

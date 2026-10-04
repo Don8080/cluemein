@@ -3,6 +3,7 @@ import axios from 'axios';
 import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
 import { AccountPopup } from '~/ui/account_popup';
+import { GettingStarted, HowToPlay } from '~/ui/info_popups';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 import { gameLabel } from '~/ui/ruleset_form';
 
@@ -37,6 +38,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
       : null
   );
   const [pendingNote, setPendingNote] = React.useState(null);
+  const [info, setInfo] = React.useState(null); // 'start' | 'play'
 
   React.useEffect(() => {
     // Drop ?message= / ?reset= so a refresh doesn't repeat them.
@@ -137,6 +139,21 @@ export const Start = ({ account, setAccount, openLogin }) => {
     setNotice(null);
   };
 
+  // Information: above Join Session for someone not in any game yet
+  // (including before logging in), otherwise the bottom row.
+  const isMember = !!games?.length;
+  const infoRow = (
+    <div className="start-row info-row">
+      <span className="info-label">Information</span>
+      <button className="info-button" onClick={() => setInfo('start')}>
+        Getting Started
+      </button>
+      <button className="info-button" onClick={() => setInfo('play')}>
+        How to Play
+      </button>
+    </div>
+  );
+
   return (
     <div id="start">
       <h2 className="screen-heading">Start</h2>
@@ -161,6 +178,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
           )}
         </label>
       </div>
+      {!isMember && infoRow}
       <div className="start-row">
         <button className="join-session" disabled={!chosen} onClick={() => {
             setLastRuleset(chosen.id);
@@ -178,16 +196,20 @@ export const Start = ({ account, setAccount, openLogin }) => {
         </button>
       </div>
       <div className="start-row">
-        <button disabled={!user} onClick={() => (window.location.href = '/create')}>
+        <button className="create-game" disabled={!user} onClick={() => (window.location.href = '/create')}>
           Create Game
         </button>
-        <button disabled={!chosen} onClick={() => {
+        <button className="modify-game" disabled={!chosen} onClick={() => {
             setLastRuleset(chosen.id);
             window.location.href = '/modify';
           }}>
           Modify Game
         </button>
       </div>
+      {isMember && infoRow}
+
+      {info === 'start' && <GettingStarted onClose={() => setInfo(null)} />}
+      {info === 'play' && <HowToPlay onClose={() => setInfo(null)} />}
 
       {popup?.kind === 'login' && (
         <LoginPopup
