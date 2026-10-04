@@ -79,4 +79,11 @@ app.get('*', (req, res) => {
   res.set('Cache-Control', 'no-cache').type('html').send(INDEX_HTML);
 });
 
+// An upload far over its size limit (e.g. a huge sound file) gets a short
+// message instead of a stack trace.
+app.use((err, req, res, next) => {
+  if (err.type !== 'entity.too.large') return next(err);
+  res.status(413).json({ error: req.path.includes('/sounds/') ? 'That file is larger than 1 MB.' : 'That is too large to send.' });
+});
+
 app.listen(PORT, () => console.log(`Clue Me In listening on http://localhost:${PORT}`));

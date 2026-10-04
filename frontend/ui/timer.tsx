@@ -11,32 +11,11 @@ function getTimeRemaining(endTime: number) {
   };
 }
 
-// Gongs: one at the 30-second mark, another when time runs out.
-const sounds = {
-  warning: '/static/sounds/gong-30s.mp3',
-  end: '/static/sounds/gong-end.mp3',
-};
-// `seconds` cuts the sound short (with a quick fade); 0 means silent.
-function playGong(which: 'warning' | 'end', seconds?: number) {
-  if (seconds === 0) return;
-  const audio = new Audio(sounds[which]);
+// Plays a timer sound (the default gong or the game's custom file).
+function playSound(url: string) {
   // Browsers may block sound until the player has clicked on the page;
   // the timer's colors still show.
-  audio.play().catch(() => {});
-  if (seconds === undefined) return;
-  const fadeMs = 250;
-  setTimeout(() => {
-    const start = Date.now();
-    const fade = setInterval(() => {
-      const left = 1 - (Date.now() - start) / fadeMs;
-      if (left <= 0) {
-        clearInterval(fade);
-        audio.pause();
-      } else {
-        audio.volume = left;
-      }
-    }, 25);
-  }, Math.max(seconds * 1000 - fadeMs, 0));
+  if (url) new Audio(url).play().catch(() => {});
 }
 
 interface TimerProps {
@@ -44,7 +23,8 @@ interface TimerProps {
   timerDurationMs: number;
   handleExpiration: () => void;
   freezeTimer: boolean;
-  warningGongSeconds?: number;
+  warningSound: string; // 30 seconds left
+  endSound: string; // out of time
 }
 
 // "Timer mm:ss". In the last 30 seconds of a turn its background turns
@@ -56,7 +36,8 @@ const Timer: React.FunctionComponent<TimerProps> = ({
   timerDurationMs,
   handleExpiration,
   freezeTimer = false,
-  warningGongSeconds,
+  warningSound,
+  endSound,
 }) => {
   const [timeRemaining, setTimeRemaining] = React.useState(undefined);
   const lastTotal = React.useRef(null);
@@ -87,8 +68,8 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     const total = timeRemaining?.total;
     if (total === undefined || freezeTimer) return;
     const prev = lastTotal.current;
-    if (prev !== null && prev > 30 && total <= 30) playGong('warning', warningGongSeconds);
-    if (prev !== null && prev > 0 && total <= 0) playGong('end');
+    if (prev !== null && prev > 30 && total <= 30) playSound(warningSound);
+    if (prev !== null && prev > 0 && total <= 0) playSound(endSound);
     lastTotal.current = total;
   }, [timeRemaining?.total]);
 

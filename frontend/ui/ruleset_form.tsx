@@ -54,7 +54,6 @@ export function settingsFromRuleset(rs) {
     next_turn_minutes: String(rs.next_turn_seconds / 60),
     enforce_timer: rs.enforce_timer,
     team_mode: rs.team_mode,
-    warning_gong_seconds: String(rs.warning_gong_seconds),
   };
 }
 
@@ -75,8 +74,6 @@ export function settingsToRequest(s) {
     next_turn_seconds: Math.round(Number(s.next_turn_minutes) * 60),
     enforce_timer: s.enforce_timer,
     team_mode: s.team_mode,
-    // Only Modify Game has this field; Create Game leaves it to the default.
-    ...(s.warning_gong_seconds !== undefined && { warning_gong_seconds: Number(s.warning_gong_seconds) }),
   };
 }
 
@@ -214,10 +211,6 @@ export const DescriptionInput = ({ value, onChange }) => (
   </span>
 );
 
-// Warning Gong play time choices: 0 to 7 seconds in half seconds (the gong
-// itself lasts about 7 seconds, so 7 plays all of it).
-const GONG_SECONDS = Array.from({ length: 15 }, (_, i) => i / 2);
-
 export const TEAM_MODES = [
   ['fixed_teams', 'Fixed Teams'],
   ['fixed_roles', 'Fixed Roles'],
@@ -251,7 +244,7 @@ const TeamModeHelp = ({ onClose }) => (
   </Popup>
 );
 
-export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], beforeWordLists = null }) => {
+export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], beforeWordLists = null, afterGraffito = null }) => {
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const [showModeHelp, setShowModeHelp] = React.useState(false);
@@ -324,21 +317,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         <input value={value.graffito_message} onChange={set('graffito_message')} />
         <label>Graffito URL</label>
         <input value={value.graffito_url} onChange={set('graffito_url')} />
-        {mode === 'modify' && (
-          <>
-            <label>Warning Gong play time</label>
-            <span>
-              <select value={value.warning_gong_seconds} onChange={set('warning_gong_seconds')}>
-                {GONG_SECONDS.map((x) => (
-                  <option key={x} value={String(x)}>
-                    {x}
-                  </option>
-                ))}
-              </select>{' '}
-              Seconds
-            </span>
-          </>
-        )}
+        {afterGraffito}
       </div>
 
       {beforeWordLists}

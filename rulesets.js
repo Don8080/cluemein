@@ -1,6 +1,7 @@
 // RuleSets ("Games" on screen): create (B1), copy, modify (B2) and edit
 // vocabulary (P2). Any member of a RuleSet may view and change it.
 const { normalizeWord } = require('./db');
+const sounds = require('./sounds');
 
 class InputError extends Error {}
 
@@ -30,6 +31,8 @@ function setupRulesets(app, db, requireAuth) {
     return rs;
   }
 
+  const soundInfo = (rulesetID) => sounds.info(db, rulesetID);
+
   function details(rs) {
     const players = db
       .prepare(
@@ -58,7 +61,7 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: rs.next_turn_seconds,
       enforce_timer: !!rs.enforce_timer,
       team_mode: rs.team_mode,
-      warning_gong_seconds: rs.warning_gong_seconds,
+      sounds: soundInfo(rs.id),
       players,
       wordlist_ids: wordlistIDs,
       word_count: n,
@@ -101,12 +104,6 @@ function setupRulesets(app, db, requireAuth) {
     const teamMode = body.team_mode || 'random';
     if (!TEAM_MODES.includes(teamMode)) throw new InputError('Choose a Team Assignment Mode.');
 
-    // Warning Gong play time (B2 only; Create Game keeps the default).
-    let gong = body.warning_gong_seconds === undefined ? 7 : Number(body.warning_gong_seconds);
-    if (!(gong >= 0 && gong <= 7) || !Number.isInteger(gong * 2)) {
-      throw new InputError('Warning Gong play time must be 0 to 7 seconds, in half seconds.');
-    }
-
     const players = (body.players || [])
       .map((p) => ({ name: String(p.name || '').trim(), email: String(p.email || '').trim().toLowerCase() }))
       .filter((p) => p.name || p.email);
@@ -139,7 +136,6 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: next > 0 ? next : 120,
       enforce_timer: body.enforce_timer ? 1 : 0,
       team_mode: teamMode,
-      warning_gong_seconds: gong,
       players,
     };
   }
@@ -159,10 +155,10 @@ function setupRulesets(app, db, requireAuth) {
     db.prepare(
       `UPDATE rulesets SET description = ?, max_session_hours = ?, min_players = ?, min_team_size = ?,
          video_url = ?, graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
-         next_turn_seconds = ?, enforce_timer = ?, team_mode = ?, warning_gong_seconds = ? WHERE id = ?`
+         next_turn_seconds = ?, enforce_timer = ?, team_mode = ? WHERE id = ?`
     ).run(
       s.description, s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
-      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, s.warning_gong_seconds, id
+      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, id
     );
     // Replace the player list, keeping the order given.
     db.prepare('DELETE FROM ruleset_members WHERE ruleset_id = ?').run(id);
@@ -266,9 +262,9 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, team_mode, warning_gong_seconds, created_by)
+             enforce_timer, team_mode, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
-             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, warning_gong_seconds, ?
+             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.
@@ -282,6 +278,10 @@ function setupRulesets(app, db, requireAuth) {
       ).run(newID, src.id);
       db.prepare(
         'INSERT INTO ruleset_words (ruleset_id, word, wordlist_id) SELECT ?, word, wordlist_id FROM ruleset_words WHERE ruleset_id = ?'
+      ).run(newID, src.id);
+      db.prepare(
+        `INSERT INTO ruleset_sounds (ruleset_id, kind, filename, mime, data, uploaded_at)
+         SELECT ?, kind, filename, mime, data, uploaded_at FROM ruleset_sounds WHERE ruleset_id = ?`
       ).run(newID, src.id);
       return newID;
     });
@@ -333,6 +333,54 @@ function setupRulesets(app, db, requireAuth) {
       if (!(err instanceof InputError)) throw err;
       res.status(400).json({ error: err.message });
     }
+  });
+
+  // The game's custom sound, for the board and B2's Play button.
+  app.get('/api/rulesets/:id/sounds/:kind', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    const row = db.prepare('SELECT mime, data FROM ruleset_sounds WHERE ruleset_id = ? AND kind = ?').get(rs.id, req.params.kind);
+    if (!row) return res.redirect(sounds.DEFAULTS[req.params.kind] || '/');
+    res.set('Cache-Control', 'private, max-age=31536000').type(row.mime).send(Buffer.from(row.data));
+  });
+
+  // (B2) Load file: the raw file is the request body; X-Filename names it.
+  // Takes effect at once, like Modify Vocabulary.
+  app.post(
+    '/api/rulesets/:id/sounds/:kind',
+    requireAuth,
+    // A generous limit so an oversized file gets our message, not a bare 413.
+    require('express').raw({ type: () => true, limit: sounds.MAX_BYTES * 3 }),
+    (req, res) => {
+      const rs = memberRuleset(req, res);
+      if (!rs) return;
+      if (!sounds.KINDS.includes(req.params.kind)) return res.status(404).json({ error: 'Unknown sound.' });
+      const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      if (buf.length > sounds.MAX_BYTES) return res.status(400).json({ error: 'That file is larger than 1 MB.' });
+      const mime = sounds.typeOf(buf);
+      if (!mime) return res.status(400).json({ error: 'That file is not an MP3, M4A or WAV sound.' });
+      let filename = String(req.get('X-Filename') || 'sound');
+      try {
+        filename = decodeURIComponent(filename);
+      } catch {
+        // keep it as sent
+      }
+      filename = filename.slice(0, 100);
+      db.prepare(
+        `INSERT INTO ruleset_sounds (ruleset_id, kind, filename, mime, data, uploaded_at) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(ruleset_id, kind) DO UPDATE SET filename = excluded.filename, mime = excluded.mime,
+           data = excluded.data, uploaded_at = excluded.uploaded_at`
+      ).run(rs.id, req.params.kind, filename, mime, buf, Date.now());
+      res.json(soundInfo(rs.id));
+    }
+  );
+
+  // (B2) Restore Default.
+  app.delete('/api/rulesets/:id/sounds/:kind', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    db.prepare('DELETE FROM ruleset_sounds WHERE ruleset_id = ? AND kind = ?').run(rs.id, req.params.kind);
+    res.json(soundInfo(rs.id));
   });
 
   // (P2) The RuleSet's vocabulary with each word's source.

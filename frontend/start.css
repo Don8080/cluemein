@@ -588,3 +588,30 @@ button.link-button,
   color: #d00000;
   font-weight: bold;
 }
+
+/* B2 sound file rows: Default/Custom, Play, Load file, Restore Default, ?. */
+#ruleset-screen .sound-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em;
+}
+
+#ruleset-screen .sound-row button {
+  padding: 0.25em 0.7em;
+  font-size: 0.85em;
+}
+
+#ruleset-screen .sound-row button.help-button {
+  padding: 0;
+}
+
+#ruleset-screen .sound-status {
+  min-width: 4.5em;
+  font-weight: bold;
+}
+
+#ruleset-screen .sound-error {
+  flex-basis: 100%;
+  margin: 0;
+}

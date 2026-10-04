@@ -3,6 +3,7 @@ import axios from 'axios';
 import { RulesetForm, settingsFromRuleset, settingsProblem, settingsToRequest } from '~/ui/ruleset_form';
 import { Vocabulary } from '~/ui/vocabulary';
 import { Popup } from '~/ui/popup';
+import { SoundRows } from '~/ui/sound_rows';
 
 // (B2) Rename popup: "Rename <old name> to ____". Saves at once.
 const RenamePopup = ({ rulesetID, oldName, onRenamed, onClose }) => {
@@ -128,6 +129,14 @@ export const ModifyGame = ({ rulesetID }) => {
         lists={lists}
         mode="modify"
         addedListIDs={ruleset.wordlist_ids}
+        afterGraffito={
+          <SoundRows
+            rulesetID={rulesetID}
+            sounds={ruleset.sounds}
+            disabled={deleted}
+            onChange={(sounds) => setRuleset({ ...ruleset, sounds })}
+          />
+        }
         beforeWordLists={
           <div className="form-section">
             <button type="button" disabled={deleted} onClick={() => setShowVocabulary(true)}>

@@ -188,13 +188,27 @@ function initDb() {
     db.exec("ALTER TABLE rulesets ADD COLUMN team_mode TEXT NOT NULL DEFAULT 'random'");
   }
   if (!hasColumn('rulesets', 'warning_gong_seconds')) {
-    // How long the 30-second warning gong plays (0 = silent). Set in B2.
+    // No longer used (replaced by custom sound files, ruleset_sounds); kept
+    // because SQLite columns can't easily be dropped.
     db.exec('ALTER TABLE rulesets ADD COLUMN warning_gong_seconds REAL NOT NULL DEFAULT 7');
   }
   if (!hasColumn('users', 'phone')) {
     // Optional; set from the Start page's account popup, shown in the Waiting Room.
     db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
   }
+  // Custom sounds uploaded in B2, replacing the default gongs for one game.
+  // kind: 'warning' (30 seconds left) or 'end' (out of time).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ruleset_sounds (
+      ruleset_id INTEGER NOT NULL REFERENCES rulesets(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      mime TEXT NOT NULL,
+      data BLOB NOT NULL,
+      uploaded_at INTEGER NOT NULL,
+      PRIMARY KEY (ruleset_id, kind)
+    );
+  `);
   if (hasColumn('ruleset_members', 'user_id')) {
     // Members used to be keyed by account; now by email (see the table).
     db.exec(`

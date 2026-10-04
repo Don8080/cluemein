@@ -6,6 +6,7 @@
 // server restart. Browsers long-poll /state, which doubles as a presence
 // heartbeat.
 const { Game, randomState, nextGameState } = require('./game');
+const sounds = require('./sounds');
 const { assignRoles, chooseTeamCluers, newStats, promoteCluer, recordCluer, register } = require('./roles');
 
 // Automatic absence detection (a silent browser or a closed tab makes the
@@ -314,7 +315,7 @@ function setupSessions(app, db, requireAuth) {
         description: rs.description || '',
         min_players: rs.min_players,
         team_mode: rs.team_mode,
-        warning_gong_seconds: rs.warning_gong_seconds,
+        sounds: sounds.info(db, rs.id), // timer sound URLs (default or custom)
         video_url: rs.video_url || '',
         graffito_message: rs.graffito_message || '',
         graffito_url: rs.graffito_url || '',
