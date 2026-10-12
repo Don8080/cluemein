@@ -12,10 +12,13 @@ function getTimeRemaining(endTime: number) {
 }
 
 // Plays a timer sound (the default gong or the game's custom file).
-function playSound(url: string) {
+function playSound(sound: { url: string; volume: number }) {
+  if (!sound?.url || sound.volume === 0) return;
+  const audio = new Audio(sound.url);
+  audio.volume = Math.min(Math.max(sound.volume ?? 1, 0), 1);
   // Browsers may block sound until the player has clicked on the page;
   // the timer's colors still show.
-  if (url) new Audio(url).play().catch(() => {});
+  audio.play().catch(() => {});
 }
 
 interface TimerProps {
@@ -23,8 +26,8 @@ interface TimerProps {
   timerDurationMs: number;
   handleExpiration: () => void;
   freezeTimer: boolean;
-  warningSound: string; // 30 seconds left
-  endSound: string; // out of time
+  warningSound: { url: string; volume: number }; // 30 seconds left
+  endSound: { url: string; volume: number }; // out of time
 }
 
 // "Timer mm:ss". In the last 30 seconds of a turn its background turns

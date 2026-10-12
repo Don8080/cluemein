@@ -14,18 +14,20 @@ function typeOf(buf) {
   return null;
 }
 
-// { warning: { custom, filename, url }, end: {...} }. A custom file's URL
+// { warning: { custom, filename, url, volume }, end: {...} }. A custom file's URL
 // changes with each upload, so browsers fetch the new one.
 function info(db, rulesetID) {
   const rows = db.prepare('SELECT kind, filename, uploaded_at FROM ruleset_sounds WHERE ruleset_id = ?').all(rulesetID);
+  const vol = db.prepare('SELECT warning_volume, end_volume FROM rulesets WHERE id = ?').get(rulesetID) || {};
   return Object.fromEntries(
     KINDS.map((kind) => {
       const r = rows.find((x) => x.kind === kind);
+      const volume = vol[`${kind}_volume`] ?? 1;
       return [
         kind,
         r
-          ? { custom: true, filename: r.filename, url: `/api/rulesets/${rulesetID}/sounds/${kind}?v=${r.uploaded_at}` }
-          : { custom: false, filename: null, url: DEFAULTS[kind] },
+          ? { custom: true, filename: r.filename, url: `/api/rulesets/${rulesetID}/sounds/${kind}?v=${r.uploaded_at}`, volume }
+          : { custom: false, filename: null, url: DEFAULTS[kind], volume },
       ];
     })
   );

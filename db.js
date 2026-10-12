@@ -196,6 +196,11 @@ function initDb() {
     // Optional; set from the Start page's account popup, shown in the Waiting Room.
     db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
   }
+  // Volume of each timer sound for this game, 0 to 1 (B2 sliders).
+  if (!hasColumn('rulesets', 'warning_volume')) {
+    db.exec('ALTER TABLE rulesets ADD COLUMN warning_volume REAL NOT NULL DEFAULT 1');
+    db.exec('ALTER TABLE rulesets ADD COLUMN end_volume REAL NOT NULL DEFAULT 1');
+  }
   // Custom sounds uploaded in B2, replacing the default gongs for one game.
   // kind: 'warning' (30 seconds left) or 'end' (out of time).
   db.exec(`

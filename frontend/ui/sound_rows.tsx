@@ -3,8 +3,9 @@ import axios from 'axios';
 import { Popup } from '~/ui/popup';
 
 // (B2) "Sound file: 30 Second Warning" and "Sound file: Out of Time": each
-// shows Default or Custom, with Play, Load file, Restore Default (Custom
-// only) and a "?". Loading or restoring takes effect at once.
+// shows Default or Custom, with Play, a volume slider, Load file, Restore
+// Default (Custom only) and a "?". Loading, restoring and the volume take
+// effect at once.
 const SOUNDS = [
   ['warning', '30 Second Warning'],
   ['end', 'Out of Time'],
@@ -23,6 +24,25 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
   const [help, setHelp] = React.useState(false);
   const inputs = { warning: React.useRef(null), end: React.useRef(null) };
   const setError = (kind, msg) => setErrors((e) => ({ ...e, [kind]: msg }));
+  // Slider positions (0-100) while dragging; saved shortly after the last move.
+  const [volumes, setVolumes] = React.useState({});
+  const saveTimers = React.useRef({});
+  const volumeOf = (kind) => volumes[kind] ?? Math.round((sounds[kind].volume ?? 1) * 100);
+
+  const changeVolume = (kind, percent) => {
+    setVolumes((v) => ({ ...v, [kind]: percent }));
+    if (playing?.kind === kind) playing.audio.volume = percent / 100;
+    clearTimeout(saveTimers.current[kind]);
+    saveTimers.current[kind] = setTimeout(async () => {
+      try {
+        const { data } = await axios.post(`/api/rulesets/${rulesetID}/sounds/${kind}/volume`, { volume: percent / 100 });
+        onChange(data);
+        setVolumes((v) => ({ ...v, [kind]: undefined }));
+      } catch (err) {
+        setError(kind, errorText(err));
+      }
+    }, 400);
+  };
 
   const stop = () => {
     playing?.audio.pause();
@@ -36,6 +56,7 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
     playing?.audio.pause();
     setError(kind, null);
     const audio = new Audio(sounds[kind].url);
+    audio.volume = volumeOf(kind) / 100;
     audio.onended = () => setPlaying((p) => (p?.audio === audio ? null : p));
     audio.play().catch(() => {
       setError(kind, 'This browser could not play that sound.');
@@ -88,6 +109,19 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
               <button type="button" onClick={() => play(kind)}>
                 {playing?.kind === kind ? 'Stop' : 'Play'}
               </button>
+              <span className="sound-volume" title="Volume">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={volumeOf(kind)}
+                  disabled={disabled}
+                  onChange={(e) => changeVolume(kind, Number(e.target.value))}
+                  aria-label={`${label} volume`}
+                />
+                <span className="sound-volume-value">{volumeOf(kind)}%</span>
+              </span>
               <button type="button" disabled={disabled || busy === kind} onClick={() => inputs[kind].current.click()}>
                 Load file
               </button>

@@ -262,9 +262,10 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, team_mode, created_by)
+             enforce_timer, team_mode, warning_volume, end_volume, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
-             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, ?
+             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, warning_volume,
+             end_volume, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.
@@ -374,6 +375,17 @@ function setupRulesets(app, db, requireAuth) {
       res.json(soundInfo(rs.id));
     }
   );
+
+  // (B2) Volume slider for one sound, 0 to 1. Takes effect at once.
+  app.post('/api/rulesets/:id/sounds/:kind/volume', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    if (!sounds.KINDS.includes(req.params.kind)) return res.status(404).json({ error: 'Unknown sound.' });
+    const volume = Number(req.body.volume);
+    if (!(volume >= 0 && volume <= 1)) return res.status(400).json({ error: 'Volume must be between 0 and 100%.' });
+    db.prepare(`UPDATE rulesets SET ${req.params.kind}_volume = ? WHERE id = ?`).run(volume, rs.id);
+    res.json(soundInfo(rs.id));
+  });
 
   // (B2) Restore Default.
   app.delete('/api/rulesets/:id/sounds/:kind', requireAuth, (req, res) => {

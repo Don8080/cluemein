@@ -688,3 +688,20 @@ button.link-button,
 .info-text li {
   margin-bottom: 0.4em;
 }
+
+/* Volume slider on each B2 sound line. */
+#ruleset-screen .sound-volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+#ruleset-screen .sound-volume input[type='range'] {
+  width: 7em;
+}
+
+#ruleset-screen .sound-volume-value {
+  min-width: 2.6em;
+  font-size: 0.85em;
+  color: #555;
+}

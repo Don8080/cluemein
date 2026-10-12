@@ -311,8 +311,8 @@ export const Board = ({ view, act }) => {
               timerDurationMs={board.timer_duration_ms}
               handleExpiration={() => board.enforce_timer && !board.last_guess && endTurn()}
               freezeTimer={over}
-              warningSound={view.ruleset.sounds.warning.url}
-              endSound={view.ruleset.sounds.end.url}
+              warningSound={view.ruleset.sounds.warning}
+              endSound={view.ruleset.sounds.end}
             />
             {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>
