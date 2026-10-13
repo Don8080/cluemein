@@ -745,6 +745,7 @@ button.sound-toggle.off {
 }
 
 .switch {
+  position: relative; /* keeps the hidden checkbox inside the switch */
   display: inline-flex;
   align-items: center;
   gap: 0.5em;
@@ -760,6 +761,8 @@ button.sound-toggle.off {
 }
 
 .switch-track {
+  display: inline-block; /* a span: needs a box to take its size */
+  flex: none;
   position: relative;
   width: 2.8em;
   height: 1.5em;
@@ -769,6 +772,7 @@ button.sound-toggle.off {
 }
 
 .switch-knob {
+  display: block;
   position: absolute;
   top: 0.15em;
   left: 0.15em;
