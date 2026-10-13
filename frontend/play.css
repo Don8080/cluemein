@@ -721,12 +721,6 @@ button.turn-banner.end-turn:disabled {
   color: #ccc;
 }
 
-/* Sound On / Sound Off (C1); Off is shown in gray italics. */
-#mode-toggle button.sound-toggle.off,
-button.sound-toggle.off {
-  color: #777;
-  font-style: italic;
-}
 
 /* Sound popup (C1): "My Device:" / "All Players:" button and an On/Off switch. */
 .sound-popup {
@@ -753,11 +747,20 @@ button.sound-toggle.off {
   user-select: none;
 }
 
+/* The real checkbox stays for keyboard use but is never drawn. */
 .switch input {
   position: absolute;
   opacity: 0;
-  width: 0;
-  height: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  clip-path: inset(50%);
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .switch-track {
@@ -779,8 +782,9 @@ button.sound-toggle.off {
   width: 1.2em;
   height: 1.2em;
   border-radius: 50%;
+  box-sizing: border-box;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   transition: left 0.15s;
 }
 
