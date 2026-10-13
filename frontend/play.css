@@ -796,11 +796,6 @@ button.turn-banner.end-turn:disabled {
   left: 1.45em;
 }
 
-.switch input:focus-visible + .switch-track {
-  outline: 2px solid #2a6ebb;
-  outline-offset: 2px;
-}
-
 .switch-label {
   min-width: 2em;
   font-weight: bold;
