@@ -204,7 +204,7 @@ button.link-button,
 /* Create Game (B1) and Modify Game (B2). */
 
 #ruleset-screen {
-  max-width: 720px;
+  max-width: 960px; /* wide enough for the Out of Time sound line */
   margin: 0 auto 3em;
   padding: 0 16px;
   font-family: 'Roboto', sans-serif;
@@ -598,8 +598,9 @@ button.link-button,
 }
 
 #ruleset-screen .sound-row button {
-  padding: 0.25em 0.7em;
-  font-size: 0.85em;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  white-space: nowrap;
 }
 
 #ruleset-screen .sound-row button.help-button {
@@ -607,13 +608,20 @@ button.link-button,
 }
 
 #ruleset-screen .sound-status {
-  min-width: 4.5em;
+  min-width: 4em;
   font-weight: bold;
 }
 
 #ruleset-screen .sound-error {
-  flex-basis: 100%;
-  margin: 0;
+  margin: -0.4em 0 0;
+}
+
+/* Each sound's controls stay on one line where there is room. */
+@media (min-width: 1000px) {
+  #ruleset-screen .sound-row {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
 }
 
 /* Create Game and Modify Game: blue (brighter than the gray default,
@@ -697,7 +705,7 @@ button.link-button,
 }
 
 #ruleset-screen .sound-volume input[type='range'] {
-  width: 7em;
+  width: 5em;
 }
 
 #ruleset-screen .sound-volume-value {
@@ -711,7 +719,8 @@ button.link-button,
   display: inline-flex;
   align-items: center;
   gap: 0.2em;
-  margin-left: 0.4em;
+  margin-left: 0.2em;
+  font-size: 0.9em;
 }
 
 #ruleset-screen .sound-repeat label.check {
@@ -721,5 +730,6 @@ button.link-button,
 }
 
 #ruleset-screen .sound-repeat input.short {
-  width: 4em;
+  width: 3.5em;
+  padding: 0.2em;
 }

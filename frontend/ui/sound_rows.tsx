@@ -198,8 +198,13 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
                   e.target.value = ''; // so the same file can be chosen again
                 }}
               />
-              {errors[kind] && <span className="form-error sound-error">{errors[kind]}</span>}
             </span>
+            {errors[kind] && (
+              <>
+                <span />
+                <span className="form-error sound-error">{errors[kind]}</span>
+              </>
+            )}
           </React.Fragment>
         );
       })}
