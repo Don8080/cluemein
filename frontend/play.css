@@ -784,7 +784,8 @@ button.turn-banner.end-turn:disabled {
   border-radius: 50%;
   box-sizing: border-box;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: none; /* no ring around the knob */
+  box-shadow: none;
   transition: left 0.15s;
 }
 
