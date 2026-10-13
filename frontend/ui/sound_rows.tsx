@@ -51,6 +51,30 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
   // Leaving the page stops a sound that is still playing.
   React.useEffect(() => () => playing?.audio.pause(), [playing]);
 
+  // Out of Time: Repeat Sound, Every __ Seconds. Saved shortly after a change.
+  const [repeatDraft, setRepeatDraft] = React.useState(null); // { on, seconds } while editing
+  const repeatTimer = React.useRef(null);
+  const repeat = repeatDraft ?? { on: !!sounds.end.repeat, seconds: String(sounds.end.repeatSeconds ?? 10) };
+  const changeRepeat = (next) => {
+    setRepeatDraft(next);
+    setError('end', null);
+    clearTimeout(repeatTimer.current);
+    const seconds = Number(next.seconds);
+    if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
+      if (next.seconds !== '') setError('end', 'Enter a whole number of seconds from 1 to 600.');
+      return;
+    }
+    repeatTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await axios.post(`/api/rulesets/${rulesetID}/sounds/end/repeat`, { on: next.on, seconds });
+        onChange(data);
+        setRepeatDraft(null);
+      } catch (err) {
+        setError('end', errorText(err));
+      }
+    }, 500);
+  };
+
   const play = (kind) => {
     if (playing?.kind === kind) return stop();
     playing?.audio.pause();
@@ -133,6 +157,37 @@ export const SoundRows = ({ rulesetID, sounds, onChange, disabled }) => {
               <button type="button" className="help-button" title="Acceptable files" onClick={() => setHelp(true)}>
                 ?
               </button>
+              {kind === 'end' && (
+                <span className="sound-repeat">
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      checked={repeat.on}
+                      disabled={disabled}
+                      onChange={(e) => changeRepeat({ ...repeat, on: e.target.checked })}
+                    />{' '}
+                    Repeat Sound
+                  </label>
+                  {repeat.on && (
+                    <>
+                      {' '}
+                      Every{' '}
+                      <input
+                        className="short"
+                        type="number"
+                        min="1"
+                        max="600"
+                        step="1"
+                        value={repeat.seconds}
+                        disabled={disabled}
+                        onChange={(e) => changeRepeat({ ...repeat, seconds: e.target.value })}
+                        aria-label="Repeat every how many seconds"
+                      />{' '}
+                      Seconds
+                    </>
+                  )}
+                </span>
+              )}
               <input
                 ref={inputs[kind]}
                 type="file"

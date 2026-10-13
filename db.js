@@ -201,6 +201,12 @@ function initDb() {
     db.exec('ALTER TABLE rulesets ADD COLUMN warning_volume REAL NOT NULL DEFAULT 1');
     db.exec('ALTER TABLE rulesets ADD COLUMN end_volume REAL NOT NULL DEFAULT 1');
   }
+  // Out of Time sound: repeat every end_repeat_seconds while the timer
+  // stays at 0:00 (B2 "Repeat Sound").
+  if (!hasColumn('rulesets', 'end_repeat')) {
+    db.exec('ALTER TABLE rulesets ADD COLUMN end_repeat INTEGER NOT NULL DEFAULT 0');
+    db.exec('ALTER TABLE rulesets ADD COLUMN end_repeat_seconds INTEGER NOT NULL DEFAULT 10');
+  }
   // Custom sounds uploaded in B2, replacing the default gongs for one game.
   // kind: 'warning' (30 seconds left) or 'end' (out of time).
   db.exec(`

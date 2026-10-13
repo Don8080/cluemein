@@ -262,10 +262,10 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, team_mode, warning_volume, end_volume, created_by)
+             enforce_timer, team_mode, warning_volume, end_volume, end_repeat, end_repeat_seconds, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
              graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, warning_volume,
-             end_volume, ?
+             end_volume, end_repeat, end_repeat_seconds, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.
@@ -384,6 +384,18 @@ function setupRulesets(app, db, requireAuth) {
     const volume = Number(req.body.volume);
     if (!(volume >= 0 && volume <= 1)) return res.status(400).json({ error: 'Volume must be between 0 and 100%.' });
     db.prepare(`UPDATE rulesets SET ${req.params.kind}_volume = ? WHERE id = ?`).run(volume, rs.id);
+    res.json(soundInfo(rs.id));
+  });
+
+  // (B2) Out of Time: Repeat Sound, Every __ Seconds (1 to 600). Takes effect at once.
+  app.post('/api/rulesets/:id/sounds/end/repeat', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    const seconds = Number(req.body.seconds);
+    if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
+      return res.status(400).json({ error: 'Enter a whole number of seconds from 1 to 600.' });
+    }
+    db.prepare('UPDATE rulesets SET end_repeat = ?, end_repeat_seconds = ? WHERE id = ?').run(req.body.on ? 1 : 0, seconds, rs.id);
     res.json(soundInfo(rs.id));
   });
 

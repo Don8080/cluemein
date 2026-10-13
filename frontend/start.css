@@ -705,3 +705,21 @@ button.link-button,
   font-size: 0.85em;
   color: #555;
 }
+
+/* Out of Time: Repeat Sound, Every __ Seconds. */
+#ruleset-screen .sound-repeat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  margin-left: 0.4em;
+}
+
+#ruleset-screen .sound-repeat label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+#ruleset-screen .sound-repeat input.short {
+  width: 4em;
+}
