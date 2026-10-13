@@ -720,3 +720,10 @@ button.turn-banner.end-turn:disabled {
 .dark-mode .board-info {
   color: #ccc;
 }
+
+/* Sound On / Sound Off (C1); Off is shown in gray italics. */
+#mode-toggle button.sound-toggle.off,
+button.sound-toggle.off {
+  color: #777;
+  font-style: italic;
+}

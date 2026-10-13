@@ -29,6 +29,7 @@ interface TimerProps {
   freezeTimer: boolean;
   warningSound: { url: string; volume: number }; // 30 seconds left
   endSound: { url: string; volume: number; repeat?: boolean; repeatSeconds?: number }; // out of time
+  muted?: boolean; // Sound Off for the session
 }
 
 // "Timer mm:ss". In the last 30 seconds of a turn its background turns
@@ -42,10 +43,19 @@ const Timer: React.FunctionComponent<TimerProps> = ({
   freezeTimer = false,
   warningSound,
   endSound,
+  muted = false,
 }) => {
   const [timeRemaining, setTimeRemaining] = React.useState(undefined);
   const lastTotal = React.useRef(null);
   const endAudio = React.useRef(null); // the Out of Time sound playing now
+  const warningAudio = React.useRef(null);
+
+  // Sound Off silences anything still playing.
+  React.useEffect(() => {
+    if (!muted) return;
+    warningAudio.current?.pause();
+    endAudio.current?.pause();
+  }, [muted]);
   const endTime = new Date(roundStartedAt).getTime() + timerDurationMs + 1000;
 
   React.useEffect(() => {
@@ -73,7 +83,9 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     const total = timeRemaining?.total;
     if (total === undefined || freezeTimer) return;
     const prev = lastTotal.current;
-    if (prev !== null && prev > 30 && total <= 30) playSound(warningSound);
+    lastTotal.current = total;
+    if (muted) return;
+    if (prev !== null && prev > 30 && total <= 30) warningAudio.current = playSound(warningSound);
     const playEnd = () => {
       endAudio.current?.pause(); // a repeat starts the sound over
       endAudio.current = playSound(endSound);
@@ -84,7 +96,6 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     if (endSound?.repeat && every > 0 && prev !== null && prev <= 0 && total < 0) {
       if (Math.floor(-prev / every) < Math.floor(-total / every)) playEnd();
     }
-    lastTotal.current = total;
   }, [timeRemaining?.total]);
   // Repeats stop by themselves when the turn ends (the countdown restarts)
   // or the board is won (frozen); a sound already playing finishes.

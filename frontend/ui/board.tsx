@@ -313,6 +313,7 @@ export const Board = ({ view, act }) => {
               freezeTimer={over}
               warningSound={view.ruleset.sounds.warning}
               endSound={view.ruleset.sounds.end}
+              muted={!view.sound_on}
             />
             {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>
@@ -334,6 +335,15 @@ export const Board = ({ view, act }) => {
               onChange={(e) => act('floaters-can-click', { on: e.target.checked })}
             />
           </label>
+          {/* Shows the current setting; clicking switches it for everyone in the session. */}
+          <button
+            type="button"
+            className={'sound-toggle' + (view.sound_on ? '' : ' off')}
+            title={view.sound_on ? 'Click to turn timer sounds off for everyone' : 'Click to turn timer sounds on for everyone'}
+            onClick={() => act('sound', { on: !view.sound_on })}
+          >
+            {view.sound_on ? 'Sound On' : 'Sound Off'}
+          </button>
           <button type="button" onClick={openModifyGame}>
             Modify Game
           </button>

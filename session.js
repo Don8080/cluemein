@@ -325,6 +325,7 @@ function setupSessions(app, db, requireAuth) {
       resumable: s.resumable,
       boards_played: s.boards.length, // 0 before the session's first game
       floaters_can_click: s.floatersCanClick,
+      sound_on: !s.soundOff,
       board: null,
     };
 
@@ -780,6 +781,13 @@ function setupSessions(app, db, requireAuth) {
       return null;
     }
     if (wasCluer && ensureCluers(s, rs, entry)) dealBoard(s, rs);
+    return null;
+  });
+
+  // Sound On / Sound Off (C1): for everyone in the session, across boards
+  // and games, until someone switches it back.
+  action('sound', (ctx, body) => {
+    ctx.s.soundOff = !body.on;
     return null;
   });
 
