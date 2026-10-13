@@ -738,7 +738,7 @@ button.turn-banner.end-turn:disabled {
   cursor: pointer;
 }
 
-.switch {
+.sound-switch {
   position: relative; /* keeps the hidden checkbox inside the switch */
   display: inline-flex;
   align-items: center;
@@ -748,7 +748,7 @@ button.turn-banner.end-turn:disabled {
 }
 
 /* The real checkbox stays for keyboard use but is never drawn. */
-.switch input {
+.sound-switch input {
   position: absolute;
   opacity: 0;
   width: 1px;
@@ -763,7 +763,7 @@ button.turn-banner.end-turn:disabled {
   pointer-events: none;
 }
 
-.switch-track {
+.sound-switch-track {
   display: inline-block; /* a span: needs a box to take its size */
   flex: none;
   position: relative;
@@ -774,7 +774,7 @@ button.turn-banner.end-turn:disabled {
   transition: background 0.15s;
 }
 
-.switch-knob {
+.sound-switch-knob {
   display: block;
   position: absolute;
   top: 0.15em;
@@ -789,15 +789,15 @@ button.turn-banner.end-turn:disabled {
   transition: left 0.15s;
 }
 
-.switch.on .switch-track {
+.sound-switch.on .sound-switch-track {
   background: #2e9e4f;
 }
 
-.switch.on .switch-knob {
+.sound-switch.on .sound-switch-knob {
   left: 1.45em;
 }
 
-.switch-label {
+.sound-switch-label {
   min-width: 2em;
   font-weight: bold;
 }

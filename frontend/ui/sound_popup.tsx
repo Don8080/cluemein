@@ -63,12 +63,12 @@ export const SoundPopup = ({ view, act, onClose }) => {
         <button type="button" className="sound-scope" onClick={switchScope} title="Switch between this device and all players">
           {scope === 'device' ? 'My Device:' : 'All Players:'}
         </button>
-        <label className={'switch' + (on ? ' on' : '')}>
+        <label className={'sound-switch' + (on ? ' on' : '')}>
           <input type="checkbox" checked={on} onChange={toggle} />
-          <span className="switch-track">
-            <span className="switch-knob" />
+          <span className="sound-switch-track">
+            <span className="sound-switch-knob" />
           </span>
-          <span className="switch-label">{on ? 'On' : 'Off'}</span>
+          <span className="sound-switch-label">{on ? 'On' : 'Off'}</span>
         </label>
       </div>
       <div className="button-row centered">
