@@ -335,14 +335,15 @@ export const Board = ({ view, act }) => {
               onChange={(e) => act('floaters-can-click', { on: e.target.checked })}
             />
           </label>
-          {/* Shows the current setting; clicking switches it for everyone in the session. */}
+          {/* Names the action: "Sound Off" turns the timer sounds off for everyone
+              in the session; "Sound On" turns them back on. */}
           <button
             type="button"
             className={'sound-toggle' + (view.sound_on ? '' : ' off')}
-            title={view.sound_on ? 'Click to turn timer sounds off for everyone' : 'Click to turn timer sounds on for everyone'}
+            title={view.sound_on ? 'Timer sounds are on. Click to turn them off for everyone' : 'Timer sounds are off. Click to turn them on for everyone'}
             onClick={() => act('sound', { on: !view.sound_on })}
           >
-            {view.sound_on ? 'Sound On' : 'Sound Off'}
+            {view.sound_on ? 'Sound Off' : 'Sound On'}
           </button>
           <button type="button" onClick={openModifyGame}>
             Modify Game
