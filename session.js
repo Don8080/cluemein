@@ -282,6 +282,16 @@ function setupSessions(app, db, requireAuth) {
     return false; // Cluers never click
   }
 
+  function soundView(s, present) {
+    const devices = {};
+    let anyOn = false;
+    for (const [id, d] of Object.entries(s.devices || {})) {
+      devices[id] = !d.off;
+      if (!d.off && present.has(d.uid)) anyOn = true;
+    }
+    return { devices, any_on: anyOn, all_off: !!s.allSoundOff, session_started: s.startedAt };
+  }
+
   // ---- What each player sees -----------------------------------------------
 
   function view(entry, uid) {
@@ -325,7 +335,9 @@ function setupSessions(app, db, requireAuth) {
       resumable: s.resumable,
       boards_played: s.boards.length, // 0 before the session's first game
       floaters_can_click: s.floatersCanClick,
-      sound_on: !s.soundOff,
+      // Timer sound per device (one browser): devices maps id -> on; any_on
+      // covers the devices of players who are here.
+      sound: soundView(s, present),
       board: null,
     };
 
@@ -427,10 +439,16 @@ function setupSessions(app, db, requireAuth) {
   }
 
   // Heartbeat bookkeeping shared by /join and /state.
-  function checkIn(ctx, tab) {
+  function checkIn(ctx, tab, device) {
     const { entry, s, uid } = ctx;
     if (s.loggedOff.includes(uid)) return; // logged off: no longer counts as here
     let dirty = touch(entry, uid, tab);
+    // A device seen for the first time starts with the room's sound setting.
+    s.devices = s.devices || {};
+    if (device && !s.devices[device]) {
+      s.devices[device] = { uid, off: !!s.allSoundOff };
+      dirty = true;
+    }
     if (s.status === 'playing' && !s.roles[uid]) {
       addFloater(s, uid); // joining mid-game: start as a Floater
       dirty = true;
@@ -443,7 +461,7 @@ function setupSessions(app, db, requireAuth) {
     const ctx = load(req, res, true);
     if (!ctx) return;
     ctx.s.loggedOff = ctx.s.loggedOff.filter((id) => id !== ctx.uid); // Play again rejoins
-    checkIn(ctx, req.body.tab);
+    checkIn(ctx, req.body.tab, req.body.device);
     res.json(view(ctx.entry, ctx.uid));
   });
 
@@ -452,7 +470,7 @@ function setupSessions(app, db, requireAuth) {
     const ctx = load(req, res);
     if (!ctx) return;
     const { entry, s, uid } = ctx;
-    checkIn(ctx, req.body.tab);
+    checkIn(ctx, req.body.tab, req.body.device);
     if (req.body.version !== s.version || s.loggedOff.includes(uid)) return res.json(view(entry, uid));
 
     let done = false;
@@ -784,10 +802,20 @@ function setupSessions(app, db, requireAuth) {
     return null;
   });
 
-  // Sound On / Sound Off (C1): for everyone in the session, across boards
-  // and games, until someone switches it back.
+  // Sound (C1 popup): on or off for this device ("My Device") or for every
+  // device in the session ("All Players"). Lasts for the session.
   action('sound', (ctx, body) => {
-    ctx.s.soundOff = !body.on;
+    const { s, uid } = ctx;
+    s.devices = s.devices || {};
+    const off = !body.on;
+    if (body.scope === 'all') {
+      s.allSoundOff = off; // devices that join later start this way too
+      for (const d of Object.values(s.devices)) d.off = off;
+      return null;
+    }
+    const device = String(body.device || '');
+    if (!device) return 'Unknown device.';
+    s.devices[device] = { uid, off };
     return null;
   });
 

@@ -5,6 +5,7 @@ import { SessionHistory } from '~/ui/session_history';
 import { setLastRuleset } from '~/ui/prefs';
 import Timer from '~/ui/timer';
 import { TEAM_MODES } from '~/ui/ruleset_form';
+import { SoundPopup, myDeviceOn } from '~/ui/sound_popup';
 
 const defaultFavicon =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA8SURBVHgB7dHBDQAgCAPA1oVkBWdzPR84kW4AD0LCg36bXJqUcLL2eVY/EEwDFQBeEfPnqUpkLmigAvABK38Grs5TfaMAAAAASUVORK5CYII=';
@@ -175,6 +176,7 @@ export const Board = ({ view, act }) => {
   const [showSettings, setShowSettings] = React.useState(false);
   const [menuFor, setMenuFor] = React.useState(null);
   const [showHistory, setShowHistory] = React.useState(false);
+  const [showSound, setShowSound] = React.useState(false);
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
@@ -313,7 +315,7 @@ export const Board = ({ view, act }) => {
               freezeTimer={over}
               warningSound={view.ruleset.sounds.warning}
               endSound={view.ruleset.sounds.end}
-              muted={!view.sound_on}
+              muted={!myDeviceOn(view.sound)}
             />
             {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>
@@ -335,15 +337,13 @@ export const Board = ({ view, act }) => {
               onChange={(e) => act('floaters-can-click', { on: e.target.checked })}
             />
           </label>
-          {/* Names the action: "Sound Off" turns the timer sounds off for everyone
-              in the session; "Sound On" turns them back on. */}
+          {/* Shows this device's setting; opens the Sound popup. */}
           <button
             type="button"
-            className={'sound-toggle' + (view.sound_on ? '' : ' off')}
-            title={view.sound_on ? 'Timer sounds are on. Click to turn them off for everyone' : 'Timer sounds are off. Click to turn them on for everyone'}
-            onClick={() => act('sound', { on: !view.sound_on })}
+            className={'sound-toggle' + (myDeviceOn(view.sound) ? '' : ' off')}
+            onClick={() => setShowSound(true)}
           >
-            {view.sound_on ? 'Sound Off' : 'Sound On'}
+            Sound ({myDeviceOn(view.sound) ? 'On' : 'Off'})
           </button>
           <button type="button" onClick={openModifyGame}>
             Modify Game
@@ -439,6 +439,8 @@ export const Board = ({ view, act }) => {
       </div>
 
       <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} />
+
+      {showSound && <SoundPopup view={view} act={act} onClose={() => setShowSound(false)} />}
 
       {showHistory && <SessionHistory rulesetID={view.ruleset.id} onClose={() => setShowHistory(false)} />}
 

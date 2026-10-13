@@ -2,6 +2,7 @@ import * as React from 'react';
 import axios from 'axios';
 import { WaitingRoom } from '~/ui/waiting_room';
 import { Board } from '~/ui/board';
+import { deviceId } from '~/ui/sound_popup';
 
 // A game's live session: the Waiting Room (A2) until play begins, then the
 // board (C1). Keeps a long-poll open, which also tells the server this
@@ -25,7 +26,7 @@ export const PlayScreen = ({ rulesetID }) => {
     const poll = async () => {
       while (!stopped) {
         try {
-          const { data } = await axios.post(`${base}/state`, { tab, version: version.current });
+          const { data } = await axios.post(`${base}/state`, { tab, device: deviceId(), version: version.current });
           if (stopped) return;
           apply(data);
           if (data.ended || data.logged_off) return;
@@ -40,7 +41,7 @@ export const PlayScreen = ({ rulesetID }) => {
       }
     };
     axios
-      .post(`${base}/join`, { tab })
+      .post(`${base}/join`, { tab, device: deviceId() })
       .then(({ data }) => {
         apply(data);
         poll();

@@ -727,3 +727,73 @@ button.sound-toggle.off {
   color: #777;
   font-style: italic;
 }
+
+/* Sound popup (C1): "My Device:" / "All Players:" button and an On/Off switch. */
+.sound-popup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  margin: 0.8em 0 0.4em;
+}
+
+.popup .sound-popup button.sound-scope {
+  min-width: 8.5em;
+  padding: 0.4em 0.8em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-track {
+  position: relative;
+  width: 2.8em;
+  height: 1.5em;
+  border-radius: 1em;
+  background: #bbb;
+  transition: background 0.15s;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 0.15em;
+  left: 0.15em;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s;
+}
+
+.switch.on .switch-track {
+  background: #2e9e4f;
+}
+
+.switch.on .switch-knob {
+  left: 1.45em;
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid #2a6ebb;
+  outline-offset: 2px;
+}
+
+.switch-label {
+  min-width: 2em;
+  font-weight: bold;
+}
