@@ -76,10 +76,10 @@ export const HowToPlay = ({ onClose }) => (
       <h3>Role Assignments</h3>
       <p>Roles are assigned randomly, under these constraints:</p>
       <p>
-        <b>Primary Goal (highest priority):</b> The main goal is to distribute the Cluer role and the Floater role as
-        evenly as possible, with equal priority. So, assuming the same players throughout a session, Player A may
-        perform the Cluer role one more time than Player B, but not 2 more times, and the same holds for the Floater
-        role. A similar rule is applied to players joining the session late.
+        <b>Primary Goal (highest priority):</b> The main goal is to distribute the Cluer role and the Floater role (if
+        it exists) as evenly as possible, with equal priority. So, assuming the same players throughout a session,
+        Player A may perform the Cluer role one more time than Player B, but not 2 more times, and the same holds for
+        the Floater role (if it exists). A similar rule is applied to players joining the session late.
       </p>
       <p>
         <b>Secondary Goal:</b> Pairs of Cluers (eg Player A vs Player D) are repeated as evenly as the Primary Goal
@@ -97,9 +97,9 @@ export const HowToPlay = ({ onClose }) => (
       </p>
       <p>
         With 3 players, there are normally two Cluers and one Floater. Any player can choose <u>Single Cluer</u> in a
-        player's popup: that player then gives clues for both teams, and the other two guess, one for each team (or
-        both can float). Clicking <u>Two Cluers</u> switches back. Single Cluer boards are not counted as wins or losses
-        in player history.
+        player's popup: that player then gives clues for both teams, and the other two guess, one for each team (or both
+        can float). Clicking <u>Two Cluers</u> switches back. Single Cluer boards are not counted as wins or losses in
+        player history.
       </p>
 
       <h3>Next Board vs Next Game</h3>
