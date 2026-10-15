@@ -303,10 +303,42 @@ function bestSplit(stats, ids, redCluer, blueCluer, g, fixedFloaters = null) {
   return { ...result, score: result.full.slice(2) };
 }
 
+// Single Cluer: one Cluer gives clues for both teams (team 'both'). Always
+// used with 2 players (the other floats); with 3 players when chosen (the
+// other two guess, one for each team). The Cluer is chosen by goal 1 (Cluer
+// and Floater turns even), then the fewest Cluer turns since joining, then
+// the Cluer–guesser balance. There is no face-off to count.
+function assignSingle(stats, ids) {
+  const options = ids.map((c) => {
+    const others = ids.filter((id) => id !== c);
+    const floaters = ids.length === 2 ? others : [];
+    const guessers = ids.length === 2 ? [] : others;
+    const broken = (cluersFair(stats, ids, [c]) ? 0 : 1) + (floatersFair(stats, ids, floaters) ? 0 : 1);
+    const [pairSpread, pairSq] = pairScore(stats, ids, guessers.map((g) => `${c}>${g}`));
+    return { c, floaters, guessers, score: [broken, recent(stats, 'cluerAt', c), pairSpread, pairSq, rand()] };
+  });
+  const { c, floaters, guessers } = best(options, (o) => o.score);
+  const roles = { [c]: { team: 'both', role: 'cluer' } };
+  floaters.forEach((id) => (roles[id] = { team: null, role: 'floater' }));
+  const [red, blue] = rand() < 0.5 ? guessers : [...guessers].reverse();
+  if (red) roles[red] = { team: 'red', role: 'guesser' };
+  if (blue) roles[blue] = { team: 'blue', role: 'guesser' };
+
+  floaters.forEach((id) => stats.floatAt[id].push(stats.n));
+  stats.cluerAt[c].push(stats.n);
+  stats.n++;
+  guessers.forEach((g) => (stats.pairs[`${c}>${g}`] = (stats.pairs[`${c}>${g}`] || 0) + 1));
+  floaters.forEach((id) => (stats.floater[id] = (stats.floater[id] || 0) + 1));
+  // With nobody guessing, the Floater clicks.
+  return { roles, floatersCanClick: guessers.length === 0 };
+}
+
 // Returns { roles, floatersCanClick } for the present players `ids` and
-// updates `stats`. roles: userID -> { team, role }.
-function assignRoles(stats, ids, minTeamSize) {
+// updates `stats`. roles: userID -> { team, role }. `single` asks for one
+// Cluer for both teams (3 players); 2 players always get one.
+function assignRoles(stats, ids, minTeamSize, { single = false } = {}) {
   register(stats, ids);
+  if (ids.length <= 2 || (single && ids.length === 3)) return assignSingle(stats, ids);
   const g = guessersPerTeam(ids.length, minTeamSize);
 
   const choice = chooseCluers(stats, ids, g);

@@ -19,7 +19,13 @@ const MODE_NAMES = Object.fromEntries(TEAM_MODES);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const roleText = (p) =>
-  !p?.role ? 'Watching' : p.role === 'floater' ? 'Floater' : `${cap(p.team)} ${p.role === 'cluer' ? 'Cluer' : 'Guesser'}`;
+  !p?.role
+    ? 'Watching'
+    : p.role === 'floater'
+    ? 'Floater'
+    : p.team === 'both'
+    ? 'Single Cluer (both teams)'
+    : `${cap(p.team)} ${p.role === 'cluer' ? 'Cluer' : 'Guesser'}`;
 
 // A clickable player name; opens that player's actions.
 const PlayerName = ({ p, me, onClick }) => (
@@ -72,8 +78,9 @@ const GuessList = ({ guesses, team }) => {
 
 // One team's column: players (Cluer first), then the team's guesses.
 const TeamList = ({ players, team, me, onName, guesses }) => {
+  // A Single Cluer heads both columns.
   const members = players
-    .filter((p) => p.team === team)
+    .filter((p) => p.team === team || p.team === 'both')
     .sort((a, b) => (a.role === 'cluer' ? -1 : b.role === 'cluer' ? 1 : 0));
   return (
     <div className={`team-list ${team}`}>
@@ -99,12 +106,41 @@ const Marks = ({ red, blue }) => (
 // Actions for a player, opened by clicking their name. Any player may do
 // these for any player: switch to Red/Blue/Float as appropriate (Cluers
 // can't switch teams), take over the team's Cluer role, or leave.
-const PlayerActions = ({ p, isMe, act, onClose }) => {
+const PlayerActions = ({ p, isMe, act, onClose, presentCount, singleActive }) => {
   const run = async (path, body, question = null) => {
     if (question && !confirm(question)) return;
     if (await act(path, { user_id: p.user_id, ...body })) onClose();
   };
   const setRole = (to) => run('set-role', { to });
+
+  // With exactly 3 players: one Cluer for both teams, or back to two.
+  const threeWay =
+    presentCount === 3 ? (
+      <>
+        {p.team !== 'both' && (
+          <button
+            type="button"
+            onClick={() =>
+              run(
+                'set-role',
+                { to: 'single' },
+                `Make ${p.name} the Single Cluer for both teams? The other two players guess, one for each team. This forces a new board.`
+              )
+            }
+          >
+            Single Cluer
+          </button>
+        )}
+        {singleActive && (
+          <button
+            type="button"
+            onClick={() => run('set-role', { to: 'double' }, 'Go back to two Cluers? This forces a new board.')}
+          >
+            Two Cluers
+          </button>
+        )}
+      </>
+    ) : null;
 
   let options = null;
   if (p.role === 'guesser') {
@@ -117,18 +153,22 @@ const PlayerActions = ({ p, isMe, act, onClose }) => {
         <button type="button" onClick={() => setRole('floater')}>
           Float
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            run(
-              'set-role',
-              { to: 'cluer' },
-              `Make ${p.name} the ${cap(p.team)} Cluer? This forces a new board, and the current Cluer becomes a guesser.`
-            )
-          }
-        >
-          Become {cap(p.team)} Cluer
-        </button>
+        {/* With a Single Cluer, the Single Cluer button above does this. */}
+        {!singleActive && (
+          <button
+            type="button"
+            onClick={() =>
+              run(
+                'set-role',
+                { to: 'cluer' },
+                `Make ${p.name} the ${cap(p.team)} Cluer? This forces a new board, and the current Cluer becomes a guesser.`
+              )
+            }
+          >
+            Become {cap(p.team)} Cluer
+          </button>
+        )}
+        {threeWay}
       </>
     );
   } else if (p.role === 'floater') {
@@ -140,8 +180,11 @@ const PlayerActions = ({ p, isMe, act, onClose }) => {
         <button type="button" className="switch-blue" onClick={() => setRole('blue')}>
           Switch to Blue
         </button>
+        {threeWay}
       </>
     );
+  } else if (p.role === 'cluer') {
+    options = threeWay;
   }
 
   return (
@@ -448,6 +491,8 @@ export const Board = ({ view, act }) => {
         <PlayerActions
           p={view.players.find((p) => p.user_id === menuFor.user_id) || menuFor}
           isMe={menuFor.user_id === view.me}
+          presentCount={view.players.filter((p) => p.present).length}
+          singleActive={view.players.some((p) => p.team === 'both')}
           act={act}
           onClose={() => setMenuFor(null)}
         />

@@ -83,14 +83,16 @@ export function settingsProblem(s, needLists) {
   const minPlayers = Number(s.min_players);
   const minTeam = Number(s.min_team_size);
   if (!s.max_session_hours || !s.min_players || !s.min_team_size) return 'Fill in the required (*) fields.';
-  if (Number.isInteger(minPlayers) && Number.isInteger(minTeam) && minTeam > minPlayers - 1) {
-    return `Minimum Team Size can be at most ${minPlayers - 1} with ${minPlayers} players.`;
+  // With 2 or 3 players a Single Cluer counts on both teams (see rulesets.js).
+  const maxTeam = minPlayers <= 3 ? minPlayers : minPlayers - 1;
+  if (Number.isInteger(minPlayers) && Number.isInteger(minTeam) && minTeam > maxTeam) {
+    return `Minimum Team Size can be at most ${maxTeam} with ${minPlayers} players.`;
   }
   const complete = s.players.filter((p) => p.name.trim() && p.email.trim()).length;
   if (s.players.some((p) => !isBlank(p) && (!p.name.trim() || !p.email.trim()))) {
     return 'Every player needs both a name and an email.';
   }
-  if (complete < 3) return 'Enter at least 3 players.';
+  if (complete < 2) return 'Enter at least 2 players.';
   if (!s.team_mode) return 'Choose a Team Assignment Mode.';
   if (needLists && !s.wordlist_ids.length) return 'Choose at least one word list.';
   return null;
@@ -276,7 +278,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         </span>
         <label title={tips.minPlayers}><Req />Minimum Number of Players</label>
         <span title={tips.minPlayers}>
-          <input className="short" type="number" min="3" value={value.min_players} onChange={set('min_players')} />
+          <input className="short" type="number" min="2" value={value.min_players} onChange={set('min_players')} />
         </span>
         <label title={tips.minTeamSize}><Req />Minimum Team Size</label>
         <span title={tips.minTeamSize}>

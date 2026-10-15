@@ -76,12 +76,14 @@ function setupRulesets(app, db, requireAuth) {
     const minPlayers = num(body.min_players);
     const minTeam = num(body.min_team_size);
     if (!(hours > 0 && hours <= 24)) throw new InputError('Maximum Session Duration must be between 0 and 24 hours.');
-    if (!Number.isInteger(minPlayers) || minPlayers < 3) throw new InputError('Minimum Number of Players must be at least 3.');
+    if (!Number.isInteger(minPlayers) || minPlayers < 2) throw new InputError('Minimum Number of Players must be at least 2.');
     if (!Number.isInteger(minTeam) || minTeam < 2) throw new InputError('Minimum Team Size must be at least 2.');
-    if (minTeam > minPlayers - 1) {
-      throw new InputError(
-        `Minimum Team Size can be at most ${minPlayers - 1} with ${minPlayers} players (Minimum Team Size ≤ Minimum Players − 1).`
-      );
+    // Two Cluers each count on one team only, so normally a team can have at
+    // most Players - 1 members; with 2 or 3 players a Single Cluer counts on
+    // both teams, so the limit is the number of players.
+    const maxTeam = minPlayers <= 3 ? minPlayers : minPlayers - 1;
+    if (minTeam > maxTeam) {
+      throw new InputError(`Minimum Team Size can be at most ${maxTeam} with ${minPlayers} players.`);
     }
 
     // Accepts "zoom.us/j/123" as well as a full link; adds https:// if missing.
@@ -107,7 +109,7 @@ function setupRulesets(app, db, requireAuth) {
     const players = (body.players || [])
       .map((p) => ({ name: String(p.name || '').trim(), email: String(p.email || '').trim().toLowerCase() }))
       .filter((p) => p.name || p.email);
-    if (players.length < 3) throw new InputError('A game needs at least 3 players.');
+    if (players.length < 2) throw new InputError('A game needs at least 2 players.');
     for (const p of players) {
       if (!p.name || !p.email) throw new InputError('Every player needs both a name and an email.');
     }

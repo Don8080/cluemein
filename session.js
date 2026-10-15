@@ -151,8 +151,12 @@ function setupSessions(app, db, requireAuth) {
   }
 
   // New Cluers, guessers and Floaters among the present players (roles.js).
+  // With 2 players there is always a Single Cluer (team 'both'); with 3 there
+  // is one while the session has chosen it (s.singleCluer); other sizes
+  // always have two Cluers.
   function reassign(s, ids, rs) {
-    const { roles, floatersCanClick } = assignRoles(s.stats, ids, rs.min_team_size);
+    if (ids.length !== 3) s.singleCluer = false;
+    const { roles, floatersCanClick } = assignRoles(s.stats, ids, rs.min_team_size, { single: !!s.singleCluer });
     s.roles = roles;
     s.floatersCanClick = floatersCanClick;
     s.floatersAuto = floatersCanClick; // switched on automatically, not by a player
@@ -182,7 +186,16 @@ function setupSessions(app, db, requireAuth) {
   function nextGameRoles(s, ids, rs, entry) {
     const mode = rs.team_mode || 'random';
     const onTeam = (team) => ids.filter((id) => s.roles[id]?.team === team);
-    if (mode === 'random' || !s.boards.length || !onTeam('red').length || !onTeam('blue').length) {
+    // Single Cluer games (2 players, or 3 by choice): Fixed Roles keeps
+    // everything; otherwise the Single Cluer rotates by the fairness rules.
+    const singleNow = ids.length === 2 || (ids.length === 3 && s.singleCluer);
+    if (singleNow && s.boards.length && mode === 'fixed_roles' && ids.some((id) => s.roles[id]?.team === 'both')) {
+      s.roles = Object.fromEntries(ids.map((id) => [id, s.roles[id] ? { ...s.roles[id] } : { team: null, role: 'floater' }]));
+      normalizeSmall(s, rs, entry);
+      autoFloaters(s);
+      return;
+    }
+    if (singleNow || mode === 'random' || !s.boards.length || !onTeam('red').length || !onTeam('blue').length) {
       reassign(s, ids, rs);
       return;
     }
@@ -210,6 +223,14 @@ function setupSessions(app, db, requireAuth) {
   // Returns true if roles changed.
   function ensureCluers(s, rs, entry) {
     const present = presentMembers(entry);
+    // A Single Cluer covers both teams; if they're gone, reassign.
+    const single = Object.keys(s.roles).map(Number).find((id) => s.roles[id].team === 'both');
+    if (single !== undefined) {
+      if (present.includes(single)) return normalizeSmall(s, rs, entry);
+      reassign(s, present, rs);
+      return true;
+    }
+    if (present.length <= 2) return normalizeSmall(s, rs, entry);
     let changedRoles = false;
     for (const team of ['red', 'blue']) {
       const cluerID = Object.keys(s.roles).map(Number).find((id) => s.roles[id].team === team && s.roles[id].role === 'cluer');
@@ -228,6 +249,31 @@ function setupSessions(app, db, requireAuth) {
       changedRoles = true;
     }
     return changedRoles;
+  }
+
+  // Two players: always one Single Cluer and one Floater. If one Cluer is
+  // still here they become the Single Cluer (same board); otherwise roles
+  // are reassigned. Three players with a Single Cluer: anyone without a
+  // role floats. Returns true when a new board must be dealt.
+  function normalizeSmall(s, rs, entry) {
+    const present = presentMembers(entry);
+    if (present.length > 3 || present.length < 2) return false;
+    const cluers = present.filter((id) => s.roles[id]?.role === 'cluer');
+    if (present.length === 3) {
+      if (!cluers.some((id) => s.roles[id].team === 'both')) return false;
+      present.forEach((id) => {
+        if (!s.roles[id]) s.roles[id] = { team: null, role: 'floater' };
+      });
+      return false;
+    }
+    if (cluers.length === 1) {
+      s.roles = { [cluers[0]]: { team: 'both', role: 'cluer' } };
+      present.filter((id) => id !== cluers[0]).forEach((id) => (s.roles[id] = { team: null, role: 'floater' }));
+      autoFloaters(s);
+      return false;
+    }
+    reassign(s, present, rs);
+    return true;
   }
 
   // ---- Boards --------------------------------------------------------------
@@ -271,6 +317,14 @@ function setupSessions(app, db, requireAuth) {
     s.current = s.boards.length - 1;
     s.status = 'playing';
     s.resumable = false;
+  }
+
+  // Guessers mark words; so do Floaters when nobody is a guesser (e.g. a
+  // 2-player game).
+  function mayMark(s, uid) {
+    const r = s.roles[uid];
+    if (r?.role === 'guesser') return true;
+    return r?.role === 'floater' && !Object.values(s.roles).some((x) => x.role === 'guesser');
   }
 
   function mayClick(s, uid) {
@@ -363,7 +417,7 @@ function setupSessions(app, db, requireAuth) {
         guesses: board.guesses,
         // Marks are for guessers; Cluers don't see them.
         marks: isCluer ? { red: [], blue: [] } : board.marks || { red: [], blue: [] },
-        can_mark: s.roles[uid]?.role === 'guesser' && !over,
+        can_mark: mayMark(s, uid) && !over,
         has_prev: s.current > 0,
         can_click: mayClick(s, uid),
         // A turn can only be ended after at least one guess.
@@ -622,6 +676,8 @@ function setupSessions(app, db, requireAuth) {
   function recordResult(ctx, board) {
     if (board.recorded) return;
     board.recorded = true;
+    // Single Cluer boards (one Cluer for both teams) aren't anyone's win or loss.
+    if (Object.values(ctx.s.roles).some((r) => r.team === 'both')) return;
     const result = boardResult(board);
     for (const [id, r] of Object.entries(ctx.s.roles)) {
       if (r.role === 'floater' || !r.team) continue;
@@ -640,13 +696,14 @@ function setupSessions(app, db, requireAuth) {
     const board = currentBoard(s);
     const r = s.roles[uid];
     if (s.status !== 'playing' || !board || board.game.winning_team) return 'No board in play.';
-    if (r?.role !== 'guesser') return 'Only guessers can mark words.';
+    if (!mayMark(s, uid)) return 'Only guessers can mark words.';
     const idx = body.index;
     if (!Number.isInteger(idx) || idx < 0 || idx >= board.game.words.length || board.game.revealed[idx]) {
       return 'That word can not be marked.';
     }
     board.marks = board.marks || { red: [], blue: [] };
-    const list = board.marks[r.team];
+    // A Floater (when nobody is a guesser) marks for the team whose turn it is.
+    const list = board.marks[r.role === 'floater' ? board.game.currentTeam() : r.team];
     const at = list.indexOf(idx);
     if (at >= 0) list.splice(at, 1);
     else list.push(idx);
@@ -685,8 +742,9 @@ function setupSessions(app, db, requireAuth) {
         number: i + 1,
         current: i === s.current,
         first_team: g.starting_team,
-        red: members((r) => r.team === 'red'),
-        blue: members((r) => r.team === 'blue'),
+        // A Single Cluer appears in both team columns.
+        red: members((r) => r.team === 'red' || r.team === 'both'),
+        blue: members((r) => r.team === 'blue' || r.team === 'both'),
         floaters: members((r) => r.role === 'floater'),
         turns,
         result: boardResult(b)?.text || null,
@@ -748,14 +806,49 @@ function setupSessions(app, db, requireAuth) {
   //   'cluer'         a guesser takes over their team's Cluer role; the old
   //                   Cluer becomes a guesser on the same team and a new
   //                   board is dealt, since the new Cluer has seen this one.
-  // Cluers can't switch teams.
+  //   'single'        (3 players) this player becomes the Single Cluer for
+  //                   both teams; the other two guess, one per team
+  //   'double'        back to two Cluers (3 players)
+  // Cluers can't switch teams. Changing a Cluer deals a new board.
   action('set-role', (ctx, body) => {
     const { s, rs, entry } = ctx;
     const target = Number(body.user_id);
     const cur = s.roles[target];
     if (s.status !== 'playing' || !cur) return 'That player has no role in this game.';
-    if (cur.role === 'cluer') return 'Cluers can not switch teams.';
     const to = body.to;
+    const present = presentMembers(entry);
+    const singleID = Object.keys(s.roles).map(Number).find((id) => s.roles[id].team === 'both');
+    if (to === 'single' || to === 'double') {
+      if (present.length !== 3) return 'Single Cluer is for games with exactly 3 players.';
+      if (to === 'double') {
+        if (singleID === undefined) return 'There are already two Cluers.';
+        s.singleCluer = false;
+        reassign(s, present, rs);
+      } else {
+        if (cur.team === 'both') return null;
+        s.singleCluer = true;
+        // The other two guess; each keeps their team where possible.
+        let [a, b] = present.filter((id) => id !== target);
+        if (s.roles[a]?.team === 'blue' || s.roles[b]?.team === 'red') [a, b] = [b, a];
+        s.roles = { [target]: { team: 'both', role: 'cluer' }, [a]: { team: 'red', role: 'guesser' }, [b]: { team: 'blue', role: 'guesser' } };
+        recordCluer(s.stats, present, target, null, [a, b]);
+      }
+      dealBoard(s, rs);
+      autoFloaters(s);
+      return null;
+    }
+    if (cur.role === 'cluer') return 'Cluers can not switch teams.';
+    if (to === 'cluer' && singleID !== undefined) {
+      // A guesser takes over as Single Cluer; the old one takes their place.
+      if (cur.role !== 'guesser') return "Only a guesser can take over the Cluer role.";
+      s.roles[singleID] = { team: cur.team, role: 'guesser' };
+      s.roles[target] = { team: 'both', role: 'cluer' };
+      const guessers = Object.keys(s.roles).map(Number).filter((id) => s.roles[id].role === 'guesser');
+      recordCluer(s.stats, present, target, null, guessers);
+      dealBoard(s, rs);
+      autoFloaters(s);
+      return null;
+    }
     if (to === 'red' || to === 'blue') {
       s.roles[target] = { team: to, role: 'guesser' };
     } else if (to === 'floater') {
@@ -798,7 +891,8 @@ function setupSessions(app, db, requireAuth) {
       s.resumable = !!(board && !board.game.winning_team);
       return null;
     }
-    if (wasCluer && ensureCluers(s, rs, entry)) dealBoard(s, rs);
+    if (wasCluer ? ensureCluers(s, rs, entry) : normalizeSmall(s, rs, entry)) dealBoard(s, rs);
+    autoFloaters(s);
     return null;
   });
 
