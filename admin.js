@@ -11,6 +11,8 @@ const RESTORE_MAX = 500 * 1024 * 1024; // a backup this large would be surprisin
 // Tables a Clue Me In backup must have.
 const REQUIRED_TABLES = ['users', 'rulesets', 'ruleset_members', 'wordlists', 'standard_words', 'ruleset_words'];
 
+// Backup file names start with Prod- on Railway and Dev- anywhere else.
+const SERVER = process.env.RAILWAY_ENVIRONMENT_NAME ? 'Prod' : 'Dev';
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
 const fileSize = (p) => (fs.existsSync(p) ? fs.statSync(p).size : 0);
 // The database file plus its write-ahead log.
@@ -67,7 +69,7 @@ function setupAdmin(app, db, requireAuth, { forgetLive }) {
       return res.status(500).json({ error: `Backup failed: ${err.message}` });
     }
     console.log(`[admin] backup by ${req.session.email}`);
-    res.download(tmp, `cluemein-backup-${stamp()}.db`, () => fs.rm(tmp, { force: true }, () => {}));
+    res.download(tmp, `${SERVER}-cluemein-backup-${stamp()}.db`, () => fs.rm(tmp, { force: true }, () => {}));
   });
 
   // Restore: the uploaded backup replaces the whole database. The current
