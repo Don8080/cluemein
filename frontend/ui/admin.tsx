@@ -56,12 +56,19 @@ const RulesetStatsTab = () => {
   const none = <span className="hint">no sessions logged yet</span>;
   const rows = [
     ['Total number of Rulesets', <>{s.total}{s.deleted ? <span className="hint"> (plus {s.deleted} deleted)</span> : null}</>],
-    ['Timer', `Off ${s.timer.off} · On and enforced ${s.timer.enforced} · On and not enforced ${s.timer.not_enforced}`],
+    [
+      'Timer',
+      <>
+        <div>Off: {s.timer.off}</div>
+        <div>On and enforced: {s.timer.enforced}</div>
+        <div>On and not enforced: {s.timer.not_enforced}</div>
+      </>,
+    ],
     ['Played in the last 7 days / 30 days / year', `${s.played.days7} / ${s.played.days30} / ${s.played.year}`],
     ['Average number of accounts listed', s.avg_accounts ?? '—'],
     ['Average number of players per session', s.avg_players ?? none],
     ['Largest number of players in a session', s.max_players ? `${s.max_players.players} (${s.max_players.name})` : none],
-    ['Average number of sessions per week (Rulesets played in the last 7 days)', s.avg_sessions_week ?? <span className="hint">none in the last 7 days</span>],
+    ['Average number of sessions this week (Rulesets played in the last 7 days)', s.avg_sessions_week ?? <span className="hint">none in the last 7 days</span>],
     ['Largest number of sessions this week', s.max_sessions_week ? `${s.max_sessions_week.sessions} (${s.max_sessions_week.name})` : <span className="hint">none in the last 7 days</span>],
     ['Average Vocabulary size', s.avg_vocab ?? '—'],
     ['Largest Vocabulary size', s.max_vocab ? `${s.max_vocab.words} (${s.max_vocab.name})` : '—'],
