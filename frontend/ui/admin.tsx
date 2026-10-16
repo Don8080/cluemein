@@ -72,11 +72,34 @@ const DatabaseTab = () => {
     setBusy(null);
   };
 
-  // The browser downloads the file itself (keeps large files out of memory).
-  const backup = () => {
-    setMessage('Your backup is downloading. Keep it somewhere safe.');
-    setError(null);
-    window.location.href = '/api/admin/backup';
+  // Fetch the backup here, so the page knows when it is done, then hand it
+  // to the browser to save under the server's file name.
+  const backup = async () => {
+    start('backup');
+    try {
+      const res = await axios.get('/api/admin/backup', { responseType: 'blob' });
+      const name =
+        /filename="([^"]+)"/.exec(res.headers['content-disposition'] || '')?.[1] || 'cluemein-backup.db';
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setMessage(`Backup downloaded: ${name} (${kb(res.data.size)}). Keep it somewhere safe.`);
+    } catch (err) {
+      // An error arrives as a blob too; read its message.
+      let text = 'The backup failed.';
+      try {
+        text = JSON.parse(await err.response.data.text()).error || text;
+      } catch {
+        // keep the general message
+      }
+      setError(text);
+    }
+    setBusy(null);
   };
 
   const restore = async (file) => {
@@ -141,7 +164,7 @@ const DatabaseTab = () => {
         </div>
         <div>
           <button type="button" disabled={!!busy} onClick={backup}>
-            Backup
+            {busy === 'backup' ? 'Downloading…' : 'Backup'}
           </button>
           <span className="hint">Downloads a complete copy of the database.</span>
         </div>
