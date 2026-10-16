@@ -135,6 +135,8 @@ export const Start = ({ account, setAccount, openLogin }) => {
 
   const loggedInUser = (u) => {
     setAccount({ user: u });
+    // Fetch the full account (e.g. whether this is an admin).
+    axios.get('/api/me').then(({ data }) => data.user && setAccount(data));
     setPopup(null);
     setNotice(null);
   };
@@ -205,6 +207,11 @@ export const Start = ({ account, setAccount, openLogin }) => {
           }}>
           Modify Game
         </button>
+        {user?.is_admin && (
+          <button className="admin-button" onClick={() => (window.location.href = '/admin')}>
+            Admin
+          </button>
+        )}
       </div>
       {isMember && infoRow}
 

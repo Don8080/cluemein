@@ -5,6 +5,7 @@ import { Start } from '~/ui/start';
 import { CreateGame } from '~/ui/create_game';
 import { ModifyGame } from '~/ui/modify_game';
 import { PlayScreen } from '~/ui/play';
+import { Admin } from '~/ui/admin';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 
 export const App = () => {
@@ -43,7 +44,11 @@ export const App = () => {
     pane = <CreateGame user={account.user} />;
   } else if (path === '/modify' && gameID) {
     pane = <ModifyGame rulesetID={gameID} />;
+  } else if (path === '/admin' && account.user.is_admin) {
+    pane = <Admin />;
   } else {
+    // Anything else, including /admin for someone who isn't an admin.
+    if (path !== '/') window.history.replaceState(null, '', '/');
     pane = <Start account={account} setAccount={setAccount} openLogin={false} />;
   }
 

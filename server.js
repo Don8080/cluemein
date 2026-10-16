@@ -8,6 +8,7 @@ const { initDb, deleteExpired } = require('./db');
 const { setupAuth } = require('./auth');
 const { setupRulesets } = require('./rulesets');
 const { setupSessions } = require('./session');
+const { setupAdmin } = require('./admin');
 
 const PORT = process.env.PORT || 3003;
 
@@ -51,7 +52,8 @@ app.set('trust proxy', 1); // Railway terminates HTTPS in front of the app
 
 const { requireAuth } = setupAuth(app, db);
 setupRulesets(app, db, requireAuth);
-setupSessions(app, db, requireAuth);
+const sessions = setupSessions(app, db, requireAuth);
+setupAdmin(app, db, requireAuth, sessions);
 
 // Standard word lists, in picker order, with word counts.
 app.get('/api/wordlists', requireAuth, (req, res) => {
@@ -83,7 +85,7 @@ app.get('*', (req, res) => {
 // message instead of a stack trace.
 app.use((err, req, res, next) => {
   if (err.type !== 'entity.too.large') return next(err);
-  res.status(413).json({ error: req.path.includes('/sounds/') ? 'That file is larger than 1 MB.' : 'That is too large to send.' });
+  res.status(413).json({ error: req.path.includes('/sounds/') ? 'That file is larger than 1 MB.' : 'That file is too large.' });
 });
 
 app.listen(PORT, () => console.log(`Clue Me In listening on http://localhost:${PORT}`));

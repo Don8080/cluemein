@@ -47,7 +47,13 @@ function initDb() {
   const db = new DatabaseSync(DB_PATH);
   db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
+  upgradeSchema(db);
+  return db;
+}
 
+// Creates any missing tables and columns and loads missing word lists. Run
+// at startup, and again after an admin restores an older backup.
+function upgradeSchema(db) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,8 +247,17 @@ function initDb() {
     console.log('Converted game memberships to email');
   }
 
+  if (!hasColumn('users', 'is_admin')) {
+    db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+  }
+  // The first admin. Only applied while there is no admin at all, so admins
+  // added later are left alone.
+  if (!db.prepare('SELECT 1 FROM users WHERE is_admin = 1').get()) {
+    const r = db.prepare("UPDATE users SET is_admin = 1 WHERE email = 'don8080@gmail.com' COLLATE NOCASE").run();
+    if (r.changes) console.log('Admin: don8080@gmail.com');
+  }
+
   seedWordlists(db);
-  return db;
 }
 
 // Load any standard list that isn't in the database yet. Existing lists are
@@ -312,4 +327,4 @@ function deleteExpired(db) {
   if (rulesets || history) console.log(`[retention] deleted ${rulesets} game(s), ${history} history row(s)`);
 }
 
-module.exports = { initDb, normalizeWord, deleteExpired };
+module.exports = { initDb, upgradeSchema, normalizeWord, deleteExpired, DB_PATH };

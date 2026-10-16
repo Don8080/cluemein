@@ -143,8 +143,8 @@ function setupAuth(app, db) {
   app.get('/api/me', (req, res) => {
     const s = req.session;
     if (s.userID) {
-      const phone = db.prepare('SELECT phone FROM users WHERE id = ?').get(s.userID)?.phone || '';
-      return res.json({ user: { id: s.userID, email: s.email, phone } });
+      const u = db.prepare('SELECT phone, is_admin FROM users WHERE id = ?').get(s.userID) || {};
+      return res.json({ user: { id: s.userID, email: s.email, phone: u.phone || '', is_admin: !!u.is_admin } });
     }
     if (s.pendingUserID) {
       const user = findUserByID.get(s.pendingUserID);

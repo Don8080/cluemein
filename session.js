@@ -936,6 +936,20 @@ function setupSessions(app, db, requireAuth) {
     db.prepare('INSERT INTO ruleset_members (ruleset_id, email, player_name) VALUES (?, ?, ?)').run(ctx.rs.id, email, name);
     return null;
   });
+
+  // After an admin restores the database: drop sessions held in memory so
+  // they are reloaded from the restored data. Browsers still waiting are
+  // answered at once, and then fetch the restored state.
+  function forgetLive() {
+    for (const entry of live.values()) {
+      const waiters = [...entry.waiters];
+      entry.waiters.clear();
+      waiters.forEach((fn) => fn());
+    }
+    live.clear();
+  }
+
+  return { forgetLive };
 }
 
 module.exports = { setupSessions };
