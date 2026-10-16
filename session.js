@@ -106,6 +106,14 @@ function setupSessions(app, db, requireAuth) {
     entry.s.ended = reason;
     entry.s.endedAt = Date.now();
     db.prepare('UPDATE rulesets SET last_session_ended_at = ? WHERE id = ?').run(entry.s.endedAt, entry.s.rulesetID);
+    // Session log for Admin → Ruleset Stats (sessions that dealt a board).
+    const s = entry.s;
+    if (s.boards.length && reason !== 'deleted') {
+      const players = new Set([...(s.everPresent || []), ...Object.keys(s.roles).map(Number)]).size;
+      db.prepare('INSERT INTO session_log (ruleset_id, started_at, ended_at, players, boards) VALUES (?, ?, ?, ?, ?)').run(
+        s.rulesetID, s.startedAt, s.endedAt, players, s.boards.length
+      );
+    }
     const waiters = [...entry.waiters];
     entry.waiters.clear();
     waiters.forEach((fn) => fn());
@@ -497,6 +505,9 @@ function setupSessions(app, db, requireAuth) {
     const { entry, s, uid } = ctx;
     if (s.loggedOff.includes(uid)) return; // logged off: no longer counts as here
     let dirty = touch(entry, uid, tab);
+    // Everyone who took part, for the session log.
+    s.everPresent = s.everPresent || [];
+    if (!s.everPresent.includes(uid)) s.everPresent.push(uid);
     // A device seen for the first time starts with the room's sound setting.
     s.devices = s.devices || {};
     if (device && !s.devices[device]) {

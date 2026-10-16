@@ -34,10 +34,54 @@ export const Admin = () => {
         ))}
       </div>
       <div className="admin-panel">
-        {tab === 'database' ? <DatabaseTab /> : <p className="hint">Coming soon.</p>}
+        {tab === 'database' ? <DatabaseTab /> : tab === 'rulesets' ? <RulesetStatsTab /> : <p className="hint">Coming soon.</p>}
       </div>
       <p>
         <a href="/">Back to Start</a>
+      </p>
+    </div>
+  );
+};
+
+// Ruleset Stats: counts of games (Rulesets) and their sessions.
+const RulesetStatsTab = () => {
+  const [s, setS] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    axios.get('/api/admin/ruleset-stats').then(({ data }) => setS(data)).catch((err) => setError(errorText(err)));
+  }, []);
+  if (error) return <div className="form-error">{error}</div>;
+  if (!s) return <p className="hint">Loading…</p>;
+
+  const none = <span className="hint">no sessions logged yet</span>;
+  const rows = [
+    ['Total number of Rulesets', <>{s.total}{s.deleted ? <span className="hint"> (plus {s.deleted} deleted)</span> : null}</>],
+    ['Timer', `Off ${s.timer.off} · On and enforced ${s.timer.enforced} · On and not enforced ${s.timer.not_enforced}`],
+    ['Played in the last 7 days / 30 days / year', `${s.played.days7} / ${s.played.days30} / ${s.played.year}`],
+    ['Average number of accounts listed', s.avg_accounts ?? '—'],
+    ['Average number of players per session', s.avg_players ?? none],
+    ['Largest number of players in a session', s.max_players ? `${s.max_players.players} (${s.max_players.name})` : none],
+    ['Average number of sessions per week (Rulesets played in the last 7 days)', s.avg_sessions_week ?? <span className="hint">none in the last 7 days</span>],
+    ['Largest number of sessions this week', s.max_sessions_week ? `${s.max_sessions_week.sessions} (${s.max_sessions_week.name})` : <span className="hint">none in the last 7 days</span>],
+    ['Average Vocabulary size', s.avg_vocab ?? '—'],
+    ['Largest Vocabulary size', s.max_vocab ? `${s.max_vocab.words} (${s.max_vocab.name})` : '—'],
+  ];
+  return (
+    <div>
+      <table className="admin-stats">
+        <tbody>
+          {rows.map(([label, value], i) => (
+            <tr key={i}>
+              <td className="stat-number">{i + 1}.</td>
+              <th>{label}</th>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="hint">
+        Session figures (5–8) come from the session log, which began on 10/16/26; {s.sessions_logged} session
+        {s.sessions_logged === 1 ? '' : 's'} logged so far. "Played" counts each Ruleset's most recent session.
       </p>
     </div>
   );

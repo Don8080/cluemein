@@ -176,6 +176,19 @@ function upgradeSchema(db) {
     );
   `);
 
+  // One row per finished session that dealt at least one board (Admin →
+  // Ruleset Stats). Times are epoch ms; players = members who took part.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS session_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ruleset_id INTEGER NOT NULL REFERENCES rulesets(id) ON DELETE CASCADE,
+      started_at INTEGER NOT NULL,
+      ended_at INTEGER NOT NULL,
+      players INTEGER NOT NULL,
+      boards INTEGER NOT NULL
+    );
+  `);
+
   // Columns added after a table was first created.
   const hasColumn = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
   if (!hasColumn('rulesets', 'description')) {

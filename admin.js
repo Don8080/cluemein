@@ -50,6 +50,59 @@ function setupAdmin(app, db, requireAuth, { forgetLive }) {
 
   app.get('/api/admin/db-info', requireAdmin, (req, res) => res.json(info()));
 
+  // Ruleset Stats tab. Counts cover active (not deleted) games; session
+  // figures come from session_log, which starts with this feature. "This
+  // week" and "the prior week" both mean the last 7 days.
+  app.get('/api/admin/ruleset-stats', requireAdmin, (req, res) => {
+    const one = (sql, ...args) => db.prepare(sql).get(...args);
+    const DAY = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const playedWithin = (days) =>
+      one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 1 AND last_session_ended_at >= ?', now - days * DAY).n;
+    const round1 = (x) => (x === null || x === undefined ? null : Math.round(x * 10) / 10);
+
+    const weekSessions = db
+      .prepare(
+        `SELECT r.name, COUNT(*) AS n FROM session_log l JOIN rulesets r ON r.id = l.ruleset_id
+          WHERE l.started_at >= ? GROUP BY l.ruleset_id ORDER BY n DESC, r.name`
+      )
+      .all(now - 7 * DAY);
+    const vocab = db
+      .prepare(
+        `SELECT r.name, COUNT(w.word) AS n FROM rulesets r LEFT JOIN ruleset_words w ON w.ruleset_id = r.id
+          WHERE r.active = 1 GROUP BY r.id ORDER BY n DESC, r.name`
+      )
+      .all();
+    const biggestSession = one(
+      `SELECT r.name, l.players FROM session_log l JOIN rulesets r ON r.id = l.ruleset_id
+        ORDER BY l.players DESC, l.ended_at DESC LIMIT 1`
+    );
+
+    res.json({
+      total: one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 1').n,
+      deleted: one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 0').n,
+      timer: {
+        off: one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 1 AND timer_on = 0').n,
+        enforced: one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 1 AND timer_on = 1 AND enforce_timer = 1').n,
+        not_enforced: one('SELECT COUNT(*) AS n FROM rulesets WHERE active = 1 AND timer_on = 1 AND enforce_timer = 0').n,
+      },
+      played: { days7: playedWithin(7), days30: playedWithin(30), year: playedWithin(365) },
+      avg_accounts: round1(
+        one(
+          `SELECT AVG(n) AS a FROM (SELECT COUNT(m.email) AS n FROM rulesets r
+             LEFT JOIN ruleset_members m ON m.ruleset_id = r.id WHERE r.active = 1 GROUP BY r.id)`
+        ).a
+      ),
+      sessions_logged: one('SELECT COUNT(*) AS n FROM session_log').n,
+      avg_players: round1(one('SELECT AVG(players) AS a FROM session_log').a),
+      max_players: biggestSession ? { players: biggestSession.players, name: biggestSession.name } : null,
+      avg_sessions_week: weekSessions.length ? round1(weekSessions.reduce((t, x) => t + x.n, 0) / weekSessions.length) : null,
+      max_sessions_week: weekSessions.length ? { sessions: weekSessions[0].n, name: weekSessions[0].name } : null,
+      avg_vocab: vocab.length ? Math.round(vocab.reduce((t, x) => t + x.n, 0) / vocab.length) : null,
+      max_vocab: vocab.length ? { words: vocab[0].n, name: vocab[0].name } : null,
+    });
+  });
+
   // Condense: rewrite the file without unused space.
   app.post('/api/admin/vacuum', requireAdmin, (req, res) => {
     const before = dbBytes();

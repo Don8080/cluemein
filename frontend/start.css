@@ -820,3 +820,27 @@ button.link-button,
   cursor: default;
   color: #aaa;
 }
+
+/* Admin stats tables. */
+#admin-screen .admin-stats {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#admin-screen .admin-stats th,
+#admin-screen .admin-stats td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.35em 0.8em 0.35em 0;
+  border-bottom: 1px solid #eee;
+}
+
+#admin-screen .admin-stats th {
+  font-weight: normal;
+  color: #444;
+}
+
+#admin-screen .admin-stats td.stat-number {
+  color: #999;
+  width: 2em;
+}
