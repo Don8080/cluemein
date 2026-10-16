@@ -187,6 +187,13 @@ function upgradeSchema(db) {
       players INTEGER NOT NULL,
       boards INTEGER NOT NULL
     );
+
+    -- Who took part in each logged session (Admin → Account Stats).
+    CREATE TABLE IF NOT EXISTS session_log_players (
+      session_id INTEGER NOT NULL REFERENCES session_log(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (session_id, user_id)
+    );
   `);
 
   // Columns added after a table was first created.

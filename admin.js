@@ -50,6 +50,41 @@ function setupAdmin(app, db, requireAuth, { forgetLive }) {
 
   app.get('/api/admin/db-info', requireAdmin, (req, res) => res.json(info()));
 
+  // Account Stats tab. Rulesets per account count active games the account's
+  // email is listed in; sessions come from session_log_players, which starts
+  // with this feature.
+  app.get('/api/admin/account-stats', requireAdmin, (req, res) => {
+    const one = (sql, ...args) => db.prepare(sql).get(...args);
+    const addedWithin = (days) => one(`SELECT COUNT(*) AS n FROM users WHERE created_at >= datetime('now', ?)`, `-${days} days`).n;
+    const round1 = (x) => (x === null || x === undefined ? null : Math.round(x * 10) / 10);
+    const rulesets = db
+      .prepare(
+        `SELECT u.email, COUNT(r.id) AS n FROM users u
+           LEFT JOIN ruleset_members m ON m.email = u.email
+           LEFT JOIN rulesets r ON r.id = m.ruleset_id AND r.active = 1
+          GROUP BY u.id ORDER BY n DESC, u.email`
+      )
+      .all();
+    const sessions = db
+      .prepare(
+        `SELECT u.email, COUNT(p.session_id) AS n FROM users u
+           LEFT JOIN session_log_players p ON p.user_id = u.id
+          GROUP BY u.id ORDER BY n DESC, u.email`
+      )
+      .all();
+    const avg = (rows) => (rows.length ? round1(rows.reduce((t, x) => t + x.n, 0) / rows.length) : null);
+    res.json({
+      total: rulesets.length,
+      verified: one('SELECT COUNT(*) AS n FROM users WHERE email_verified = 1').n,
+      added: { days7: addedWithin(7), days30: addedWithin(30), year: addedWithin(365) },
+      avg_rulesets: avg(rulesets),
+      max_rulesets: rulesets.length ? { rulesets: rulesets[0].n, email: rulesets[0].email } : null,
+      sessions_logged: one('SELECT COUNT(*) AS n FROM session_log').n,
+      avg_sessions: avg(sessions),
+      max_sessions: sessions.length && sessions[0].n ? { sessions: sessions[0].n, email: sessions[0].email } : null,
+    });
+  });
+
   // Ruleset Stats tab. Counts cover active (not deleted) games; session
   // figures come from session_log, which starts with this feature. "This
   // week" and "the prior week" both mean the last 7 days.

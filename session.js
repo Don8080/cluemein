@@ -109,10 +109,14 @@ function setupSessions(app, db, requireAuth) {
     // Session log for Admin → Ruleset Stats (sessions that dealt a board).
     const s = entry.s;
     if (s.boards.length && reason !== 'deleted') {
-      const players = new Set([...(s.everPresent || []), ...Object.keys(s.roles).map(Number)]).size;
-      db.prepare('INSERT INTO session_log (ruleset_id, started_at, ended_at, players, boards) VALUES (?, ?, ?, ?, ?)').run(
-        s.rulesetID, s.startedAt, s.endedAt, players, s.boards.length
+      const players = [...new Set([...(s.everPresent || []), ...Object.keys(s.roles).map(Number)])];
+      const { lastInsertRowid: logID } = db
+        .prepare('INSERT INTO session_log (ruleset_id, started_at, ended_at, players, boards) VALUES (?, ?, ?, ?, ?)')
+        .run(s.rulesetID, s.startedAt, s.endedAt, players.length, s.boards.length);
+      const addPlayer = db.prepare(
+        'INSERT OR IGNORE INTO session_log_players (session_id, user_id) SELECT ?, id FROM users WHERE id = ?'
       );
+      players.forEach((uid) => addPlayer.run(logID, uid));
     }
     const waiters = [...entry.waiters];
     entry.waiters.clear();

@@ -34,7 +34,15 @@ export const Admin = () => {
         ))}
       </div>
       <div className="admin-panel">
-        {tab === 'database' ? <DatabaseTab /> : tab === 'rulesets' ? <RulesetStatsTab /> : <p className="hint">Coming soon.</p>}
+        {tab === 'database' ? (
+          <DatabaseTab />
+        ) : tab === 'rulesets' ? (
+          <RulesetStatsTab />
+        ) : tab === 'accounts' ? (
+          <AccountStatsTab />
+        ) : (
+          <p className="hint">Coming soon.</p>
+        )}
       </div>
       <p>
         <a href="/">Back to Start</a>
@@ -89,6 +97,53 @@ const RulesetStatsTab = () => {
       <p className="hint">
         Session figures (5–8) come from the session log, which began on 10/16/26; {s.sessions_logged} session
         {s.sessions_logged === 1 ? '' : 's'} logged so far. "Played" counts each Ruleset's most recent session.
+      </p>
+    </div>
+  );
+};
+
+// Account Stats: accounts, the games they're in, and sessions played.
+const AccountStatsTab = () => {
+  const [s, setS] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    axios.get('/api/admin/account-stats').then(({ data }) => setS(data)).catch((err) => setError(errorText(err)));
+  }, []);
+  if (error) return <div className="form-error">{error}</div>;
+  if (!s) return <p className="hint">Loading…</p>;
+
+  const none = <span className="hint">no sessions logged yet</span>;
+  const rows = [
+    ['Number of Accounts', <>{s.total}<span className="hint"> ({s.verified} verified)</span></>],
+    [
+      'Accounts added',
+      <>
+        <div>Last 7 days: {s.added.days7}</div>
+        <div>Last 30 days: {s.added.days30}</div>
+        <div>Last year: {s.added.year}</div>
+      </>,
+    ],
+    ['Average number of Rulesets', s.avg_rulesets ?? '—'],
+    ['Maximum number of Rulesets', s.max_rulesets ? `${s.max_rulesets.rulesets} (${s.max_rulesets.email})` : '—'],
+    ['Average number of Sessions played', s.sessions_logged ? s.avg_sessions : none],
+    ['Maximum number of Sessions played', s.max_sessions ? `${s.max_sessions.sessions} (${s.max_sessions.email})` : none],
+  ];
+  return (
+    <div>
+      <table className="admin-stats">
+        <tbody>
+          {rows.map(([label, value], i) => (
+            <tr key={i}>
+              <td className="stat-number">{i + 1}.</td>
+              <th>{label}</th>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="hint">
+        Rulesets count the games an account is listed in (not deleted ones). Sessions (5–6) come from the session
+        log, which began on 10/16/26; {s.sessions_logged} session{s.sessions_logged === 1 ? '' : 's'} logged so far.
       </p>
     </div>
   );
