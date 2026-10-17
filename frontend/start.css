@@ -844,3 +844,33 @@ button.link-button,
   color: #999;
   width: 2em;
 }
+
+/* Vocabulary Stats decile table. */
+#admin-screen .admin-deciles {
+  border-collapse: collapse;
+  margin: 0.5em 0 1em;
+}
+
+#admin-screen .admin-deciles th,
+#admin-screen .admin-deciles td {
+  padding: 0.3em 1.2em;
+  border-bottom: 1px solid #eee;
+  text-align: right;
+}
+
+#admin-screen .admin-deciles thead th {
+  border-bottom: 2px solid #ccc;
+  font-weight: bold;
+}
+
+#admin-screen .admin-deciles tbody th {
+  text-align: center;
+  font-weight: normal;
+  color: #555;
+}
+
+#admin-screen .admin-deciles tr.totals th,
+#admin-screen .admin-deciles tr.totals td {
+  border-top: 2px solid #ccc;
+  font-weight: bold;
+}

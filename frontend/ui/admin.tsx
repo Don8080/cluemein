@@ -41,7 +41,7 @@ export const Admin = () => {
         ) : tab === 'accounts' ? (
           <AccountStatsTab />
         ) : (
-          <p className="hint">Coming soon.</p>
+          <VocabularyStatsTab />
         )}
       </div>
       <p>
@@ -145,6 +145,55 @@ const AccountStatsTab = () => {
         Rulesets count the games an account is listed in (not deleted ones). Sessions (5–6) come from the session
         log, which began on 10/16/26; {s.sessions_logged} session{s.sessions_logged === 1 ? '' : 's'} logged so far.
       </p>
+    </div>
+  );
+};
+
+// Vocabulary Stats: word pairs guessed in the same turn, by decile.
+const VocabularyStatsTab = () => {
+  const [s, setS] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    axios.get('/api/admin/vocabulary-stats').then(({ data }) => setS(data)).catch((err) => setError(errorText(err)));
+  }, []);
+  if (error) return <div className="form-error">{error}</div>;
+  if (!s) return <p className="hint">Loading…</p>;
+
+  const avg = (x) => (x === null ? '—' : x.toFixed(2));
+  const row = (label, d, cls = '') => (
+    <tr key={label} className={cls}>
+      <th>{label}</th>
+      <td>{avg(d.average)}</td>
+      <td>{d.total}</td>
+      <td>{d.percent.toFixed(1)}%</td>
+    </tr>
+  );
+  return (
+    <div>
+      <p className="hint">
+        Pairs of words guessed by the same team in the same turn, in all games, sorted by how often each pair was
+        guessed together (most first) and split into ten equal groups. {s.totals.pairs} pair
+        {s.totals.pairs === 1 ? '' : 's'} so far.
+      </p>
+      <table className="admin-deciles">
+        <thead>
+          <tr>
+            <th>Decile</th>
+            <th>Average count</th>
+            <th>Total count</th>
+            <th>Percent of total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {s.deciles.map((d) => row(`${d.decile}`, d))}
+          {row('Total', s.totals, 'totals')}
+        </tbody>
+      </table>
+      {s.top && s.top.count > 1 && (
+        <p className="hint">
+          Most frequent pair: {s.top.word_a} + {s.top.word_b} ({s.top.count} times).
+        </p>
+      )}
     </div>
   );
 };

@@ -85,6 +85,41 @@ function setupAdmin(app, db, requireAuth, { forgetLive }) {
     });
   });
 
+  // Vocabulary Stats tab: word pairs guessed in the same turn (word_pairs,
+  // all games), sorted by count, highest first, and cut into ten equal
+  // groups (deciles) by rank. Per decile: pairs, average count, total
+  // count and percent of all counts.
+  app.get('/api/admin/vocabulary-stats', requireAdmin, (req, res) => {
+    const counts = db.prepare('SELECT count FROM word_pairs WHERE count > 0 ORDER BY count DESC').all().map((r) => r.count);
+    const grand = counts.reduce((t, c) => t + c, 0);
+    const pct = (n) => (grand ? Math.round((n / grand) * 1000) / 10 : 0);
+    const deciles = [];
+    for (let d = 0; d < 10; d++) {
+      // Ranks [from, to) for this decile; spreads any remainder evenly.
+      const from = Math.round((d * counts.length) / 10);
+      const to = Math.round(((d + 1) * counts.length) / 10);
+      const group = counts.slice(from, to);
+      const total = group.reduce((t, c) => t + c, 0);
+      deciles.push({
+        decile: d + 1,
+        pairs: group.length,
+        average: group.length ? Math.round((total / group.length) * 100) / 100 : null,
+        total,
+        percent: pct(total),
+      });
+    }
+    res.json({
+      deciles,
+      totals: {
+        pairs: counts.length,
+        average: counts.length ? Math.round((grand / counts.length) * 100) / 100 : null,
+        total: grand,
+        percent: grand ? 100 : 0,
+      },
+      top: db.prepare('SELECT word_a, word_b, count FROM word_pairs ORDER BY count DESC, word_a, word_b LIMIT 1').get() || null,
+    });
+  });
+
   // Ruleset Stats tab. Counts cover active (not deleted) games; session
   // figures come from session_log, which starts with this feature. "This
   // week" and "the prior week" both mean the last 7 days.
