@@ -11,6 +11,16 @@ import * as React from 'react';
 // kept on their screen only, and moved into the clue box when their turn
 // comes (still unposted until they click Post).
 
+// No browser autocomplete list, spell-check or auto-correct in the clue boxes
+// (the suggestion list swallowed the first click on Post).
+const NO_SUGGESTIONS = {
+  autoComplete: 'off',
+  autoCorrect: 'off',
+  autoCapitalize: 'off',
+  spellCheck: false,
+  name: 'cluemein-clue-' + Math.random().toString(36).slice(2), // no remembered entries to offer
+};
+
 const defaultNumber = (max) => (max >= 2 ? 2 : max);
 
 const NumberPick = ({ max, value, onChange, label }) =>
@@ -80,6 +90,7 @@ export const ClueEntry = ({ board, me, act }) => {
       <div className="clue-entry" style={{ gridColumn: team === 'red' ? '4 / span 2' : '1 / span 2' }}>
         <form
           className="clue-line"
+          autoComplete="off"
           onSubmit={(e) => {
             e.preventDefault();
             post();
@@ -89,6 +100,7 @@ export const ClueEntry = ({ board, me, act }) => {
             className={'clue-word' + (showingPosted ? ` posted ${team}` : '')}
             placeholder="Clue"
             maxLength={30}
+            {...NO_SUGGESTIONS}
             value={word}
             onChange={(e) => edit({ word: e.target.value })}
             aria-label="Clue"
@@ -104,6 +116,7 @@ export const ClueEntry = ({ board, me, act }) => {
               className={`clue-word next ${me.team}`}
               placeholder="your next clue"
               maxLength={30}
+            {...NO_SUGGESTIONS}
               value={nextValue.word}
               onChange={(e) => setNext({ ...nextValue, word: e.target.value })}
               aria-label="Your next clue"
