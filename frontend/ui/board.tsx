@@ -3,7 +3,7 @@ import { Settings, SettingsButton, SettingsPanel } from '~/ui/settings';
 import { Popup } from '~/ui/popup';
 import { SessionHistory } from '~/ui/session_history';
 import { setLastRuleset } from '~/ui/prefs';
-import Timer, { SoundBlockedNotice } from '~/ui/timer';
+import Timer from '~/ui/timer';
 import { TurnLine, teamTurns } from '~/ui/turn_line';
 import { ClueEntry } from '~/ui/clue_entry';
 import { TEAM_MODES } from '~/ui/ruleset_form';
@@ -344,7 +344,6 @@ export const Board = ({ view, act }) => {
               endSound={view.ruleset.sounds.end}
               muted={!myDeviceOn(view.sound)}
             />
-            <SoundBlockedNotice soundOn={myDeviceOn(view.sound)} />
             {board.last_guess && <div className="last-guess">Time's up: one guess, then the turn ends</div>}
           </div>
         )}

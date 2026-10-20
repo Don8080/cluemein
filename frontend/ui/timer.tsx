@@ -11,59 +11,16 @@ function getTimeRemaining(endTime: number) {
   };
 }
 
-// Browsers refuse to play sound on a page nobody has clicked or typed on
-// yet. When that happens the board shows a "click to allow sound" notice
-// (see SoundBlockedNotice); the timer's colors still show.
-export const SOUND_BLOCKED_EVENT = 'cluemein-sound-blocked';
-
 // Plays a timer sound (the default gong or the game's custom file).
 function playSound(sound: { url: string; volume: number }) {
   if (!sound?.url || sound.volume === 0) return null;
   const audio = new Audio(sound.url);
   audio.volume = Math.min(Math.max(sound.volume ?? 1, 0), 1);
-  audio.play().catch((err) => {
-    if (err?.name === 'NotAllowedError') window.dispatchEvent(new Event(SOUND_BLOCKED_EVENT));
-  });
+  // Browsers may block sound until the player has clicked on the page;
+  // the timer's colors still show.
+  audio.play().catch(() => {});
   return audio;
 }
-
-// A tiny silent WAV: playing it during a click lets the page play sound.
-const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-
-// "Sound was blocked by this browser — click to allow sound". Appears when a
-// timer sound was refused, or up front where the browser can say it would
-// refuse (Firefox). Any click on the page also clears it.
-export const SoundBlockedNotice = ({ soundOn }) => {
-  const [blocked, setBlocked] = React.useState(() => {
-    try {
-      const policy = (navigator as any).getAutoplayPolicy?.('mediaelement');
-      return !!policy && policy !== 'allowed';
-    } catch {
-      return false;
-    }
-  });
-  React.useEffect(() => {
-    const onBlocked = () => setBlocked(true);
-    const onGesture = () => {
-      new Audio(SILENCE).play().catch(() => {});
-      setBlocked(false);
-    };
-    window.addEventListener(SOUND_BLOCKED_EVENT, onBlocked);
-    document.addEventListener('pointerdown', onGesture);
-    document.addEventListener('keydown', onGesture);
-    return () => {
-      window.removeEventListener(SOUND_BLOCKED_EVENT, onBlocked);
-      document.removeEventListener('pointerdown', onGesture);
-      document.removeEventListener('keydown', onGesture);
-    };
-  }, []);
-  if (!blocked || !soundOn) return null;
-  return (
-    <button type="button" className="sound-blocked">
-      🔇 Sound was blocked by this browser — click to allow sound
-    </button>
-  );
-};
 
 interface TimerProps {
   roundStartedAt: number;
