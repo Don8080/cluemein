@@ -900,3 +900,9 @@ button.turn-banner.end-turn:disabled {
   color: #aaa;
   cursor: default;
 }
+
+/* Both teams' guess lists read left to right (the Red column's names are
+   right-aligned toward the board, but its guesses are not). */
+.team-list.red .guess-list {
+  text-align: left;
+}
