@@ -427,6 +427,8 @@ function setupSessions(app, db, requireAuth) {
         timer_duration_ms: g.turnDurationMs(),
         enforce_timer: g.enforce_timer,
         guesses: board.guesses,
+        // Posted clues by turn (round): { team, word, number }.
+        clues: board.clues || {},
         // Marks are for guessers; Cluers don't see them.
         marks: isCluer ? { red: [], blue: [] } : board.marks || { red: [], blue: [] },
         can_mark: mayMark(s, uid) && !over,
@@ -706,6 +708,28 @@ function setupSessions(app, db, requireAuth) {
   // Mark (right-click or Safe Click Mode): a guesser flags a word for later
   // for their team; marking it again clears their team's mark. Floaters
   // and Cluers can't mark.
+  // Post the current turn's clue (optional; anyone in the session). The
+  // number runs from 0 to the current team's unguessed words; with one word
+  // left it is 1. Posting again replaces it.
+  action('clue', (ctx, body) => {
+    const { s } = ctx;
+    const board = currentBoard(s);
+    if (s.status !== 'playing' || !board || board.game.winning_team) return 'No board in play.';
+    const g = board.game;
+    if (body.round !== g.round) return 'That turn is over.';
+    const word = String(body.word || '').trim().replace(/\s+/g, ' ');
+    if (!word) return 'Type a clue first.';
+    if (word.length > 30) return 'A clue can be at most 30 characters.';
+    const team = g.currentTeam();
+    const max = g.remaining(team);
+    let number = Number(body.number);
+    if (max <= 1) number = 1;
+    if (!Number.isInteger(number) || number < 0 || number > max) return `The number must be from 0 to ${max}.`;
+    board.clues = board.clues || {};
+    board.clues[g.round] = { team, word, number };
+    return null;
+  });
+
   action('mark', (ctx, body) => {
     const { s, uid } = ctx;
     const board = currentBoard(s);
@@ -746,13 +770,23 @@ function setupSessions(app, db, requireAuth) {
           .map(([id, r]) => ({ name: nameOf(id), cluer: r.role === 'cluer' }));
       const over = !!g.winning_team;
       const sawColors = roles[uid]?.role === 'cluer';
-      // Guesses grouped into turns.
+      // Guesses grouped into turns, each with its posted clue (if any); a turn
+      // with a clue but no guesses yet is included too.
       const turns = [];
       b.guesses.forEach((x, j) => {
         const prev = b.guesses[j - 1];
-        if (!prev || prev.round !== x.round || prev.team !== x.team) turns.push({ team: x.team, number: x.round !== undefined ? x.round + 1 : null, guesses: [] });
+        if (!prev || prev.round !== x.round || prev.team !== x.team) {
+          turns.push({ team: x.team, round: x.round, number: x.round !== undefined ? x.round + 1 : null, guesses: [] });
+        }
         turns[turns.length - 1].guesses.push({ word: x.word, color: x.color });
       });
+      for (const [round, c] of Object.entries(b.clues || {})) {
+        if (!turns.some((t) => t.round === Number(round))) {
+          turns.push({ team: c.team, round: Number(round), number: Number(round) + 1, guesses: [] });
+        }
+      }
+      turns.sort((a, c) => (a.round ?? 0) - (c.round ?? 0));
+      turns.forEach((t) => (t.clue = (b.clues || {})[t.round] || null));
       return {
         number: i + 1,
         current: i === s.current,

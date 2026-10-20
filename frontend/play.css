@@ -581,10 +581,6 @@ button.turn-banner.end-turn:disabled {
   font-weight: bold;
 }
 
-.history-guess.neutral {
-  background: #9e9e9e;
-}
-
 .history-guess.assassin {
   background: #000;
 }
@@ -813,4 +809,106 @@ button.sound-blocked {
   color: #5a4300;
   font-size: 0.85em;
   cursor: pointer;
+}
+
+/* Clue chips (Session History and the board's guess lists): the clue in its
+   team's color on white, or ****** when none was posted. */
+.clue-chip {
+  display: inline-block;
+  padding: 0.1em 0.3em;
+  margin: 0 0.25em 0.2em 0;
+  background: #fff;
+  font-weight: bold;
+}
+
+.clue-chip.red {
+  color: #d13030;
+}
+
+.clue-chip.blue {
+  color: #4183cc;
+}
+
+.clue-chip.missing {
+  color: #000;
+  letter-spacing: 0.05em;
+}
+
+/* Neutral guesses look like a revealed neutral word: black on beige. */
+.history-guess.neutral {
+  background: #ede2cc;
+  color: #000;
+}
+
+/* The board's guess lists use the same chips, a bit smaller. */
+.guess-list .history-turn {
+  font-size: 0.85em;
+  margin-bottom: 0.25em;
+}
+
+/* Clue entry row above the board: the same 5 columns as the board. */
+.clue-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 18%);
+  justify-content: space-between;
+  margin: -0.3em 0 0.5em;
+}
+
+.clue-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+.clue-line {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0;
+}
+
+.clue-word {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3em 0.4em;
+  font: inherit;
+  font-weight: bold;
+  color: #000;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+/* Posted: the clue in its team's color. */
+.clue-word.posted.red,
+.clue-word.next.red {
+  color: #d13030;
+}
+
+.clue-word.posted.blue,
+.clue-word.next.blue {
+  color: #4183cc;
+}
+
+.clue-number {
+  padding: 0.25em 0.1em;
+  font: inherit;
+}
+
+.clue-number-fixed {
+  min-width: 1.6em;
+  text-align: center;
+  font-weight: bold;
+}
+
+#game-view button.clue-post {
+  padding: 0.3em 0.6em;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #eee;
+  cursor: pointer;
+}
+
+#game-view button.clue-post:disabled {
+  color: #aaa;
+  cursor: default;
 }

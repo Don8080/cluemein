@@ -4,6 +4,8 @@ import { Popup } from '~/ui/popup';
 import { SessionHistory } from '~/ui/session_history';
 import { setLastRuleset } from '~/ui/prefs';
 import Timer, { SoundBlockedNotice } from '~/ui/timer';
+import { TurnLine, teamTurns } from '~/ui/turn_line';
+import { ClueEntry } from '~/ui/clue_entry';
 import { TEAM_MODES } from '~/ui/ruleset_form';
 import { SoundPopup, myDeviceOn } from '~/ui/sound_popup';
 
@@ -42,42 +44,24 @@ const PlayerName = ({ p, me, onClick }) => (
   </button>
 );
 
-// This team's guesses, one line per turn, each word in the color it turned
-// out to be. Turns are numbered in one sequence for the whole board, so the
-// team that went first has the odd numbers and the other team the even.
-const GuessList = ({ guesses, team }) => {
-  const turns = [];
-  let lastRound = null;
-  guesses
-    .filter((g) => g.team === team)
-    .forEach((g, i) => {
-      // Older records have no round; treat each as its own turn.
-      const round = g.round ?? `x${i}`;
-      if (round !== lastRound) turns.push({ number: g.round !== undefined ? g.round + 1 : null, guesses: [] });
-      turns[turns.length - 1].guesses.push(g);
-      lastRound = round;
-    });
+// This team's turns, one line per turn like Session History: the turn
+// number (one sequence for the whole board, so the team that went first has
+// the odd numbers), the posted clue (or ******) and the guesses as chips.
+const GuessList = ({ guesses, clues, team }) => {
+  const turns = teamTurns(guesses, clues, team);
   if (!turns.length) return null;
   return (
     <div className="guess-list">
       <div className="section-label">Guesses</div>
       {turns.map((t, i) => (
-        <div key={i} className="guess-turn">
-          {t.number ?? i + 1}){' '}
-          {t.guesses.map((g, j) => (
-            <span key={j} className={`guess-word ${g.color}`}>
-              {j > 0 ? ', ' : ''}
-              {g.word}
-            </span>
-          ))}
-        </div>
+        <TurnLine key={i} turn={t} />
       ))}
     </div>
   );
 };
 
 // One team's column: players (Cluer first), then the team's guesses.
-const TeamList = ({ players, team, me, onName, guesses }) => {
+const TeamList = ({ players, team, me, onName, guesses, clues }) => {
   // A Single Cluer heads both columns.
   const members = players
     .filter((p) => p.team === team || p.team === 'both')
@@ -87,7 +71,7 @@ const TeamList = ({ players, team, me, onName, guesses }) => {
       {members.map((p) => (
         <PlayerName key={p.user_id} p={p} me={me} onClick={onName} />
       ))}
-      <GuessList guesses={guesses} team={team} />
+      <GuessList guesses={guesses} clues={clues} team={team} />
     </div>
   );
 };
@@ -341,7 +325,7 @@ export const Board = ({ view, act }) => {
 
   return (
     <div id="play-view" className={viewClass + extraClasses}>
-      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} />
+      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} />
 
       {/* Subtitle under "Clue Me In". */}
       <div className="board-info">
@@ -409,6 +393,8 @@ export const Board = ({ view, act }) => {
           <div>{turnCell('blue')}</div>
           <div></div>
         </div>
+
+        {!over && <ClueEntry board={board} me={me} act={act} />}
 
         <div
           className={'board ' + statusClass}
@@ -482,7 +468,7 @@ export const Board = ({ view, act }) => {
         {graffito}
       </div>
 
-      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} />
+      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} />
 
       {showSound && <SoundPopup view={view} act={act} onClose={() => setShowSound(false)} />}
 
