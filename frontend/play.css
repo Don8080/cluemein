@@ -316,8 +316,7 @@ button.turn-banner.end-turn:disabled {
 }
 
 .board-toolbar button:not(.gear),
-.board-bottom > button,
-.board-bottom .next-buttons button {
+.board-bottom .board-buttons button {
   padding: 5px 10px;
   border: 1px #ccc solid;
   border-radius: 5px;
@@ -326,7 +325,7 @@ button.turn-banner.end-turn:disabled {
   font-size: 0.95em;
 }
 
-.board-bottom > button:disabled {
+.board-bottom .board-buttons button:disabled {
   color: #aaa;
   cursor: default;
 }
@@ -347,14 +346,16 @@ button.turn-banner.end-turn:disabled {
   margin-top: 0.8em;
 }
 
-.board-bottom .next-buttons {
+/* Prev Board and Next Board at the left, a comfortable gap apart; Next
+   Game alone at the right edge of the board. */
+.board-bottom .board-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.5em;
+  flex-wrap: wrap;
+  gap: 0.6em 1.2em;
 }
 
-.board-bottom > button {
-  justify-self: start;
+.board-bottom .board-buttons.right {
+  justify-content: flex-end;
 }
 
 /* Floaters under the board, one per line, centered. */
