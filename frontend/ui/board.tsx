@@ -440,9 +440,18 @@ export const Board = ({ view, act }) => {
         </div>
 
         <div className="board-bottom">
-          <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
-            Prev Board
-          </button>
+          {/* Left: Prev Board and Next Board; middle: Floaters; right: Next Game. */}
+          <div className="board-buttons left">
+            <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
+              Prev Board
+            </button>
+            {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
+            {view.ruleset.team_mode !== 'fixed_roles' && (
+              <button type="button" onClick={() => next('next-board')}>
+                Next Board
+              </button>
+            )}
+          </div>
           <div className={'floater-list' + (over ? '' : ` turn-${board.current_team}`)}>
             <div className="section-label">Floaters</div>
             {floaters.length ? (
@@ -451,13 +460,7 @@ export const Board = ({ view, act }) => {
               <div className="hint">none</div>
             )}
           </div>
-          <div className="next-buttons">
-            {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
-            {view.ruleset.team_mode !== 'fixed_roles' && (
-              <button type="button" onClick={() => next('next-board')}>
-                Next Board
-              </button>
-            )}
+          <div className="board-buttons right">
             <button type="button" onClick={() => next('next-game')}>
               Next Game
             </button>
