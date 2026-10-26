@@ -75,7 +75,7 @@ function setupRulesets(app, db, requireAuth) {
     const hours = num(body.max_session_hours);
     const minPlayers = num(body.min_players);
     const minTeam = num(body.min_team_size);
-    if (!(hours > 0 && hours <= 24)) throw new InputError('Maximum Session Duration must be between 0 and 24 hours.');
+    if (!(hours > 0 && hours <= 96)) throw new InputError('Maximum Session Duration must be between 0 and 96 hours.');
     if (!Number.isInteger(minPlayers) || minPlayers < 2) throw new InputError('Minimum Number of Players must be at least 2.');
     if (!Number.isInteger(minTeam) || minTeam < 2) throw new InputError('Minimum Team Size must be at least 2.');
     // Two Cluers each count on one team only, so normally a team can have at

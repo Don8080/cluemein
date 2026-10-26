@@ -274,7 +274,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         )}
         <label title={tips.sessionDuration}><Req />Maximum Session Duration</label>
         <span title={tips.sessionDuration}>
-          <input className="short" type="number" min="0.5" max="24" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
+          <input className="short" type="number" min="0.5" max="96" step="0.5" value={value.max_session_hours} onChange={set('max_session_hours')} /> Hours
         </span>
         <label title={tips.minPlayers}><Req />Minimum Number of Players</label>
         <span title={tips.minPlayers}>
