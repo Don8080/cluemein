@@ -4,7 +4,8 @@ import { Popup } from '~/ui/popup';
 import { SessionHistory } from '~/ui/session_history';
 import { setLastRuleset } from '~/ui/prefs';
 import Timer from '~/ui/timer';
-import { TurnLine, teamTurns } from '~/ui/turn_line';
+import { TurnLine, teamTurns, remainingAtTurnStart } from '~/ui/turn_line';
+import { LateClueDialog } from '~/ui/late_clue';
 import { ClueEntry } from '~/ui/clue_entry';
 import { TEAM_MODES } from '~/ui/ruleset_form';
 import { SoundPopup, myDeviceOn } from '~/ui/sound_popup';
@@ -47,21 +48,21 @@ const PlayerName = ({ p, me, onClick }) => (
 // This team's turns, one line per turn like Session History: the turn
 // number (one sequence for the whole board, so the team that went first has
 // the odd numbers), the posted clue (or ******) and the guesses as chips.
-const GuessList = ({ guesses, clues, team }) => {
+const GuessList = ({ guesses, clues, team, onAddClue }) => {
   const turns = teamTurns(guesses, clues, team);
   if (!turns.length) return null;
   return (
     <div className="guess-list">
       <div className="section-label">Guesses</div>
       {turns.map((t, i) => (
-        <TurnLine key={i} turn={t} />
+        <TurnLine key={i} turn={t} onAddClue={onAddClue} />
       ))}
     </div>
   );
 };
 
 // One team's column: players (Cluer first), then the team's guesses.
-const TeamList = ({ players, team, me, onName, guesses, clues }) => {
+const TeamList = ({ players, team, me, onName, guesses, clues, onAddClue }) => {
   // A Single Cluer heads both columns.
   const members = players
     .filter((p) => p.team === team || p.team === 'both')
@@ -71,7 +72,7 @@ const TeamList = ({ players, team, me, onName, guesses, clues }) => {
       {members.map((p) => (
         <PlayerName key={p.user_id} p={p} me={me} onClick={onName} />
       ))}
-      <GuessList guesses={guesses} clues={clues} team={team} />
+      <GuessList guesses={guesses} clues={clues} team={team} onAddClue={onAddClue} />
     </div>
   );
 };
@@ -203,6 +204,7 @@ export const Board = ({ view, act }) => {
   const [showSettings, setShowSettings] = React.useState(false);
   const [menuFor, setMenuFor] = React.useState(null);
   const [showHistory, setShowHistory] = React.useState(false);
+  const [lateClue, setLateClue] = React.useState(null); // a turn without a clue
   const [showSound, setShowSound] = React.useState(false);
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
@@ -325,7 +327,7 @@ export const Board = ({ view, act }) => {
 
   return (
     <div id="play-view" className={viewClass + extraClasses}>
-      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} />
+      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
 
       {/* Subtitle under "Clue Me In". */}
       <div className="board-info">
@@ -470,9 +472,18 @@ export const Board = ({ view, act }) => {
         {graffito}
       </div>
 
-      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} />
+      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
 
       {showSound && <SoundPopup view={view} act={act} onClose={() => setShowSound(false)} />}
+
+      {lateClue && (
+        <LateClueDialog
+          turn={lateClue}
+          max={remainingAtTurnStart(board.remaining[lateClue.team], board.guesses, lateClue.team, lateClue.round)}
+          onPost={(word, number) => act('late-clue', { board: board.number - 1, round: lateClue.round, word, number })}
+          onClose={() => setLateClue(null)}
+        />
+      )}
 
       {showHistory && <SessionHistory rulesetID={view.ruleset.id} onClose={() => setShowHistory(false)} />}
 

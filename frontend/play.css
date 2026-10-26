@@ -907,3 +907,30 @@ button.turn-banner.end-turn:disabled {
 .team-list.red .guess-list {
   text-align: left;
 }
+
+/* A missing clue (******) that can be clicked to enter it. */
+button.clue-chip.missing.add {
+  border: 1px dashed #999;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.clue-chip.missing.add:hover {
+  background: #f3f3f3;
+  border-color: #555;
+}
+
+/* The dialog for a missing clue. */
+.late-clue .clue-line {
+  margin: 0.6em 0 0.8em;
+}
+
+.late-clue .clue-word.red {
+  color: #d13030;
+}
+
+.late-clue .clue-word.blue {
+  color: #4183cc;
+}

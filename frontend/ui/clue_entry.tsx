@@ -13,7 +13,7 @@ import * as React from 'react';
 
 // No browser autocomplete list, spell-check or auto-correct in the clue boxes
 // (the suggestion list swallowed the first click on Post).
-const NO_SUGGESTIONS = {
+export const NO_SUGGESTIONS = {
   autoComplete: 'off',
   autoCorrect: 'off',
   autoCapitalize: 'off',
@@ -21,9 +21,9 @@ const NO_SUGGESTIONS = {
   name: 'cluemein-clue-' + Math.random().toString(36).slice(2), // no remembered entries to offer
 };
 
-const defaultNumber = (max) => (max >= 2 ? 2 : max);
+export const defaultNumber = (max) => (max >= 2 ? 2 : max);
 
-const NumberPick = ({ max, value, onChange, label }) =>
+export const NumberPick = ({ max, value, onChange, label }) =>
   max <= 1 ? (
     <span className="clue-number-fixed" aria-label={label}>
       {max}

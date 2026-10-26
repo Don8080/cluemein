@@ -735,6 +735,29 @@ function setupSessions(app, db, requireAuth) {
     return null;
   });
 
+  // Add the clue for a turn that started without one (the ****** in the
+  // guess lists and Session History), on any board of the session. Same
+  // rules as posting live; the number's limit is the team's unguessed words
+  // when that turn began.
+  action('late-clue', (ctx, body) => {
+    const b = ctx.s.boards[Number(body.board)];
+    if (!b) return 'That board is not in this session.';
+    const round = Number(body.round);
+    const turnGuesses = b.guesses.filter((x) => x.round === round);
+    if (!turnGuesses.length) return 'That turn has no guesses yet; use the clue box above the board.';
+    const team = turnGuesses[0].team;
+    const word = String(body.word || '').trim().replace(/\s+/g, ' ');
+    if (!word) return 'Type a clue first.';
+    if (word.length > 30) return 'A clue can be at most 30 characters.';
+    const max = b.game.remaining(team) + b.guesses.filter((x) => x.color === team && (x.round ?? -1) >= round).length;
+    let number = Number(body.number);
+    if (max <= 1) number = 1;
+    if (!Number.isInteger(number) || number < 0 || number > max) return `The number must be from 0 to ${max}.`;
+    b.clues = b.clues || {};
+    b.clues[round] = { team, word, number };
+    return null;
+  });
+
   action('mark', (ctx, body) => {
     const { s, uid } = ctx;
     const board = currentBoard(s);

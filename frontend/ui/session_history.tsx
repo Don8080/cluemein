@@ -1,7 +1,8 @@
 import * as React from 'react';
 import axios from 'axios';
 import { Popup } from '~/ui/popup';
-import { TurnLine } from '~/ui/turn_line';
+import { TurnLine, remainingAtTurnStart } from '~/ui/turn_line';
+import { LateClueDialog } from '~/ui/late_clue';
 
 
 // "Blue by 3" / "Red by Assassination", with the winning team's name in
@@ -57,13 +58,35 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
   const [boards, setBoards] = React.useState(null);
   const [error, setError] = React.useState(null);
   const [shown, setShown] = React.useState(null);
+  const [late, setLate] = React.useState(null); // { board, turn }: entering a missing clue
 
-  React.useEffect(() => {
+  const load = () =>
     axios
       .post(`/api/play/${rulesetID}/history`)
       .then(({ data }) => setBoards(data.boards))
       .catch((err) => setError(err.response?.data?.error || 'Could not load the history.'));
+  React.useEffect(() => {
+    load();
   }, []);
+
+  // A missing clue's limit: the team's unguessed words when that turn began.
+  const lateMax = ({ board, turn }) =>
+    remainingAtTurnStart(
+      board.final_board.remaining[turn.team],
+      board.turns.flatMap((t) => t.guesses.map((g) => ({ ...g, round: t.round }))),
+      turn.team,
+      turn.round
+    );
+  const postLate = async (word, number) => {
+    try {
+      await axios.post(`/api/play/${rulesetID}/late-clue`, { board: late.board.number - 1, round: late.turn.round, word, number });
+      await load();
+      return true;
+    } catch (err) {
+      alert(err.response?.data?.error || 'Something went wrong.');
+      return false;
+    }
+  };
 
   // The final-board popup is rendered beside (not inside) this one, since a
   // popup that has been dragged would otherwise confine it.
@@ -104,7 +127,7 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
                   </td>
                   <td>
                     {b.turns.map((t, i) => (
-                      <TurnLine key={i} turn={t} />
+                      <TurnLine key={i} turn={t} onAddClue={(turn) => setLate({ board: b, turn })} />
                     ))}
                   </td>
                   <td>
@@ -123,6 +146,7 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
       </div>
     </Popup>
     {shown && <FinalBoard board={shown} onClose={() => setShown(null)} />}
+    {late && <LateClueDialog turn={late.turn} max={lateMax(late)} onPost={postLate} onClose={() => setLate(null)} />}
     </>
   );
 };

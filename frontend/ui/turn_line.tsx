@@ -13,21 +13,27 @@ export const GuessChip = ({ word, color, team }) => {
   return <span className={`history-guess ${kind}${wrongTeam ? ` other-team by-${team}` : ''}`}>{word}</span>;
 };
 
-export const ClueChip = ({ clue }) =>
+// With `onAdd`, a missing clue's ****** is a button that opens a dialog to
+// enter it.
+export const ClueChip = ({ clue, onAdd = null }) =>
   clue ? (
     <span className={`clue-chip ${clue.team}`}>
       {clue.word}
       {`{${clue.number}}`}
     </span>
+  ) : onAdd ? (
+    <button type="button" className="clue-chip missing add" title="Enter the clue for this turn" onClick={onAdd}>
+      ******
+    </button>
   ) : (
     <span className="clue-chip missing">******</span>
   );
 
 // turn: { team, number, clue, guesses: [{ word, color }] }
-export const TurnLine = ({ turn }) => (
+export const TurnLine = ({ turn, onAddClue = null }) => (
   <div className="history-turn">
     {turn.number && <span className={`turn-number ${turn.team}`}>{turn.number})</span>}
-    <ClueChip clue={turn.clue} />
+    <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} />
     {turn.guesses.map((g, j) => (
       <GuessChip key={j} word={g.word} color={g.color} team={turn.team} />
     ))}
@@ -52,4 +58,10 @@ export function teamTurns(guesses, clues, team) {
   return [...byRound.values()]
     .sort((a, b) => (a.round ?? 0) - (b.round ?? 0))
     .map((t) => ({ ...t, clue: t.round !== undefined ? (clues || {})[t.round] || null : null }));
+}
+
+// The team's unguessed words when a turn began: those left now plus the
+// team's words revealed in that turn or later. guesses: [{ color, round }].
+export function remainingAtTurnStart(remainingNow, guesses, team, round) {
+  return remainingNow + guesses.filter((g) => g.color === team && (g.round ?? -1) >= round).length;
 }
