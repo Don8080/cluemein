@@ -633,6 +633,11 @@ function setupSessions(app, db, requireAuth) {
 
   action('guess', (ctx, body) => {
     const { s, uid } = ctx;
+    // Two teammates clicking the same word at about the same time: the second
+    // click finds it already revealed (and perhaps the turn over); ignore it
+    // quietly instead of showing an error.
+    const shown = currentBoard(s);
+    if (s.status === 'playing' && shown && Number.isInteger(body.index) && shown.game.revealed[body.index]) return null;
     if (!mayClick(s, uid)) return "It isn't your turn to guess.";
     const board = currentBoard(s);
     const team = board.game.currentTeam();
