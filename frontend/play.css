@@ -981,3 +981,14 @@ button.clue-chip.missing.add:hover {
 .history-turn.stacked button.clue-chip.missing.add {
   padding-left: calc(0.4em - 1px);
 }
+
+/* Session History: the "Show Not Finished" switch, top right. */
+.history-options {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.5em;
+}
+
+.history-options .history-option-label {
+  margin-right: 0.2em;
+}

@@ -53,8 +53,33 @@ const FinalBoard = ({ board, onClose }) => {
   );
 };
 
-// (D1) Session History: every board of the session so far.
-export const SessionHistory = ({ rulesetID, onClose }) => {
+// "Show Not Finished": this player's choice, remembered on this device for
+// the rest of the session (a new session starts at No).
+const unfinishedKey = (rulesetID, sessionStarted) => `cluemein_history_unfinished_${rulesetID}_${sessionStarted}`;
+function loadShowUnfinished(rulesetID, sessionStarted) {
+  try {
+    return localStorage.getItem(unfinishedKey(rulesetID, sessionStarted)) === 'yes';
+  } catch {
+    return false;
+  }
+}
+function saveShowUnfinished(rulesetID, sessionStarted, on) {
+  try {
+    localStorage.setItem(unfinishedKey(rulesetID, sessionStarted), on ? 'yes' : 'no');
+  } catch {
+    // not remembered; harmless
+  }
+}
+
+// (D1) Session History: every board of the session so far (boards left
+// unfinished only when "Show Not Finished" is on; the board in progress
+// always shows).
+export const SessionHistory = ({ rulesetID, sessionStarted, onClose }) => {
+  const [showUnfinished, setShowUnfinished] = React.useState(() => loadShowUnfinished(rulesetID, sessionStarted));
+  const toggleUnfinished = () => {
+    setShowUnfinished(!showUnfinished);
+    saveShowUnfinished(rulesetID, sessionStarted, !showUnfinished);
+  };
   const [boards, setBoards] = React.useState(null);
   const [error, setError] = React.useState(null);
   const [shown, setShown] = React.useState(null);
@@ -95,6 +120,19 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
     <Popup title="Session History" onClose={onClose} extraWide>
       {error && <div className="form-error">{error}</div>}
       {!boards && !error && <p>Loading…</p>}
+      <div className="history-options">
+        <label className={'sound-switch' + (showUnfinished ? ' on' : '')}>
+          <span className="history-option-label">Show Not Finished</span>
+          <input type="checkbox" checked={showUnfinished} onChange={toggleUnfinished} />
+          <span className="sound-switch-track">
+            <span className="sound-switch-knob" />
+          </span>
+          <span className="sound-switch-label">{showUnfinished ? 'Yes' : 'No'}</span>
+        </label>
+      </div>
+      {boards && !showUnfinished && boards.every((b) => !b.result && !b.current) && (
+        <p className="hint">No finished games yet.</p>
+      )}
       {boards && (
         <div className="history-scroll">
           <table className="history-table">
@@ -109,7 +147,7 @@ export const SessionHistory = ({ rulesetID, onClose }) => {
               </tr>
             </thead>
             <tbody>
-              {boards.map((b) => (
+              {boards.filter((b) => showUnfinished || b.result || b.current).map((b) => (
                 <tr key={b.number}>
                   <td>
                     <button type="button" onClick={() => setShown(b)}>

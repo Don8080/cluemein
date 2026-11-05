@@ -485,7 +485,7 @@ export const Board = ({ view, act }) => {
         />
       )}
 
-      {showHistory && <SessionHistory rulesetID={view.ruleset.id} onClose={() => setShowHistory(false)} />}
+      {showHistory && <SessionHistory rulesetID={view.ruleset.id} sessionStarted={view.sound.session_started} onClose={() => setShowHistory(false)} />}
 
       {menuFor && (
         <PlayerActions
