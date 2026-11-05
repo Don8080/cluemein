@@ -934,3 +934,10 @@ button.clue-chip.missing.add:hover {
 .late-clue .clue-word.blue {
   color: #4183cc;
 }
+
+/* The "Clue" placeholder in light gray, so it reads as temporary. */
+.clue-word:not(.next)::placeholder {
+  color: #c4c4c4;
+  font-weight: normal;
+  opacity: 1; /* Firefox dims placeholders on its own */
+}
