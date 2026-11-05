@@ -22,6 +22,8 @@ const Names = ({ list }) => (
     {list.map((p, i) => (
       <div key={i} className={p.cluer ? 'history-cluer' : ''}>
         {p.name}
+        {/* Times a Cluer (or Floater) so far: this game plus earlier completed ones. */}
+        {p.count ? <span className="role-count"> ({p.count})</span> : null}
       </div>
     ))}
   </>

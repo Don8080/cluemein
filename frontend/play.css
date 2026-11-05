@@ -992,3 +992,9 @@ button.clue-chip.missing.add:hover {
 .history-options .history-option-label {
   margin-right: 0.2em;
 }
+
+/* Session History: times a Cluer / Floater so far, after the name. */
+.history-table .role-count {
+  font-weight: normal;
+  color: #666;
+}

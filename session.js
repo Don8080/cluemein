@@ -787,15 +787,25 @@ function setupSessions(app, db, requireAuth) {
     const { s, uid } = ctx;
     const names = new Map(getMembers.all(s.rulesetID).map((m) => [m.user_id, m.name]));
     const nameOf = (id) => names.get(Number(id)) || 'Former player';
+    // Final roles: as left, or live for the current board.
+    const rolesOf = (b, i) => (i === s.current ? s.roles : b.finalRoles || b.roles);
+    // How many times a player was a Cluer (or Floater) up to board i: board i
+    // always counts, earlier boards only if they were completed.
+    const timesAs = (uid, role, i) =>
+      s.boards.filter((b, j) => j <= i && (j === i || b.game.winning_team) && rolesOf(b, j)[uid]?.role === role).length;
     const boards = s.boards.map((b, i) => {
       const g = b.game;
-      // Final roles: as left, or live for the current board.
-      const roles = i === s.current ? s.roles : b.finalRoles || b.roles;
+      const roles = rolesOf(b, i);
       const members = (pred) =>
         Object.entries(roles)
           .filter(([, r]) => pred(r))
           .sort(([, a], [, b2]) => (a.role === 'cluer' ? -1 : b2.role === 'cluer' ? 1 : 0))
-          .map(([id, r]) => ({ name: nameOf(id), cluer: r.role === 'cluer' }));
+          .map(([id, r]) => ({
+            name: nameOf(id),
+            cluer: r.role === 'cluer',
+            // Shown after Cluers' and Floaters' names.
+            count: r.role === 'cluer' || r.role === 'floater' ? timesAs(id, r.role, i) : null,
+          }));
       const over = !!g.winning_team;
       const sawColors = roles[uid]?.role === 'cluer';
       // Guesses grouped into turns, each with its posted clue (if any); a turn
