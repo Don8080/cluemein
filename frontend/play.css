@@ -941,3 +941,43 @@ button.clue-chip.missing.add:hover {
   font-weight: normal;
   opacity: 1; /* Firefox dims placeholders on its own */
 }
+
+/* Beside the board: each turn as a column. Number on the left, then the
+   clue (in capitals) and one guess per line, every word starting at the
+   same place. */
+.history-turn.stacked {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.45em;
+}
+
+.history-turn.stacked .turn-number {
+  flex: none;
+  min-width: 2.2em;
+  padding-top: 0.1em;
+}
+
+.history-turn.stacked .turn-words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+  min-width: 0;
+}
+
+.history-turn.stacked .clue-chip,
+.history-turn.stacked .history-guess {
+  margin: 0;
+  padding: 0.1em 0.4em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.history-turn.stacked .clue-chip {
+  text-transform: uppercase;
+}
+
+/* The ****** button's border would shift it by a pixel; keep its text aligned. */
+.history-turn.stacked button.clue-chip.missing.add {
+  padding-left: calc(0.4em - 1px);
+}

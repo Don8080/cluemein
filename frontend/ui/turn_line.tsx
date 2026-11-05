@@ -30,15 +30,24 @@ export const ClueChip = ({ clue, onAdd = null }) =>
   );
 
 // turn: { team, number, clue, guesses: [{ word, color }] }
-export const TurnLine = ({ turn, onAddClue = null }) => (
-  <div className="history-turn">
-    {turn.number && <span className={`turn-number ${turn.team}`}>{turn.number})</span>}
-    <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} />
-    {turn.guesses.map((g, j) => (
-      <GuessChip key={j} word={g.word} color={g.color} team={turn.team} />
-    ))}
-  </div>
-);
+// `stacked` (beside the board): the clue in capitals and one word per line,
+// all starting at the same place, next to the turn number.
+export const TurnLine = ({ turn, onAddClue = null, stacked = false }) => {
+  const words = (
+    <>
+      <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} />
+      {turn.guesses.map((g, j) => (
+        <GuessChip key={j} word={g.word} color={g.color} team={turn.team} />
+      ))}
+    </>
+  );
+  return (
+    <div className={'history-turn' + (stacked ? ' stacked' : '')}>
+      {turn.number && <span className={`turn-number ${turn.team}`}>{turn.number})</span>}
+      {stacked ? <div className="turn-words">{words}</div> : words}
+    </div>
+  );
+};
 
 // Turns for one team from a board's guesses and posted clues (by round).
 export function teamTurns(guesses, clues, team) {

@@ -55,7 +55,7 @@ const GuessList = ({ guesses, clues, team, onAddClue }) => {
     <div className="guess-list">
       <div className="section-label">Guesses</div>
       {turns.map((t, i) => (
-        <TurnLine key={i} turn={t} onAddClue={onAddClue} />
+        <TurnLine key={i} turn={t} onAddClue={onAddClue} stacked />
       ))}
     </div>
   );
