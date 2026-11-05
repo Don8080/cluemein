@@ -72,10 +72,21 @@ export const WaitingRoom = ({ view, act }) => {
         </tbody>
       </table>
 
+      {/* Green like Start's Join Session; Join Video Session as on Start, set apart. */}
       <div className="start-row">
-        <button onClick={() => setAdding(true)}>Add Player</button>
-        <button disabled={!quorum} onClick={() => act('begin')}>
+        <button className="join-session" onClick={() => setAdding(true)}>
+          Add Player
+        </button>
+        <button className="join-session" disabled={!quorum} onClick={() => act('begin')}>
           Begin Game
+        </button>
+        <button
+          className="join-video waiting-video"
+          disabled={!view.ruleset.video_url}
+          title={view.ruleset.video_url ? undefined : 'This game has no Video Chat URL'}
+          onClick={() => window.open(view.ruleset.video_url, '_blank', 'noopener')}
+        >
+          Join Video Session
         </button>
       </div>
       <p>

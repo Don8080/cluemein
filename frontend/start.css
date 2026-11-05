@@ -874,3 +874,8 @@ button.link-button,
   border-top: 2px solid #ccc;
   font-weight: bold;
 }
+
+/* Waiting Room: Join Video Session about half a button's width past Begin Game. */
+#start button.join-video.waiting-video {
+  margin-left: 3.5em;
+}
