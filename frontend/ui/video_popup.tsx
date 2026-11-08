@@ -52,7 +52,10 @@ export const VideoPopup = ({ rulesetID, url, onClose }) => {
         const { data } = await axios.post(`/api/rulesets/${rulesetID}/video-invite`);
         setMessage(`An invitation with the link was sent to ${data.email}.`);
       } catch (err) {
-        setError(err.response?.data?.error || 'The email could not be sent.');
+        setError(
+          err.response?.data?.error ||
+            `The email could not be sent${err.response ? ` (server answered ${err.response.status})` : ' (no answer from the server)'}.`
+        );
       }
       setBusy(false);
     }
