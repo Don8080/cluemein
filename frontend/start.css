@@ -879,3 +879,18 @@ button.link-button,
 #start button.join-video.waiting-video {
   margin-left: 3.5em;
 }
+
+/* Join Video Session popup: three radio choices, one per line. */
+.video-choices {
+  min-width: 18em;
+}
+
+.video-choices .video-choice {
+  display: block;
+  margin: 0.45em 0;
+  cursor: pointer;
+}
+
+.video-choices .button-row {
+  gap: 0.6em;
+}

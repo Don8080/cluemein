@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Popup } from '~/ui/popup';
+import { VideoPopup } from '~/ui/video_popup';
 
 const STATUS_LABELS = { none: 'No Account', pending: 'Unverified', verified: 'Verified' };
 
@@ -7,6 +8,7 @@ const STATUS_LABELS = { none: 'No Account', pending: 'Unverified', verified: 'Ve
 // clicking it takes everyone present to the board.
 export const WaitingRoom = ({ view, act }) => {
   const [adding, setAdding] = React.useState(false);
+  const [video, setVideo] = React.useState(false); // Join Video Session popup
   const present = view.players.filter((p) => p.present);
   const absent = view.players.filter((p) => !p.present);
   const unverified = view.players.filter((p) => p.status !== 'verified');
@@ -84,7 +86,7 @@ export const WaitingRoom = ({ view, act }) => {
           className="join-video waiting-video"
           disabled={!view.ruleset.video_url}
           title={view.ruleset.video_url ? undefined : 'This game has no Video Chat URL'}
-          onClick={() => window.open(view.ruleset.video_url, '_blank', 'noopener')}
+          onClick={() => setVideo(true)}
         >
           Join Video Session
         </button>
@@ -94,6 +96,7 @@ export const WaitingRoom = ({ view, act }) => {
       </p>
 
       {adding && <AddPlayer act={act} onClose={() => setAdding(false)} />}
+      {video && <VideoPopup rulesetID={view.ruleset.id} url={view.ruleset.video_url} onClose={() => setVideo(false)} />}
     </div>
   );
 };

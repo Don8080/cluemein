@@ -2,6 +2,7 @@
 // vocabulary (P2). Any member of a RuleSet may view and change it.
 const { normalizeWord } = require('./db');
 const sounds = require('./sounds');
+const { sendEmail, FROM_VIDEO } = require('./mailer');
 
 class InputError extends Error {}
 
@@ -407,6 +408,36 @@ function setupRulesets(app, db, requireAuth) {
     if (!rs) return;
     db.prepare('DELETE FROM ruleset_sounds WHERE ruleset_id = ? AND kind = ?').run(rs.id, req.params.kind);
     res.json(soundInfo(rs.id));
+  });
+
+  // Join Video Session → "Send me an email invitation": emails the game's
+  // Video Chat URL to the logged-in player. At most one per player a minute.
+  const lastInvite = new Map(); // userID -> time sent
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  app.post('/api/rulesets/:id/video-invite', requireAuth, async (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (!rs) return;
+    if (!rs.video_url) return res.status(400).json({ error: 'This game has no Video Chat URL.' });
+    const last = lastInvite.get(req.session.userID) || 0;
+    if (Date.now() - last < 60 * 1000) return res.status(429).json({ error: 'An invitation was just sent. Please wait a minute.' });
+    lastInvite.set(req.session.userID, Date.now());
+    try {
+      await sendEmail({
+        from: FROM_VIDEO,
+        to: req.session.email,
+        subject: `Video session for ${rs.name}`,
+        text: `Join the video session for ${rs.name}:
+${rs.video_url}
+`,
+        html: `<p>Join the video session for <b>${esc(rs.name)}</b>:</p><p><a href="${esc(rs.video_url)}">${esc(rs.video_url)}</a></p>`,
+      });
+      console.log(`[video-invite] ${req.session.email}: ${rs.name}`);
+      res.json({ ok: true, email: req.session.email });
+    } catch (err) {
+      lastInvite.delete(req.session.userID);
+      console.error('[video-invite] email failed:', err.name, err.message);
+      res.status(502).json({ error: `The email could not be sent (${err.name}).` });
+    }
   });
 
   // (P2) The RuleSet's vocabulary with each word's source.

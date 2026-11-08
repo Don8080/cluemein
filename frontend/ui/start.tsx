@@ -4,6 +4,7 @@ import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
 import { AccountPopup } from '~/ui/account_popup';
 import { GettingStarted, HowToPlay } from '~/ui/info_popups';
+import { VideoPopup } from '~/ui/video_popup';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 import { gameLabel } from '~/ui/ruleset_form';
 
@@ -39,6 +40,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
   );
   const [pendingNote, setPendingNote] = React.useState(null);
   const [info, setInfo] = React.useState(null); // 'start' | 'play'
+  const [video, setVideo] = React.useState(false); // Join Video Session popup
 
   React.useEffect(() => {
     // Drop ?message= / ?reset= so a refresh doesn't repeat them.
@@ -192,7 +194,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
           className="join-video"
           disabled={!chosen?.video_url}
           title={chosen && !chosen.video_url ? 'This game has no Video Chat URL' : undefined}
-          onClick={() => window.open(chosen.video_url, '_blank', 'noopener')}
+          onClick={() => setVideo(true)}
         >
           Join Video Session
         </button>
@@ -216,6 +218,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
       {isMember && infoRow}
 
       {info === 'start' && <GettingStarted onClose={() => setInfo(null)} />}
+      {video && chosen?.video_url && <VideoPopup rulesetID={chosen.id} url={chosen.video_url} onClose={() => setVideo(false)} />}
       {info === 'play' && <HowToPlay onClose={() => setInfo(null)} />}
 
       {popup?.kind === 'login' && (
