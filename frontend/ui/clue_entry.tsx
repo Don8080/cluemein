@@ -4,7 +4,7 @@ import * as React from 'react';
 // the current team's unguessed words; fixed at 1 when one is left; default
 // 2) and Post. It sits over columns 4-5 on Red's turn and 1-2 on Blue's.
 // Anyone may post; the posted clue shows on every screen in the team's
-// color. Typing is black and stays on your screen until you Post; if someone
+// color. Typing (also in the team color) stays on your screen until you Post; if someone
 // else posts first, your typing is replaced by their clue.
 //
 // The waiting team's Cluer also gets "your next clue": typed in advance,
@@ -97,7 +97,7 @@ export const ClueEntry = ({ board, me, act }) => {
           }}
         >
           <input
-            className={'clue-word' + (showingPosted ? ` posted ${team}` : '')}
+            className={`clue-word ${team}` + (showingPosted ? ' posted' : '')}
             placeholder="Clue"
             maxLength={30}
             {...NO_SUGGESTIONS}

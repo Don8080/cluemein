@@ -867,17 +867,6 @@ button.turn-banner.end-turn:disabled {
   border-radius: 4px;
 }
 
-/* Posted: the clue in its team's color. */
-.clue-word.posted.red,
-.clue-word.next.red {
-  color: #d13030;
-}
-
-.clue-word.posted.blue,
-.clue-word.next.blue {
-  color: #4183cc;
-}
-
 .clue-number {
   padding: 0.25em 0.1em;
   font: inherit;
@@ -927,20 +916,6 @@ button.clue-chip.missing.add:hover {
   margin: 0.6em 0 0.8em;
 }
 
-.late-clue .clue-word.red {
-  color: #d13030;
-}
-
-.late-clue .clue-word.blue {
-  color: #4183cc;
-}
-
-/* The "Clue" placeholder in light gray, so it reads as temporary. */
-.clue-word:not(.next)::placeholder {
-  color: #c4c4c4;
-  font-weight: normal;
-  opacity: 1; /* Firefox dims placeholders on its own */
-}
 
 /* Beside the board: each turn as a column. Number on the left, then the
    clue (in capitals) and one guess per line, every word starting at the
@@ -997,4 +972,27 @@ button.clue-chip.missing.add:hover {
 .history-table .role-count {
   font-weight: normal;
   color: #666;
+}
+
+/* Clue boxes (clue, "your next clue", and the ****** dialog) are always in
+   their team's color: clear for what is typed or posted, subdued for the
+   hint ("Clue", "your next clue"), never black or gray. */
+.clue-word.red {
+  color: #d13030;
+}
+
+.clue-word.blue {
+  color: #4183cc;
+}
+
+.clue-word.red::placeholder {
+  color: #ecaaaa;
+  font-weight: normal;
+  opacity: 1; /* Firefox dims placeholders on its own */
+}
+
+.clue-word.blue::placeholder {
+  color: #aac7e8;
+  font-weight: normal;
+  opacity: 1;
 }
