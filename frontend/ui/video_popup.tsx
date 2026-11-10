@@ -5,6 +5,26 @@ import { Popup } from '~/ui/popup';
 // Join Video Session (Start page and Waiting Room): open the game's video
 // call in a new tab or a new window, or email the link to yourself. The
 // last choice is remembered on this device.
+// "Join Zoom Session" etc. when the Video Chat URL is on a known platform
+// (recognized by its domain), otherwise "Join Video Session".
+const PLATFORMS = [
+  ['Zoom', /(^|.)(zoom.us|zoomgov.com)$/],
+  ['Meet', /^meet.google.com$/],
+  ['Skype', /(^|.)skype.com$/],
+  ['Teams', /^teams.(microsoft|live).com$/],
+  ['Webex', /(^|.)webex.com$/],
+];
+export function joinLabel(url) {
+  let host = '';
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    // not a full address: no platform
+  }
+  const found = PLATFORMS.find(([, re]) => re.test(host));
+  return `Join ${found ? found[0] : 'Video'} Session`;
+}
+
 const CHOICES = [
   ['tab', 'Open in new tab'],
   ['window', 'Open in new Window'],
@@ -62,7 +82,7 @@ export const VideoPopup = ({ rulesetID, url, onClose }) => {
   };
 
   return (
-    <Popup title="Join Video Session" onClose={onClose}>
+    <Popup title={joinLabel(url)} onClose={onClose}>
       <form className="video-choices" onSubmit={go}>
         {CHOICES.map(([id, label]) => (
           <label key={id} className="video-choice">

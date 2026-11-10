@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Popup } from '~/ui/popup';
-import { VideoPopup } from '~/ui/video_popup';
+import { VideoPopup, joinLabel } from '~/ui/video_popup';
 
 const STATUS_LABELS = { none: 'No Account', pending: 'Unverified', verified: 'Verified' };
 
@@ -88,7 +88,7 @@ export const WaitingRoom = ({ view, act }) => {
           title={view.ruleset.video_url ? undefined : 'This game has no Video Chat URL'}
           onClick={() => setVideo(true)}
         >
-          Join Video Session
+          {joinLabel(view.ruleset.video_url)}
         </button>
       </div>
       <p>

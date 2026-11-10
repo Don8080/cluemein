@@ -4,7 +4,7 @@ import { LoginPopup } from '~/ui/login_popup';
 import { ChangePassword } from '~/ui/change_password';
 import { AccountPopup } from '~/ui/account_popup';
 import { GettingStarted, HowToPlay } from '~/ui/info_popups';
-import { VideoPopup } from '~/ui/video_popup';
+import { VideoPopup, joinLabel } from '~/ui/video_popup';
 import { getLastRuleset, setLastRuleset } from '~/ui/prefs';
 import { gameLabel } from '~/ui/ruleset_form';
 
@@ -196,7 +196,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
           title={chosen && !chosen.video_url ? 'This game has no Video Chat URL' : undefined}
           onClick={() => setVideo(true)}
         >
-          Join Video Session
+          {joinLabel(chosen?.video_url)}
         </button>
       </div>
       <div className="start-row">
