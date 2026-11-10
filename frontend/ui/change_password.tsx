@@ -12,6 +12,14 @@ export const ChangePassword = ({ email: initialEmail, resetToken, onSaved, onCan
   const emailRef = React.useRef(null);
   const currentRef = React.useRef(null);
   const passwordRef = React.useRef(null);
+  // Show/Hide for each password box, as in the Login popup.
+  const [showCurrent, setShowCurrent] = React.useState(false);
+  const [showNew, setShowNew] = React.useState(false);
+  const toggle = (shown, setShown) => (
+    <button type="button" className="link-button" onClick={() => setShown(!shown)}>
+      {shown ? 'Hide' : 'Show'}
+    </button>
+  );
 
   const save = async (e) => {
     e.preventDefault();
@@ -47,24 +55,30 @@ export const ChangePassword = ({ email: initialEmail, resetToken, onSaved, onCan
         {!resetToken && (
           <label>
             Current Password
-            <input
-              ref={currentRef}
-              type="password"
-              name="current-password"
-              autoComplete="current-password"
-              autoFocus={!!initialEmail}
-            />
+            <span className="password-field">
+              <input
+                ref={currentRef}
+                type={showCurrent ? 'text' : 'password'}
+                name="current-password"
+                autoComplete="current-password"
+                autoFocus={!!initialEmail}
+              />
+              {toggle(showCurrent, setShowCurrent)}
+            </span>
           </label>
         )}
         <label>
           New Password
-          <input
-            ref={passwordRef}
-            type="password"
-            name="new-password"
-            autoComplete="new-password"
-            autoFocus={!!resetToken}
-          />
+          <span className="password-field">
+            <input
+              ref={passwordRef}
+              type={showNew ? 'text' : 'password'}
+              name="new-password"
+              autoComplete="new-password"
+              autoFocus={!!resetToken}
+            />
+            {toggle(showNew, setShowNew)}
+          </span>
         </label>
 
         {error && <div className="form-error">{error}</div>}
