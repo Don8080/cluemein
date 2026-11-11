@@ -996,3 +996,23 @@ button.clue-chip.missing.add:hover {
   font-weight: normal;
   opacity: 1;
 }
+
+/* Board buttons colored like their Start page counterparts: Prev/Next
+   Board amber (Getting Started), Next Game red (Admin), Modify Game blue,
+   Session History teal (Join Video Session). */
+.board-toolbar button.btn-amber, .board-toolbar button.btn-red, .board-toolbar button.btn-blue, .board-toolbar button.btn-teal,
+.board-bottom .board-buttons button.btn-amber, .board-bottom .board-buttons button.btn-red,
+.board-bottom .board-buttons button.btn-blue, .board-bottom .board-buttons button.btn-teal {
+  border: 1px solid transparent;
+  font-weight: bold;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.board-toolbar button.btn-amber, .board-bottom .board-buttons button.btn-amber { background: #e9c46a; color: #2b1d00; }
+.board-toolbar button.btn-red, .board-bottom .board-buttons button.btn-red { background: #c62828; }
+.board-toolbar button.btn-blue, .board-bottom .board-buttons button.btn-blue { background: #2f6fd6; }
+.board-toolbar button.btn-teal, .board-bottom .board-buttons button.btn-teal { background: #1a8fb0; }
+.board-toolbar button[class^='btn-']:hover:not(:disabled),
+.board-bottom .board-buttons button[class^='btn-']:hover:not(:disabled) { filter: brightness(1.1); }
+.board-bottom .board-buttons button[class^='btn-']:disabled { opacity: 0.45; box-shadow: none; }
+.board-bottom .board-buttons button.btn-amber:disabled { color: #2b1d00; }

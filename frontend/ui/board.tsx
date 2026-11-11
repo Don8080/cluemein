@@ -374,10 +374,10 @@ export const Board = ({ view, act }) => {
           >
             Sound ({myDeviceOn(view.sound) ? 'On' : 'Off'})
           </button>
-          <button type="button" onClick={openModifyGame}>
+          <button type="button" className="btn-blue" onClick={openModifyGame}>
             Modify Game
           </button>
-          <button type="button" onClick={() => setShowHistory(true)}>
+          <button type="button" className="btn-teal" onClick={() => setShowHistory(true)}>
             Session History
           </button>
           <SettingsButton onClick={() => setShowSettings(true)} />
@@ -444,12 +444,12 @@ export const Board = ({ view, act }) => {
         <div className="board-bottom">
           {/* Left: Prev Board and Next Board; middle: Floaters; right: Next Game. */}
           <div className="board-buttons left">
-            <button type="button" disabled={!board.has_prev} onClick={() => act('prev-board')}>
+            <button type="button" className="btn-amber" disabled={!board.has_prev} onClick={() => act('prev-board')}>
               Prev Board
             </button>
             {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
             {view.ruleset.team_mode !== 'fixed_roles' && (
-              <button type="button" onClick={() => next('next-board')}>
+              <button type="button" className="btn-amber" onClick={() => next('next-board')}>
                 Next Board
               </button>
             )}
@@ -463,7 +463,7 @@ export const Board = ({ view, act }) => {
             )}
           </div>
           <div className="board-buttons right">
-            <button type="button" onClick={() => next('next-game')}>
+            <button type="button" className="btn-red" onClick={() => next('next-game')}>
               Next Game
             </button>
           </div>
