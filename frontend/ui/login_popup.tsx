@@ -73,7 +73,7 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
   });
 
   return (
-    <Popup title="Login" onClose={onClose}>
+    <Popup title={invited ? 'Create Account' : 'Login'} onClose={onClose}>
       <form className="login-form" onSubmit={invited ? createAccount : login}>
         <label className="check">
           <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
