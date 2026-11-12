@@ -243,6 +243,8 @@ function upgradeSchema(db) {
       sent_by INTEGER REFERENCES users(id) ON DELETE SET NULL
     );
   `);
+  // The code in the invitation's link (?invite=...), kept across resends.
+  if (!hasColumn('invites', 'token')) db.exec('ALTER TABLE invites ADD COLUMN token TEXT');
 
   // kind: 'warning' (30 seconds left) or 'end' (out of time).
   db.exec(`

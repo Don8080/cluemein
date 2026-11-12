@@ -9,7 +9,10 @@ const errorText = (err) => err.response?.data?.error || 'Something went wrong. P
 // The email and password are read from the fields when a button is clicked,
 // not from React state: browsers' password autofill (notably Firefox) can
 // fill the fields without telling the page.
-export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, notice }) => {
+// From an invitation link (`invite` = its code): the invited email is filled
+// in and only Create Account is offered.
+export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, notice, invite = null }) => {
+  const [invited, setInvited] = React.useState(false);
   const [keep, setKeep] = React.useState(true);
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState(null);
@@ -17,6 +20,18 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
   const [busy, setBusy] = React.useState(false);
   const emailRef = React.useRef(null);
   const passwordRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!invite) return;
+    axios
+      .get(`/api/invite/${encodeURIComponent(invite)}`)
+      .then(({ data }) => {
+        emailRef.current.value = data.email;
+        setInvited(true);
+        passwordRef.current.focus();
+      })
+      .catch(() => {}); // unknown code: the usual Login
+  }, []);
 
   const values = () => ({
     email: emailRef.current.value.trim(),
@@ -59,7 +74,7 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
 
   return (
     <Popup title="Login" onClose={onClose}>
-      <form className="login-form" onSubmit={login}>
+      <form className="login-form" onSubmit={invited ? createAccount : login}>
         <label className="check">
           <input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} />
           Keep me signed in
@@ -75,7 +90,7 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
               ref={passwordRef}
               type={showPassword ? 'text' : 'password'}
               name="password"
-              autoComplete="current-password"
+              autoComplete={invited ? 'new-password' : 'current-password'}
             />
             <button
               type="button"
@@ -90,11 +105,20 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
         {error && <div className="form-error">{error}</div>}
         {message && <div className="form-message">{message}</div>}
 
-        <div className="button-row login-row">
-          <button type="submit" className="login-button" disabled={busy}>
-            Login
-          </button>
-        </div>
+        {!invited && (
+          <div className="button-row login-row">
+            <button type="submit" className="login-button" disabled={busy}>
+              Login
+            </button>
+          </div>
+        )}
+        {invited ? (
+          <div className="button-row login-row">
+            <button type="submit" className="login-button" disabled={busy}>
+              Create Account
+            </button>
+          </div>
+        ) : (
         <div className="button-row secondary">
           <button type="button" disabled={busy} onClick={createAccount}>
             Create Account
@@ -106,11 +130,14 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
             Change Password
           </button>
         </div>
-        <div className="button-row close-row">
-          <button type="button" onClick={onClose}>
-            Close
-          </button>
-        </div>
+        )}
+        {!invited && (
+          <div className="button-row close-row">
+            <button type="button" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        )}
       </form>
     </Popup>
   );

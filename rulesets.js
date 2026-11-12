@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 // RuleSets ("Games" on screen): create (B1), copy, modify (B2) and edit
 // vocabulary (P2). Any member of a RuleSet may view and change it.
 const { normalizeWord } = require('./db');
@@ -453,9 +454,18 @@ ${rs.video_url}
     'SELECT player_name FROM ruleset_members WHERE email = ? ORDER BY rowid DESC LIMIT 1'
   );
   const recordInvite = db.prepare(
-    `INSERT INTO invites (email, sent_at, sent_by) VALUES (?, ?, ?)
-     ON CONFLICT(email) DO UPDATE SET sent_at = excluded.sent_at, sent_by = excluded.sent_by`
+    `INSERT INTO invites (email, sent_at, sent_by, token) VALUES (?, ?, ?, ?)
+     ON CONFLICT(email) DO UPDATE SET sent_at = excluded.sent_at, sent_by = excluded.sent_by, token = excluded.token`
   );
+  const inviteToken = db.prepare('SELECT token FROM invites WHERE email = ?');
+  const inviteByToken = db.prepare('SELECT email FROM invites WHERE token = ?');
+
+  // The invitation link (?invite=<code>) opens Login with this email filled in.
+  app.get('/api/invite/:token', (req, res) => {
+    const row = inviteByToken.get(String(req.params.token));
+    if (!row) return res.status(404).json({ error: 'Unknown invitation.' });
+    res.json({ email: row.email });
+  });
   app.post('/api/invite', requireAuth, async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const name = String(req.body.name || '').trim().slice(0, 60);
@@ -471,6 +481,9 @@ ${rs.video_url}
     if (recent.length >= 30) return res.status(429).json({ error: 'Too many invitations today.' });
     const from = inviterName.get(req.session.email)?.player_name || req.session.email;
     const hi = name ? `Hi ${name},\n\n` : '';
+    // Resends keep the same code, so an earlier email's link still works.
+    const token = inviteToken.get(email)?.token || crypto.randomBytes(16).toString('hex');
+    const link = `${baseURL}/?invite=${token}`;
     try {
       await sendEmail({
         from: FROM_INVITE,
@@ -479,11 +492,11 @@ ${rs.video_url}
         text:
           hi +
           `${from} has added you to ${game ? `the game "${game}"${about ? ` (${about})` : ''}` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.\n\n` +
-          `To join, create an account with this email address (${email}) at:\n${baseURL}\n`,
+          `To join, create your account here:\n${link}\n`,
         html:
           (name ? `<p>Hi ${esc(name)},</p>` : '') +
           `<p>${esc(from)} has added you to ${game ? `the game <b>${esc(game)}</b>${about ? ` (${esc(about)})` : ''}` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.</p>` +
-          `<p>To join, create an account with this email address (${esc(email)}) at:<br><a href="${esc(baseURL)}">${esc(baseURL)}</a></p>`,
+          `<p>To join, <a href="${esc(link)}">create your account here</a>.</p>`,
       });
     } catch (err) {
       console.error('[invite] email failed:', err.name, err.message);
@@ -491,7 +504,7 @@ ${rs.video_url}
     }
     lastToEmail.set(email, now);
     sentBy.set(req.session.userID, [...recent, now]);
-    recordInvite.run(email, now, req.session.userID);
+    recordInvite.run(email, now, req.session.userID, token);
     console.log(`[invite] ${req.session.email} -> ${email}`);
     res.json({ ok: true, status: 'invited' });
   });

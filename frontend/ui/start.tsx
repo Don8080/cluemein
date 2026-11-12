@@ -30,10 +30,12 @@ export const Start = ({ account, setAccount, openLogin }) => {
   const [notice, setNotice] = React.useState(
     MESSAGES[params.get('message')] || endedNotice(params.get('ended')) || null
   );
-  // null | { kind: 'login', notice? } | { kind: 'change', email, fromAccount? } | { kind: 'reset', token } | { kind: 'account' }
+  // null | { kind: 'login', notice?, invite? } | { kind: 'change', email, fromAccount? } | { kind: 'reset', token } | { kind: 'account' }
   const [popup, setPopup] = React.useState(
     params.get('reset')
       ? { kind: 'reset', token: params.get('reset') }
+      : params.get('invite')
+      ? { kind: 'login', invite: params.get('invite') }
       : openLogin
       ? { kind: 'login' }
       : null
@@ -43,7 +45,7 @@ export const Start = ({ account, setAccount, openLogin }) => {
   const [video, setVideo] = React.useState(false); // Join Video Session popup
 
   React.useEffect(() => {
-    // Drop ?message= / ?reset= so a refresh doesn't repeat them.
+    // Drop ?message= / ?reset= / ?invite= so a refresh doesn't repeat them.
     if (window.location.search) window.history.replaceState(null, '', window.location.pathname);
   }, []);
 
@@ -221,9 +223,10 @@ export const Start = ({ account, setAccount, openLogin }) => {
       {video && chosen?.video_url && <VideoPopup rulesetID={chosen.id} url={chosen.video_url} onClose={() => setVideo(false)} />}
       {info === 'play' && <HowToPlay onClose={() => setInfo(null)} />}
 
-      {popup?.kind === 'login' && (
+      {popup?.kind === 'login' && !(popup.invite && user) && (
         <LoginPopup
           notice={popup.notice}
+          invite={popup.invite}
           onClose={() => setPopup(null)}
           onLoggedIn={loggedInUser}
           onPending={(pending) => {
