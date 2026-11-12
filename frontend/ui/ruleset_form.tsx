@@ -129,7 +129,8 @@ const PlayerRows = ({ players, onChange, removable, gameName }) => {
       setInviting((v) => ({ ...v, [key]: 'sent' }));
       setTimeout(() => setInviting((v) => (v[key] === 'sent' ? { ...v, [key]: undefined } : v)), 3000);
     } catch (err) {
-      setInviting((v) => ({ ...v, [key]: err.response?.data?.error || 'The email could not be sent.' }));
+      const why = err.response ? ` (server answered ${err.response.status})` : ' (no answer from the server)';
+      setInviting((v) => ({ ...v, [key]: err.response?.data?.error || `The email could not be sent${why}.` }));
     }
   };
   const statusCell = (p, status) => {
