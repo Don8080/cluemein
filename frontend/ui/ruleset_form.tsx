@@ -105,7 +105,7 @@ const looksLikeEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 // most two blank rows. Each email's account status is looked up when you
 // tab out of it: Pending or Verified, or for no account a Send Invite link
 // (Resend Invite once one was sent).
-const PlayerRows = ({ players, onChange, removable, gameName }) => {
+const PlayerRows = ({ players, onChange, removable, gameName, gameDescription }) => {
   const set = (i, field, value) => onChange(players.map((p, j) => (j === i ? { ...p, [field]: value } : p)));
   // email (lowercase) -> 'none' | 'invited' | 'pending' | 'verified'
   const [statuses, setStatuses] = React.useState(() =>
@@ -124,7 +124,7 @@ const PlayerRows = ({ players, onChange, removable, gameName }) => {
     const key = p.email.trim().toLowerCase();
     setInviting((v) => ({ ...v, [key]: 'sending' }));
     try {
-      await axios.post('/api/invite', { email: key, name: p.name, game: gameName });
+      await axios.post('/api/invite', { email: key, name: p.name, game: gameName, description: gameDescription });
       setStatuses((s) => ({ ...s, [key]: 'invited' }));
       setInviting((v) => ({ ...v, [key]: 'sent' }));
       setTimeout(() => setInviting((v) => (v[key] === 'sent' ? { ...v, [key]: undefined } : v)), 3000);
@@ -341,6 +341,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, gameName = '', added
         onChange={(players) => onChange({ ...value, players })}
         removable={mode === 'modify'}
         gameName={gameName}
+        gameDescription={value.description}
       />
 
       <div className="form-grid">

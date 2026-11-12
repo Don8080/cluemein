@@ -460,6 +460,7 @@ ${rs.video_url}
     const email = String(req.body.email || '').trim().toLowerCase();
     const name = String(req.body.name || '').trim().slice(0, 60);
     const game = String(req.body.game || '').trim().slice(0, 100);
+    const about = String(req.body.description || '').trim().slice(0, 200);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Enter a valid email first.' });
     if (accountStatus.get(email)) return res.status(400).json({ error: 'This player already has an account.' });
     const now = Date.now();
@@ -477,11 +478,11 @@ ${rs.video_url}
         subject: `${from} invited you to play Codenames on Clue Me In`,
         text:
           hi +
-          `${from} has added you to ${game ? `the game "${game}"` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.\n\n` +
+          `${from} has added you to ${game ? `the game "${game}"${about ? ` (${about})` : ''}` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.\n\n` +
           `To join, create an account with this email address (${email}) at:\n${baseURL}\n`,
         html:
           (name ? `<p>Hi ${esc(name)},</p>` : '') +
-          `<p>${esc(from)} has added you to ${game ? `the game <b>${esc(game)}</b>` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.</p>` +
+          `<p>${esc(from)} has added you to ${game ? `the game <b>${esc(game)}</b>${about ? ` (${esc(about)})` : ''}` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.</p>` +
           `<p>To join, create an account with this email address (${esc(email)}) at:<br><a href="${esc(baseURL)}">${esc(baseURL)}</a></p>`,
       });
     } catch (err) {
