@@ -13,6 +13,7 @@ const ses = new SESClient({
 const FROM_VERIFY = `Clue Me In Email Verification <${process.env.FROM_EMAIL}>`;
 const FROM_RESET = `Clue Me In Password Reset <${process.env.FROM_EMAIL}>`;
 const FROM_VIDEO = `Clue Me In Video Session <${process.env.FROM_EMAIL}>`;
+const FROM_INVITE = `Clue Me In Invitation <${process.env.FROM_EMAIL}>`;
 
 async function sendEmail({ from, to, subject, text, html }) {
   await ses.send(
@@ -30,4 +31,4 @@ async function sendEmail({ from, to, subject, text, html }) {
   );
 }
 
-module.exports = { sendEmail, FROM_VERIFY, FROM_RESET, FROM_VIDEO };
+module.exports = { sendEmail, FROM_VERIFY, FROM_RESET, FROM_VIDEO, FROM_INVITE };

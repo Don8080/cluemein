@@ -105,7 +105,7 @@ export const CreateGame = ({ user }) => {
 
       <div className="or-divider">OR</div>
 
-      <RulesetForm value={settings} onChange={setSettings} lists={lists} mode="create" />
+      <RulesetForm value={settings} onChange={setSettings} lists={lists} mode="create" gameName={name} />
 
       {error && <div className="form-error">{error}</div>}
       {!error && problem && <div className="form-hint">{problem}</div>}

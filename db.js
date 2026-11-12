@@ -234,6 +234,16 @@ function upgradeSchema(db) {
     db.exec('ALTER TABLE rulesets ADD COLUMN end_repeat_seconds INTEGER NOT NULL DEFAULT 10');
   }
   // Custom sounds uploaded in B2, replacing the default gongs for one game.
+  // Invitations emailed to players with no account (Create/Modify Game),
+  // by email: when the last one was sent and by whom.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS invites (
+      email TEXT PRIMARY KEY COLLATE NOCASE,
+      sent_at INTEGER NOT NULL,
+      sent_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+    );
+  `);
+
   // kind: 'warning' (30 seconds left) or 'end' (out of time).
   db.exec(`
     CREATE TABLE IF NOT EXISTS ruleset_sounds (

@@ -2,7 +2,7 @@
 // vocabulary (P2). Any member of a RuleSet may view and change it.
 const { normalizeWord } = require('./db');
 const sounds = require('./sounds');
-const { sendEmail, FROM_VIDEO } = require('./mailer');
+const { sendEmail, FROM_VIDEO, FROM_INVITE } = require('./mailer');
 
 class InputError extends Error {}
 
@@ -13,10 +13,13 @@ function setupRulesets(app, db, requireAuth) {
   // Members are stored by email; the logged-in player is matched by theirs.
   const isMember = db.prepare('SELECT 1 FROM ruleset_members WHERE ruleset_id = ? AND email = ?');
   const accountStatus = db.prepare('SELECT email_verified FROM users WHERE email = ?');
-  // 'none' (No Account), 'pending' (not verified yet) or 'verified'.
+  const wasInvited = db.prepare('SELECT 1 FROM invites WHERE email = ?');
+  // 'none' (No Account), 'invited' (no account, invitation sent),
+  // 'pending' (not verified yet) or 'verified'.
   const statusOf = (email) => {
     const u = accountStatus.get(email);
-    return !u ? 'none' : u.email_verified ? 'verified' : 'pending';
+    if (!u) return wasInvited.get(email) ? 'invited' : 'none';
+    return u.email_verified ? 'verified' : 'pending';
   };
   const getRuleset = db.prepare('SELECT * FROM rulesets WHERE id = ?');
 
@@ -438,6 +441,58 @@ ${rs.video_url}
       console.error('[video-invite] email failed:', err.name, err.message);
       res.status(502).json({ error: `The email could not be sent (${err.name}).` });
     }
+  });
+
+  // (B1/B2) Send Invite / Resend Invite: emails a player who has no account
+  // yet, asking them to create one. The same address at most once a minute;
+  // each sender at most 30 a day.
+  const baseURL = (process.env.BASE_URL || 'http://localhost:3003').replace(/\/+$/, '');
+  const lastToEmail = new Map(); // email -> time sent
+  const sentBy = new Map(); // userID -> times sent in the last day
+  const inviterName = db.prepare(
+    'SELECT player_name FROM ruleset_members WHERE email = ? ORDER BY rowid DESC LIMIT 1'
+  );
+  const recordInvite = db.prepare(
+    `INSERT INTO invites (email, sent_at, sent_by) VALUES (?, ?, ?)
+     ON CONFLICT(email) DO UPDATE SET sent_at = excluded.sent_at, sent_by = excluded.sent_by`
+  );
+  app.post('/api/invite', requireAuth, async (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim().slice(0, 60);
+    const game = String(req.body.game || '').trim().slice(0, 100);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Enter a valid email first.' });
+    if (accountStatus.get(email)) return res.status(400).json({ error: 'This player already has an account.' });
+    const now = Date.now();
+    if (now - (lastToEmail.get(email) || 0) < 60 * 1000) {
+      return res.status(429).json({ error: 'An invitation was just sent. Please wait a minute.' });
+    }
+    const recent = (sentBy.get(req.session.userID) || []).filter((t) => now - t < 24 * 3600 * 1000);
+    if (recent.length >= 30) return res.status(429).json({ error: 'Too many invitations today.' });
+    const from = inviterName.get(req.session.email)?.player_name || req.session.email;
+    const hi = name ? `Hi ${name},\n\n` : '';
+    try {
+      await sendEmail({
+        from: FROM_INVITE,
+        to: email,
+        subject: `${from} invited you to play Codenames on Clue Me In`,
+        text:
+          hi +
+          `${from} has added you to ${game ? `the game "${game}"` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.\n\n` +
+          `To join, create an account with this email address (${email}) at:\n${baseURL}\n`,
+        html:
+          (name ? `<p>Hi ${esc(name)},</p>` : '') +
+          `<p>${esc(from)} has added you to ${game ? `the game <b>${esc(game)}</b>` : 'a game'} on Clue Me In, a site for playing Codenames online with friends.</p>` +
+          `<p>To join, create an account with this email address (${esc(email)}) at:<br><a href="${esc(baseURL)}">${esc(baseURL)}</a></p>`,
+      });
+    } catch (err) {
+      console.error('[invite] email failed:', err.name, err.message);
+      return res.status(502).json({ error: `The email could not be sent (${err.name}).` });
+    }
+    lastToEmail.set(email, now);
+    sentBy.set(req.session.userID, [...recent, now]);
+    recordInvite.run(email, now, req.session.userID);
+    console.log(`[invite] ${req.session.email} -> ${email}`);
+    res.json({ ok: true, status: 'invited' });
   });
 
   // (P2) The RuleSet's vocabulary with each word's source.

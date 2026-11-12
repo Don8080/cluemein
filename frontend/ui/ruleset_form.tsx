@@ -98,15 +98,16 @@ export function settingsProblem(s, needLists) {
   return null;
 }
 
-const STATUS_LABELS = { none: 'No Account', pending: 'Pending', verified: 'Verified' };
+const STATUS_LABELS = { pending: 'Pending', verified: 'Verified' };
 const looksLikeEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 // Player rows. A spare blank row is added when one gets focus, keeping at
-// most two blank rows. Each email's account status (No Account / Pending /
-// Verified) is looked up when you tab out of it.
-const PlayerRows = ({ players, onChange, removable }) => {
+// most two blank rows. Each email's account status is looked up when you
+// tab out of it: Pending or Verified, or for no account a Send Invite link
+// (Resend Invite once one was sent).
+const PlayerRows = ({ players, onChange, removable, gameName }) => {
   const set = (i, field, value) => onChange(players.map((p, j) => (j === i ? { ...p, [field]: value } : p)));
-  // email (lowercase) -> 'none' | 'pending' | 'verified'
+  // email (lowercase) -> 'none' | 'invited' | 'pending' | 'verified'
   const [statuses, setStatuses] = React.useState(() =>
     Object.fromEntries(players.filter((p) => p.status).map((p) => [p.email.toLowerCase(), p.status]))
   );
@@ -116,6 +117,34 @@ const PlayerRows = ({ players, onChange, removable }) => {
     axios
       .get('/api/account-status', { params: { email: key } })
       .then(({ data }) => setStatuses((s) => ({ ...s, [key]: data.status })));
+  };
+  // email (lowercase) -> 'sending' | 'sent' | error message
+  const [inviting, setInviting] = React.useState({});
+  const invite = async (p) => {
+    const key = p.email.trim().toLowerCase();
+    setInviting((v) => ({ ...v, [key]: 'sending' }));
+    try {
+      await axios.post('/api/invite', { email: key, name: p.name, game: gameName });
+      setStatuses((s) => ({ ...s, [key]: 'invited' }));
+      setInviting((v) => ({ ...v, [key]: 'sent' }));
+      setTimeout(() => setInviting((v) => (v[key] === 'sent' ? { ...v, [key]: undefined } : v)), 3000);
+    } catch (err) {
+      setInviting((v) => ({ ...v, [key]: err.response?.data?.error || 'The email could not be sent.' }));
+    }
+  };
+  const statusCell = (p, status) => {
+    if (status !== 'none' && status !== 'invited') return status ? STATUS_LABELS[status] : '';
+    const state = inviting[p.email.trim().toLowerCase()];
+    if (state === 'sending') return 'Sending…';
+    if (state === 'sent') return 'Invite Sent';
+    return (
+      <>
+        <button type="button" className="link-button" onClick={() => invite(p)}>
+          {status === 'invited' ? 'Resend Invite' : 'Send Invite'}
+        </button>
+        {state && <div className="form-error">{state}</div>}
+      </>
+    );
   };
   // Emails already filled in when the form opens (e.g. your own on Create Game).
   React.useEffect(() => {
@@ -157,7 +186,7 @@ const PlayerRows = ({ players, onChange, removable }) => {
                 onBlur={(e) => lookUp(e.target.value)}
               />
             </td>
-            <td className={`account-status ${status || ''}`}>{status ? STATUS_LABELS[status] : ''}</td>
+            <td className={`account-status ${status || ''}`}>{statusCell(p, status)}</td>
             {removable && (
               <td>
                 {!isBlank(p) && (
@@ -246,7 +275,7 @@ const TeamModeHelp = ({ onClose }) => (
   </Popup>
 );
 
-export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], beforeWordLists = null, afterGraffito = null }) => {
+export const RulesetForm = ({ value, onChange, lists, mode, gameName = '', addedListIDs = [], beforeWordLists = null, afterGraffito = null }) => {
   const set = (field) => (e) =>
     onChange({ ...value, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const [showModeHelp, setShowModeHelp] = React.useState(false);
@@ -310,6 +339,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, addedListIDs = [], b
         players={value.players}
         onChange={(players) => onChange({ ...value, players })}
         removable={mode === 'modify'}
+        gameName={gameName}
       />
 
       <div className="form-grid">

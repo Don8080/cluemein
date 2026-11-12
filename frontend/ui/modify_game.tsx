@@ -127,6 +127,7 @@ export const ModifyGame = ({ rulesetID }) => {
         value={settings}
         onChange={setSettings}
         lists={lists}
+        gameName={ruleset.name}
         mode="modify"
         addedListIDs={ruleset.wordlist_ids}
         afterGraffito={
