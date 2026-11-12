@@ -181,6 +181,19 @@ function setupAuth(app, db) {
       user = findUserByID.get(lastInsertRowid);
     }
 
+    // From an invitation link: the code proves this email received the
+    // invitation, so the account is verified at once and logged in. The
+    // code is then used up.
+    const invite = String(req.body.invite || '');
+    if (invite && db.prepare('SELECT 1 FROM invites WHERE token = ? AND email = ?').get(invite, email)) {
+      db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(user.id);
+      db.prepare('UPDATE invites SET token = NULL WHERE email = ?').run(email);
+      console.log(`[register] ${email}: verified by invitation`);
+      return startSession(req, findUserByID.get(user.id), keep !== false, (err) =>
+        err ? res.status(500).json({ error: 'Session error' }) : res.json({ user: { id: user.id, email: user.email } })
+      );
+    }
+
     req.session.pendingUserID = user.id;
     req.session.keep = keep !== false;
     try {

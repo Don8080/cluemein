@@ -63,8 +63,10 @@ export const LoginPopup = ({ onClose, onLoggedIn, onPending, onChangePassword, n
   });
 
   const createAccount = run(['email', 'password'], async ({ email, password }) => {
-    const { data } = await axios.post('/api/register', { email, password, keep });
-    onPending(data.pending);
+    const { data } = await axios.post('/api/register', { email, password, keep, invite: invited ? invite : undefined });
+    // An invitation's account needs no verification: logged in already.
+    if (data.user) onLoggedIn(data.user);
+    else onPending(data.pending);
   });
 
   const forgotPassword = run(['email'], async ({ email }) => {
