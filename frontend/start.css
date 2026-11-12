@@ -201,24 +201,20 @@ button.link-button,
   justify-content: center;
 }
 
-/* The other Login popup buttons: teal like Join Video Session, centered. */
+/* The other Login popup buttons: a lighter teal than Join Video Session, centered. */
 .login-form .button-row.secondary {
   justify-content: center;
 }
 
 #start .popup .login-form .button-row.secondary button,
-#start .popup .login-form .button-row.close-row button,
-.popup .login-form .button-row.secondary button,
-.popup .login-form .button-row.close-row button {
-  background: #1a8fb0;
-  border-color: #157590;
+.popup .login-form .button-row.secondary button {
+  background: #4fb3cf;
+  border-color: #3a9cb8;
   color: #fff;
 }
 
 #start .popup .login-form .button-row.secondary button:hover:not(:disabled),
-#start .popup .login-form .button-row.close-row button:hover,
-.popup .login-form .button-row.secondary button:hover:not(:disabled),
-.popup .login-form .button-row.close-row button:hover {
+.popup .login-form .button-row.secondary button:hover:not(:disabled) {
   filter: brightness(1.1);
 }
 
