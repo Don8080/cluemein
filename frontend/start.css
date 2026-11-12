@@ -171,7 +171,7 @@ button.link-button,
   font-size: 0.85em;
 }
 
-/* Login stands out on its own row; Close sits at the bottom right.
+/* Login stands out on its own row; Close sits centered at the bottom.
    (#start in the selector so it outranks the Start screen's gray buttons.) */
 #start .popup button.login-button,
 .popup button.login-button {
@@ -198,7 +198,32 @@ button.link-button,
 }
 
 .login-form .button-row.close-row {
-  justify-content: flex-end;
+  justify-content: center;
+}
+
+/* The other Login popup buttons: teal like Join Video Session, centered. */
+.login-form .button-row.secondary {
+  justify-content: center;
+}
+
+#start .popup .login-form .button-row.secondary button,
+#start .popup .login-form .button-row.close-row button,
+.popup .login-form .button-row.secondary button,
+.popup .login-form .button-row.close-row button {
+  background: #1a8fb0;
+  border-color: #157590;
+  color: #fff;
+}
+
+#start .popup .login-form .button-row.secondary button:hover:not(:disabled),
+#start .popup .login-form .button-row.close-row button:hover,
+.popup .login-form .button-row.secondary button:hover:not(:disabled),
+.popup .login-form .button-row.close-row button:hover {
+  filter: brightness(1.1);
+}
+
+.popup .login-form .button-row.secondary button:disabled {
+  opacity: 0.6;
 }
 
 /* Create Game (B1) and Modify Game (B2). */
