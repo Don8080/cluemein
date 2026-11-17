@@ -16,7 +16,6 @@ export const GuessChip = ({ word, color, team }) => {
 // With `onAdd`, a missing clue (******) is a button that opens a dialog to
 // enter it; with `correctable` too (the board's lists only, not Session
 // History), so is a posted clue, to correct it.
-// dialog: to enter a missing clue (******) or correct a posted one.
 export const ClueChip = ({ clue, onAdd = null, correctable = false }) =>
   clue && onAdd && correctable ? (
     <button type="button" className={`clue-chip ${clue.team} edit`} title="Correct the clue for this turn" onClick={onAdd}>
