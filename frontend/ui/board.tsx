@@ -223,7 +223,7 @@ export const Board = ({ view, act }) => {
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
-  // Your own name is outlined only when the game's Highlight My Name is on.
+  // Your own name is outlined only when the game's Highlight Player's Name is on.
   const highlightID = view.ruleset.highlight_me ? view.me : null;
   const isCluer = me?.role === 'cluer';
   const over = !!board.winning_team;

@@ -338,7 +338,7 @@ export const RulesetForm = ({ value, onChange, lists, mode, gameName = '', added
         {/* Modify Game only; new games start with it off. */}
         {mode === 'modify' && (
           <>
-            <label>Highlight My Name</label>
+            <label>Highlight Player's Name</label>
             <span>
               <input type="checkbox" checked={!!value.highlight_me} onChange={set('highlight_me')} />
             </span>
