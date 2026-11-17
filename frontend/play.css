@@ -964,6 +964,10 @@ button.clue-chip.missing.add:hover {
   margin: 0;
   padding: 0.1em 0.4em;
   max-width: 100%;
+  /* Long words split at the soft hyphens hyphenate() puts in (shown as
+     "-"); anything else too long still breaks rather than overflow. */
+  -webkit-hyphens: manual;
+  hyphens: manual;
   overflow-wrap: anywhere;
 }
 

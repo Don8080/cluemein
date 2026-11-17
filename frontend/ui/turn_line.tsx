@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { hyphenate } from '~/ui/hyphenate';
 
 // One turn as shown in Session History and the board's guess lists:
 //   1) Sorcerer{2} TAPESTRY DRESSING GARDEN
@@ -16,15 +17,17 @@ export const GuessChip = ({ word, color, team }) => {
 // With `onAdd`, a missing clue (******) is a button that opens a dialog to
 // enter it; with `correctable` too (the board's lists only, not Session
 // History), so is a posted clue, to correct it.
-export const ClueChip = ({ clue, onAdd = null, correctable = false }) =>
+// `fit` (beside the board): a word too long for the column splits at a
+// syllable, with a hyphen.
+export const ClueChip = ({ clue, onAdd = null, correctable = false, fit = false }) =>
   clue && onAdd && correctable ? (
     <button type="button" className={`clue-chip ${clue.team} edit`} title="Correct the clue for this turn" onClick={onAdd}>
-      {clue.word}
+      {fit ? hyphenate(clue.word) : clue.word}
       {`{${clue.number}}`}
     </button>
   ) : clue ? (
     <span className={`clue-chip ${clue.team}`}>
-      {clue.word}
+      {fit ? hyphenate(clue.word) : clue.word}
       {`{${clue.number}}`}
     </span>
   ) : onAdd ? (
@@ -41,9 +44,9 @@ export const ClueChip = ({ clue, onAdd = null, correctable = false }) =>
 export const TurnLine = ({ turn, onAddClue = null, stacked = false, correctable = false }) => {
   const words = (
     <>
-      <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} correctable={correctable} />
+      <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} correctable={correctable} fit={stacked} />
       {turn.guesses.map((g, j) => (
-        <GuessChip key={j} word={g.word} color={g.color} team={turn.team} />
+        <GuessChip key={j} word={stacked ? hyphenate(g.word) : g.word} color={g.color} team={turn.team} />
       ))}
     </>
   );
