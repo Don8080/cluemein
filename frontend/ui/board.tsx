@@ -445,12 +445,12 @@ export const Board = ({ view, act }) => {
           {/* Left: Prev Board and Next Board; middle: Floaters; right: Next Game. */}
           <div className="board-buttons left">
             <button type="button" className="btn-amber" disabled={!board.has_prev} onClick={() => act('prev-board')}>
-              Prev Board
+              ← Prev Board
             </button>
             {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
             {view.ruleset.team_mode !== 'fixed_roles' && (
               <button type="button" className="btn-amber" onClick={() => next('next-board')}>
-                Next Board
+                Next Board →
               </button>
             )}
           </div>
