@@ -13,10 +13,12 @@ export const GuessChip = ({ word, color, team }) => {
   return <span className={`history-guess ${kind}${wrongTeam ? ` other-team by-${team}` : ''}`}>{word}</span>;
 };
 
-// With `onAdd` (the board's lists), the clue is a button that opens a
+// With `onAdd`, a missing clue (******) is a button that opens a dialog to
+// enter it; with `correctable` too (the board's lists only, not Session
+// History), so is a posted clue, to correct it.
 // dialog: to enter a missing clue (******) or correct a posted one.
-export const ClueChip = ({ clue, onAdd = null }) =>
-  clue && onAdd ? (
+export const ClueChip = ({ clue, onAdd = null, correctable = false }) =>
+  clue && onAdd && correctable ? (
     <button type="button" className={`clue-chip ${clue.team} edit`} title="Correct the clue for this turn" onClick={onAdd}>
       {clue.word}
       {`{${clue.number}}`}
@@ -37,10 +39,10 @@ export const ClueChip = ({ clue, onAdd = null }) =>
 // turn: { team, number, clue, guesses: [{ word, color }] }
 // `stacked` (beside the board): the clue in capitals and one word per line,
 // all starting at the same place, next to the turn number.
-export const TurnLine = ({ turn, onAddClue = null, stacked = false }) => {
+export const TurnLine = ({ turn, onAddClue = null, stacked = false, correctable = false }) => {
   const words = (
     <>
-      <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} />
+      <ClueChip clue={turn.clue} onAdd={onAddClue && turn.round !== undefined && turn.guesses.length ? () => onAddClue(turn) : null} correctable={correctable} />
       {turn.guesses.map((g, j) => (
         <GuessChip key={j} word={g.word} color={g.color} team={turn.team} />
       ))}
