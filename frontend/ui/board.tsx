@@ -48,6 +48,20 @@ const PlayerName = ({ p, me, onClick }) => (
 // This team's turns, one line per turn like Session History: the turn
 // number (one sequence for the whole board, so the team that went first has
 // the odd numbers), the posted clue (or ******) and the guesses as chips.
+// A bold arrow for Prev Board / Next Board (text arrows are too thin).
+const Arrow = ({ dir }) => (
+  <svg className="board-arrow" viewBox="0 0 16 12" width="1.1em" height="0.85em" aria-hidden="true">
+    <path
+      d={dir === 'left' ? 'M15 6H3M7.5 1.5L2.5 6l5 4.5' : 'M1 6h12M8.5 1.5l5 4.5-5 4.5'}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const GuessList = ({ guesses, clues, team, onAddClue }) => {
   const turns = teamTurns(guesses, clues, team);
   if (!turns.length) return null;
@@ -445,12 +459,12 @@ export const Board = ({ view, act }) => {
           {/* Left: Prev Board and Next Board; middle: Floaters; right: Next Game. */}
           <div className="board-buttons left">
             <button type="button" className="btn-amber" disabled={!board.has_prev} onClick={() => act('prev-board')}>
-              ← Prev Board
+              <Arrow dir="left" /> Prev Board
             </button>
             {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
             {view.ruleset.team_mode !== 'fixed_roles' && (
               <button type="button" className="btn-amber" onClick={() => next('next-board')}>
-                Next Board →
+                Next Board <Arrow dir="right" />
               </button>
             )}
           </div>

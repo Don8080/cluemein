@@ -1035,3 +1035,7 @@ button.clue-chip.missing.add:hover {
 .board-bottom .board-buttons button[class^='btn-']:hover:not(:disabled) { filter: brightness(1.1); }
 .board-bottom .board-buttons button[class^='btn-']:disabled { opacity: 0.45; box-shadow: none; }
 .board-bottom .board-buttons button.btn-amber:disabled { color: #2b1d00; }
+
+.board-arrow {
+  vertical-align: -0.08em;
+}
