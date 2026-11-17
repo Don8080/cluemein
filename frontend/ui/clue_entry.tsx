@@ -30,7 +30,8 @@ export const NumberPick = ({ max, value, onChange, label }) =>
     </span>
   ) : (
     <select className="clue-number" aria-label={label} value={value} onChange={(e) => onChange(Number(e.target.value))}>
-      {Array.from({ length: max + 1 }, (_, i) => (
+      {/* Highest first, so the up arrow key raises the number. */}
+      {Array.from({ length: max + 1 }, (_, k) => max - k).map((i) => (
         <option key={i} value={i}>
           {i}
         </option>
