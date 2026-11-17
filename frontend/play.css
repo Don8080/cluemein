@@ -913,6 +913,18 @@ button.clue-chip.missing.add {
   cursor: pointer;
 }
 
+/* A posted clue on the board's lists: click to correct it. */
+button.clue-chip.edit {
+  border: none;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.clue-chip.edit:hover {
+  filter: brightness(1.15);
+}
+
 button.clue-chip.missing.add:hover {
   background: #f3f3f3;
   border-color: #555;

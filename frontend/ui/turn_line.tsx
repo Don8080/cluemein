@@ -13,10 +13,15 @@ export const GuessChip = ({ word, color, team }) => {
   return <span className={`history-guess ${kind}${wrongTeam ? ` other-team by-${team}` : ''}`}>{word}</span>;
 };
 
-// With `onAdd`, a missing clue's ****** is a button that opens a dialog to
-// enter it.
+// With `onAdd` (the board's lists), the clue is a button that opens a
+// dialog: to enter a missing clue (******) or correct a posted one.
 export const ClueChip = ({ clue, onAdd = null }) =>
-  clue ? (
+  clue && onAdd ? (
+    <button type="button" className={`clue-chip ${clue.team} edit`} title="Correct the clue for this turn" onClick={onAdd}>
+      {clue.word}
+      {`{${clue.number}}`}
+    </button>
+  ) : clue ? (
     <span className={`clue-chip ${clue.team}`}>
       {clue.word}
       {`{${clue.number}}`}

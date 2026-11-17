@@ -2,13 +2,14 @@ import * as React from 'react';
 import { Popup } from '~/ui/popup';
 import { NO_SUGGESTIONS, NumberPick, defaultNumber } from '~/ui/clue_entry';
 
-// Enter the clue for a turn that started without one (click the ******).
+// Enter the clue for a turn that started without one (click the ******),
+// or correct a posted one (click it; the dialog starts with it filled in).
 // Same rules as the clue box: up to 30 characters; the number from 0 to the
 // team's unguessed words when the turn began (fixed at 1 if only one was
 // left). onPost(word, number) returns true when the clue was saved.
 export const LateClueDialog = ({ turn, max, onPost, onClose }) => {
-  const [word, setWord] = React.useState('');
-  const [number, setNumber] = React.useState(defaultNumber(max));
+  const [word, setWord] = React.useState(turn.clue?.word || '');
+  const [number, setNumber] = React.useState(turn.clue ? Math.min(turn.clue.number, max) : defaultNumber(max));
   const [busy, setBusy] = React.useState(false);
   const post = async (e) => {
     e.preventDefault();
