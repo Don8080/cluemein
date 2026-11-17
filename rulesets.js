@@ -66,6 +66,7 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: rs.next_turn_seconds,
       enforce_timer: !!rs.enforce_timer,
       team_mode: rs.team_mode,
+      highlight_me: !!rs.highlight_me,
       sounds: soundInfo(rs.id),
       players,
       wordlist_ids: wordlistIDs,
@@ -143,6 +144,7 @@ function setupRulesets(app, db, requireAuth) {
       next_turn_seconds: next > 0 ? next : 120,
       enforce_timer: body.enforce_timer ? 1 : 0,
       team_mode: teamMode,
+      highlight_me: body.highlight_me ? 1 : 0, // only on Modify Game
       players,
     };
   }
@@ -162,10 +164,11 @@ function setupRulesets(app, db, requireAuth) {
     db.prepare(
       `UPDATE rulesets SET description = ?, max_session_hours = ?, min_players = ?, min_team_size = ?,
          video_url = ?, graffito_message = ?, graffito_url = ?, timer_on = ?, first_turn_seconds = ?,
-         next_turn_seconds = ?, enforce_timer = ?, team_mode = ? WHERE id = ?`
+         next_turn_seconds = ?, enforce_timer = ?, team_mode = ?, highlight_me = ? WHERE id = ?`
     ).run(
       s.description, s.max_session_hours, s.min_players, s.min_team_size, s.video_url, s.graffito_message,
-      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode, id
+      s.graffito_url, s.timer_on, s.first_turn_seconds, s.next_turn_seconds, s.enforce_timer, s.team_mode,
+      s.highlight_me, id
     );
     // Replace the player list, keeping the order given.
     db.prepare('DELETE FROM ruleset_members WHERE ruleset_id = ?').run(id);
@@ -240,7 +243,7 @@ function setupRulesets(app, db, requireAuth) {
   app.post('/api/rulesets', requireAuth, (req, res) => {
     const id = inTransaction(res, () => {
       const name = checkName(req.body.name);
-      const s = cleanSettings(req.body);
+      const s = { ...cleanSettings(req.body), highlight_me: 0 }; // set on Modify Game only
       if (!s.players.some((p) => p.email === String(req.session.email).toLowerCase())) {
         throw new InputError('Include yourself in the player list, or you won\'t be able to open this game.');
       }
@@ -269,10 +272,10 @@ function setupRulesets(app, db, requireAuth) {
         .prepare(
           `INSERT INTO rulesets (name, description, max_session_hours, min_players, min_team_size, video_url,
              graffito_message, graffito_url, timer_on, first_turn_seconds, next_turn_seconds,
-             enforce_timer, team_mode, warning_volume, end_volume, end_repeat, end_repeat_seconds, created_by)
+             enforce_timer, team_mode, highlight_me, warning_volume, end_volume, end_repeat, end_repeat_seconds, created_by)
            SELECT ?, ?, max_session_hours, min_players, min_team_size, video_url, graffito_message,
-             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, warning_volume,
-             end_volume, end_repeat, end_repeat_seconds, ?
+             graffito_url, timer_on, first_turn_seconds, next_turn_seconds, enforce_timer, team_mode, highlight_me,
+             warning_volume, end_volume, end_repeat, end_repeat_seconds, ?
              FROM rulesets WHERE id = ?`
         )
         // The description isn't copied: only one typed in Create Game is used.

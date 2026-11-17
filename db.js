@@ -229,6 +229,10 @@ function upgradeSchema(db) {
   }
   // Out of Time sound: repeat every end_repeat_seconds while the timer
   // stays at 0:00 (B2 "Repeat Sound").
+  // Game page: highlight the logged-in player's own name (off by default).
+  if (!hasColumn('rulesets', 'highlight_me')) {
+    db.exec('ALTER TABLE rulesets ADD COLUMN highlight_me INTEGER NOT NULL DEFAULT 0');
+  }
   if (!hasColumn('rulesets', 'end_repeat')) {
     db.exec('ALTER TABLE rulesets ADD COLUMN end_repeat INTEGER NOT NULL DEFAULT 0');
     db.exec('ALTER TABLE rulesets ADD COLUMN end_repeat_seconds INTEGER NOT NULL DEFAULT 10');

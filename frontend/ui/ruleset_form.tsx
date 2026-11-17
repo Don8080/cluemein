@@ -54,6 +54,7 @@ export function settingsFromRuleset(rs) {
     next_turn_minutes: String(rs.next_turn_seconds / 60),
     enforce_timer: rs.enforce_timer,
     team_mode: rs.team_mode,
+    highlight_me: rs.highlight_me,
   };
 }
 
@@ -74,6 +75,7 @@ export function settingsToRequest(s) {
     next_turn_seconds: Math.round(Number(s.next_turn_minutes) * 60),
     enforce_timer: s.enforce_timer,
     team_mode: s.team_mode,
+    highlight_me: !!s.highlight_me,
   };
 }
 
@@ -333,6 +335,15 @@ export const RulesetForm = ({ value, onChange, lists, mode, gameName = '', added
             ?
           </button>
         </span>
+        {/* Modify Game only; new games start with it off. */}
+        {mode === 'modify' && (
+          <>
+            <label>Highlight My Name</label>
+            <span>
+              <input type="checkbox" checked={!!value.highlight_me} onChange={set('highlight_me')} />
+            </span>
+          </>
+        )}
       </div>
       {showModeHelp && <TeamModeHelp onClose={() => setShowModeHelp(false)} />}
 

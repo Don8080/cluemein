@@ -223,6 +223,8 @@ export const Board = ({ view, act }) => {
   const [touchIdx, setTouchIdx] = React.useState(null); // word under a dragging finger
   const board = view.board;
   const me = view.players.find((p) => p.user_id === view.me);
+  // Your own name is outlined only when the game's Highlight My Name is on.
+  const highlightID = view.ruleset.highlight_me ? view.me : null;
   const isCluer = me?.role === 'cluer';
   const over = !!board.winning_team;
   const safeClick = !!settings.safeClick;
@@ -341,7 +343,7 @@ export const Board = ({ view, act }) => {
 
   return (
     <div id="play-view" className={viewClass + extraClasses}>
-      <TeamList players={view.players} team="red" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
+      <TeamList players={view.players} team="red" me={highlightID} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
 
       {/* Subtitle under "Clue Me In". */}
       <div className="board-info">
@@ -471,7 +473,7 @@ export const Board = ({ view, act }) => {
           <div className={'floater-list' + (over ? '' : ` turn-${board.current_team}`)}>
             <div className="section-label">Floaters</div>
             {floaters.length ? (
-              floaters.map((p) => <PlayerName key={p.user_id} p={p} me={view.me} onClick={setMenuFor} />)
+              floaters.map((p) => <PlayerName key={p.user_id} p={p} me={highlightID} onClick={setMenuFor} />)
             ) : (
               <div className="hint">none</div>
             )}
@@ -486,7 +488,7 @@ export const Board = ({ view, act }) => {
         {graffito}
       </div>
 
-      <TeamList players={view.players} team="blue" me={view.me} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
+      <TeamList players={view.players} team="blue" me={highlightID} onName={setMenuFor} guesses={board.guesses} clues={board.clues} onAddClue={setLateClue} />
 
       {showSound && <SoundPopup view={view} act={act} onClose={() => setShowSound(false)} />}
 

@@ -391,6 +391,7 @@ function setupSessions(app, db, requireAuth) {
         description: rs.description || '',
         min_players: rs.min_players,
         team_mode: rs.team_mode,
+        highlight_me: !!rs.highlight_me,
         sounds: sounds.info(db, rs.id), // timer sound URLs (default or custom)
         video_url: rs.video_url || '',
         graffito_message: rs.graffito_message || '',
