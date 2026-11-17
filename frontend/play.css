@@ -527,20 +527,23 @@ button.turn-banner.end-turn:disabled {
   margin-bottom: 0.3em;
 }
 
+/* Guesses: the word's color as text on white, with a thin border of it.
+   (Clues are the reverse: white on the team's color.) */
 .history-guess {
   display: inline-block;
   padding: 0.1em 0.4em;
   margin: 0 0.2em 0.2em 0;
   border-radius: 4px;
-  color: #fff;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .history-guess.red {
-  background: #d13030;
+  color: #d13030;
 }
 
 .history-guess.blue {
-  background: #4183cc;
+  color: #4183cc;
 }
 
 /* The other team's word: its own color plus a thin black outline. */
@@ -583,7 +586,8 @@ button.turn-banner.end-turn:disabled {
 }
 
 .history-guess.assassin {
-  background: #000;
+  color: #000;
+  font-weight: bold;
 }
 
 /* Final board popup: a small read-only board as the Cluers see it. */
@@ -806,16 +810,19 @@ button.turn-banner.end-turn:disabled {
   display: inline-block;
   padding: 0.1em 0.3em;
   margin: 0 0.25em 0.2em 0;
+  border-radius: 4px;
   background: #fff;
   font-weight: bold;
 }
 
 .clue-chip.red {
-  color: #d13030;
+  background: #d13030;
+  color: #fff;
 }
 
 .clue-chip.blue {
-  color: #4183cc;
+  background: #4183cc;
+  color: #fff;
 }
 
 .clue-chip.missing {
@@ -823,10 +830,10 @@ button.turn-banner.end-turn:disabled {
   letter-spacing: 0.05em;
 }
 
-/* Neutral guesses look like a revealed neutral word: black on beige. */
+/* Neutral guesses: a dark tan (beige itself is too faint as text). */
 .history-guess.neutral {
-  background: #ede2cc;
-  color: #000;
+  color: #7a6440;
+  box-shadow: inset 0 0 0 1px #d9c8a3;
 }
 
 /* The board's guess lists use the same chips, a bit smaller. */
