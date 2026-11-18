@@ -513,6 +513,10 @@ ${rs.video_url}
   });
 
   // (P2) The RuleSet's vocabulary with each word's source.
+  const getPlayerName = db.prepare('SELECT player_name FROM ruleset_members WHERE ruleset_id = ? AND email = ?');
+  const logVocab = db.prepare(
+    'INSERT INTO vocab_log (ruleset_id, email, player_name, action, word) VALUES (?, ?, ?, ?, ?)'
+  );
   const vocabulary = db.prepare(
     `SELECT w.word, COALESCE(l.name, 'Manual') AS source
        FROM ruleset_words w LEFT JOIN wordlists l ON l.id = w.wordlist_id
@@ -533,13 +537,35 @@ ${rs.video_url}
     const del = (req.body.delete || []).map(normalizeWord).filter(Boolean);
     let added = 0;
     let deleted = 0;
+    const who = req.session.email;
+    const playerName = (getPlayerName.get(rs.id, who) || {}).player_name || null;
     inTransaction(res, () => {
       const ins = db.prepare('INSERT OR IGNORE INTO ruleset_words (ruleset_id, word, wordlist_id) VALUES (?, ?, NULL)');
       const rm = db.prepare('DELETE FROM ruleset_words WHERE ruleset_id = ? AND word = ?');
-      for (const w of del) deleted += rm.run(rs.id, w).changes;
-      for (const w of add) added += ins.run(rs.id, w).changes;
+      // Log only words that actually changed (not repeats or missing words).
+      const log = (action, w) => logVocab.run(rs.id, who, playerName, action, w);
+      for (const w of del) {
+        const n = rm.run(rs.id, w).changes;
+        deleted += n;
+        if (n) log('delete', w);
+      }
+      for (const w of add) {
+        const n = ins.run(rs.id, w).changes;
+        added += n;
+        if (n) log('add', w);
+      }
     });
     res.json({ added, deleted, words: vocabulary.all(rs.id) });
+  });
+
+  // Change Log: every word added or deleted in Modify Vocabulary, newest first.
+  const vocabLog = db.prepare(
+    `SELECT changed_at, email, player_name, action, word FROM vocab_log
+      WHERE ruleset_id = ? ORDER BY id DESC`
+  );
+  app.get('/api/rulesets/:id/words/log', requireAuth, (req, res) => {
+    const rs = memberRuleset(req, res);
+    if (rs) res.json(vocabLog.all(rs.id));
   });
 
   // (P2) Export Vocabulary as a CSV file.

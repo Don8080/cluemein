@@ -15,6 +15,7 @@ export const Vocabulary = ({ rulesetID, onClose }) => {
   const [message, setMessage] = React.useState(null);
   const [error, setError] = React.useState(null);
   const [busy, setBusy] = React.useState(false);
+  const [showLog, setShowLog] = React.useState(false);
 
   React.useEffect(() => {
     axios.get(`/api/rulesets/${rulesetID}/words`).then(({ data }) => {
@@ -72,70 +73,136 @@ export const Vocabulary = ({ rulesetID, onClose }) => {
   };
 
   return (
-    <Popup title="Change Vocabulary" onClose={onClose} wide>
-      <div className="vocabulary">
-        <label className="vocab-search">
-          Search String <input value={search} onChange={(e) => setSearch(e.target.value)} />
-        </label>
+    <>
+      <Popup title="Change Vocabulary" onClose={onClose} wide>
+        <div className="vocabulary">
+          <label className="vocab-search">
+            Search String <input value={search} onChange={(e) => setSearch(e.target.value)} />
+          </label>
 
-        <div className="vocab-letters">
-          <span className="hint">Starting Letter</span>
-          {letters.map((l) => (
-            <button
-              key={l}
-              type="button"
-              className={'letter' + (l === letter ? ' active' : '')}
-              onClick={() => setLetter(l === letter ? null : l)}
-            >
-              {l}
+          <div className="vocab-letters">
+            <span className="hint">Starting Letter</span>
+            {letters.map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={'letter' + (l === letter ? ' active' : '')}
+                onClick={() => setLetter(l === letter ? null : l)}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
+          <label className="vocab-add">
+            Add Words (comma separated)
+            <input value={addText} onChange={(e) => setAddText(e.target.value)} />
+          </label>
+
+          <div className="vocab-count hint">
+            {words ? `Showing ${shown.length} of ${words.length} words` : 'Loading…'}
+            {toDelete.size > 0 && ` · ${toDelete.size} marked for deletion`}
+          </div>
+          <div className="vocab-list">
+            <table>
+              <thead>
+                <tr>
+                  <th>Word</th>
+                  <th>Delete</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((w) => (
+                  <tr key={w.word}>
+                    <td>{w.word}</td>
+                    <td>
+                      <input type="checkbox" checked={toDelete.has(w.word)} onChange={() => toggleDelete(w.word)} />
+                    </td>
+                    <td>{w.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {error && <div className="form-error">{error}</div>}
+          {message && <div className="form-message">{message}</div>}
+
+          <div className="button-row">
+            <button type="button" disabled={busy || (!addWords.length && !toDelete.size)} onClick={apply}>
+              Add / Delete
             </button>
-          ))}
+            <button type="button" onClick={onClose}>
+              Close
+            </button>
+            <button type="button" onClick={() => (window.location.href = `/api/rulesets/${rulesetID}/words.csv`)}>
+              Export Vocabulary
+            </button>
+            <button type="button" onClick={() => setShowLog(true)}>
+              Change Log
+            </button>
+          </div>
         </div>
+      </Popup>
+      {/* A sibling, not a child: the popup above is transformed when dragged,
+          which would trap this one inside it. */}
+      {showLog && <VocabLog rulesetID={rulesetID} onClose={() => setShowLog(false)} />}
+    </>
+  );
+};
 
-        <label className="vocab-add">
-          Add Words (comma separated)
-          <input value={addText} onChange={(e) => setAddText(e.target.value)} />
-        </label>
+// Stored as UTC "YYYY-MM-DD HH:MM:SS"; shown in the viewer's local time.
+const localTime = (t) =>
+  new Date(t.replace(' ', 'T') + 'Z').toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
+// Change Log: every word added or deleted in this game's vocabulary.
+const VocabLog = ({ rulesetID, onClose }) => {
+  const [rows, setRows] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    axios
+      .get(`/api/rulesets/${rulesetID}/words/log`)
+      .then(({ data }) => setRows(data))
+      .catch(() => setError('The change log could not be loaded.'));
+  }, []);
+  return (
+    <Popup title="Vocabulary Change Log" onClose={onClose} wide>
+      <div className="vocabulary">
         <div className="vocab-count hint">
-          {words ? `Showing ${shown.length} of ${words.length} words` : 'Loading…'}
-          {toDelete.size > 0 && ` · ${toDelete.size} marked for deletion`}
+          {error || (rows ? `${rows.length} change${rows.length === 1 ? '' : 's'}` : 'Loading…')}
         </div>
         <div className="vocab-list">
           <table>
             <thead>
               <tr>
+                <th>Date / Time</th>
+                <th>Person</th>
+                <th>Change</th>
                 <th>Word</th>
-                <th>Delete</th>
-                <th>Source</th>
               </tr>
             </thead>
             <tbody>
-              {shown.map((w) => (
-                <tr key={w.word}>
-                  <td>{w.word}</td>
-                  <td>
-                    <input type="checkbox" checked={toDelete.has(w.word)} onChange={() => toggleDelete(w.word)} />
-                  </td>
-                  <td>{w.source}</td>
+              {(rows || []).map((r, i) => (
+                <tr key={i}>
+                  <td>{localTime(r.changed_at)}</td>
+                  <td title={r.email}>{r.player_name || r.email}</td>
+                  <td>{r.action === 'add' ? 'Added' : 'Deleted'}</td>
+                  <td>{r.word}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        {error && <div className="form-error">{error}</div>}
-        {message && <div className="form-message">{message}</div>}
-
         <div className="button-row">
-          <button type="button" disabled={busy || (!addWords.length && !toDelete.size)} onClick={apply}>
-            Add / Delete
-          </button>
           <button type="button" onClick={onClose}>
             Close
-          </button>
-          <button type="button" onClick={() => (window.location.href = `/api/rulesets/${rulesetID}/words.csv`)}>
-            Export Vocabulary
           </button>
         </div>
       </div>

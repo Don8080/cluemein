@@ -250,6 +250,21 @@ function upgradeSchema(db) {
   // The code in the invitation's link (?invite=...), kept across resends.
   if (!hasColumn('invites', 'token')) db.exec('ALTER TABLE invites ADD COLUMN token TEXT');
 
+  // Change Log for Modify Vocabulary: one row per word added or deleted.
+  // The person is saved as their email and player name at the time.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS vocab_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ruleset_id INTEGER NOT NULL REFERENCES rulesets(id) ON DELETE CASCADE,
+      changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      email TEXT NOT NULL,
+      player_name TEXT,
+      action TEXT NOT NULL, -- 'add' or 'delete'
+      word TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS vocab_log_ruleset ON vocab_log (ruleset_id, id);
+  `);
+
   // kind: 'warning' (30 seconds left) or 'end' (out of time).
   db.exec(`
     CREATE TABLE IF NOT EXISTS ruleset_sounds (
