@@ -309,11 +309,14 @@ function setupSessions(app, db, requireAuth) {
     }
   }
 
-  function dealBoard(s, rs) {
+  // leavingRoles: the roles as they were on the board being left, taken
+  // before any change that led to this deal (Next Game, a new Cluer...).
+  function dealBoard(s, rs, leavingRoles = s.roles) {
     // Remember the roles as they ended on the board being left (Prev Board
-    // restores them).
+    // restores them; Session History shows them). A finished board keeps
+    // the roles it was won with (recordResult).
     const leaving = currentBoard(s);
-    if (leaving) leaving.finalRoles = clone(s.roles);
+    if (leaving && !leaving.game.winning_team) leaving.finalRoles = clone(leavingRoles);
     refreshWords(s);
     const next = s.deck
       ? nextGameState({ ...s.deck, word_set: s.words })
@@ -603,11 +606,13 @@ function setupSessions(app, db, requireAuth) {
       s.status = 'playing';
       s.resumable = false;
       // A Cluer who is no longer here must be replaced (new board).
-      if (ensureCluers(s, rs, entry)) dealBoard(s, rs);
+      const before = clone(s.roles);
+      if (ensureCluers(s, rs, entry)) dealBoard(s, rs, before);
       return null;
     }
+    const before = clone(s.roles);
     nextGameRoles(s, ids, rs, entry);
-    dealBoard(s, rs);
+    dealBoard(s, rs, before);
     return null;
   });
 
@@ -627,8 +632,9 @@ function setupSessions(app, db, requireAuth) {
     if (s.status !== 'playing') return 'The game is not in progress.';
     const err = requireQuorum(ctx);
     if (err) return err;
+    const before = clone(s.roles);
     nextGameRoles(s, presentMembers(entry), rs, entry);
-    dealBoard(s, rs);
+    dealBoard(s, rs, before);
     return null;
   });
 
@@ -699,6 +705,8 @@ function setupSessions(app, db, requireAuth) {
   function recordResult(ctx, board) {
     if (board.recorded) return;
     board.recorded = true;
+    // Session History shows who played this board, as it ended.
+    board.finalRoles = clone(ctx.s.roles);
     // Single Cluer boards (one Cluer for both teams) aren't anyone's win or loss.
     if (Object.values(ctx.s.roles).some((r) => r.team === 'both')) return;
     const result = boardResult(board);
@@ -788,8 +796,8 @@ function setupSessions(app, db, requireAuth) {
     const { s, uid } = ctx;
     const names = new Map(getMembers.all(s.rulesetID).map((m) => [m.user_id, m.name]));
     const nameOf = (id) => names.get(Number(id)) || 'Former player';
-    // Final roles: as left, or live for the current board.
-    const rolesOf = (b, i) => (i === s.current ? s.roles : b.finalRoles || b.roles);
+    // Final roles: as won, as left, or live for the current board in play.
+    const rolesOf = (b, i) => (i === s.current && !b.game.winning_team ? s.roles : b.finalRoles || b.roles);
     // How many times a player was a Cluer (or Floater) up to board i: board i
     // always counts, earlier boards only if they were completed.
     const timesAs = (uid, role, i) =>
@@ -855,7 +863,7 @@ function setupSessions(app, db, requireAuth) {
     const { s } = ctx;
     if (s.status !== 'playing') return 'The game is not in progress.';
     if (s.current <= 0) return 'This is the first board of the session.';
-    currentBoard(s).finalRoles = clone(s.roles);
+    if (!currentBoard(s).game.winning_team) currentBoard(s).finalRoles = clone(s.roles);
     s.current--;
     const board = currentBoard(s);
     s.roles = clone(board.finalRoles || board.roles);
@@ -906,6 +914,7 @@ function setupSessions(app, db, requireAuth) {
     const to = body.to;
     const present = presentMembers(entry);
     const singleID = Object.keys(s.roles).map(Number).find((id) => s.roles[id].team === 'both');
+    const before = clone(s.roles); // for the board being left, if a new one is dealt
     if (to === 'single' || to === 'double') {
       if (present.length !== 3) return 'Single Cluer is for games with exactly 3 players.';
       if (to === 'double') {
@@ -921,7 +930,7 @@ function setupSessions(app, db, requireAuth) {
         s.roles = { [target]: { team: 'both', role: 'cluer' }, [a]: { team: 'red', role: 'guesser' }, [b]: { team: 'blue', role: 'guesser' } };
         recordCluer(s.stats, present, target, null, [a, b]);
       }
-      dealBoard(s, rs);
+      dealBoard(s, rs, before);
       autoFloaters(s);
       return null;
     }
@@ -933,7 +942,7 @@ function setupSessions(app, db, requireAuth) {
       s.roles[target] = { team: 'both', role: 'cluer' };
       const guessers = Object.keys(s.roles).map(Number).filter((id) => s.roles[id].role === 'guesser');
       recordCluer(s.stats, present, target, null, guessers);
-      dealBoard(s, rs);
+      dealBoard(s, rs, before);
       autoFloaters(s);
       return null;
     }
@@ -951,7 +960,7 @@ function setupSessions(app, db, requireAuth) {
       const other = ids.find((id) => s.roles[id].team !== team && s.roles[id].role === 'cluer');
       const teammates = ids.filter((id) => s.roles[id].team === team && s.roles[id].role === 'guesser');
       recordCluer(s.stats, presentMembers(entry), target, other, teammates);
-      dealBoard(s, rs);
+      dealBoard(s, rs, before);
     } else {
       return 'Unknown role.';
     }
@@ -971,6 +980,7 @@ function setupSessions(app, db, requireAuth) {
     entry.presence.delete(target);
     const wasCluer = s.roles[target]?.role === 'cluer';
     delete s.roles[target];
+    const before = clone(s.roles); // without the player who left, as before
     const board = currentBoard(s);
     if (board) delete board.roles[target];
     if (s.status !== 'playing') return null;
@@ -979,7 +989,7 @@ function setupSessions(app, db, requireAuth) {
       s.resumable = !!(board && !board.game.winning_team);
       return null;
     }
-    if (wasCluer ? ensureCluers(s, rs, entry) : normalizeSmall(s, rs, entry)) dealBoard(s, rs);
+    if (wasCluer ? ensureCluers(s, rs, entry) : normalizeSmall(s, rs, entry)) dealBoard(s, rs, before);
     autoFloaters(s);
     return null;
   });
