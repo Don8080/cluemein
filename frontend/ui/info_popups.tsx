@@ -70,7 +70,7 @@ export const HowToPlay = ({ onClose }) => (
         </li>
       </ol>
       <p>
-        Players can make manual changes to player roles at any time. In all cases, changing a Cluer forces a new board.
+        By clicking a player's name on the game board, players can make manual changes to player roles at any time. In all cases, changing a Cluer forces a new board.
       </p>
 
       <h3>Role Assignments</h3>
