@@ -74,12 +74,17 @@ export const HowToPlay = ({ onClose }) => (
       </p>
 
       <h3>Role Assignments</h3>
-      <p>Roles are assigned randomly, under these constraints:</p>
+      <p>
+        Roles are chosen to best meet these goals, in priority order; chance only decides between equally good choices.
+        The computer also looks a few games ahead, so that a choice that is fair now does not make the next games
+        unfair.
+      </p>
       <p>
         <b>Primary Goal (highest priority):</b> The main goal is to distribute the Cluer role and the Floater role (if
         it exists) as evenly as possible, with equal priority. So, assuming the same players throughout a session,
         Player A may perform the Cluer role one more time than Player B, but not 2 more times, and the same holds for
-        the Floater role. A similar rule is applied to players joining the session late.
+        the Floater role. A player who joins late is compared with the others only on the games played since they
+        joined, and starts with as many Floater turns as whoever has floated least.
       </p>
       <p>
         <b>Secondary Goal:</b> Pairs of Cluers (eg Player A vs Player D) are repeated as evenly as the Primary Goal
@@ -88,6 +93,19 @@ export const HowToPlay = ({ onClose }) => (
       <p>
         <b>Tertiary Goal (lowest priority):</b> Cluer A should not be paired with Guesser B more than 2 times in excess
         of any other Cluer-Guesser pair.
+      </p>
+      <p>
+        With <b>Fixed Teams</b>, only the Cluers change: one is chosen from each team by the Primary and Secondary
+        Goals, as far as the teams allow.
+      </p>
+      <p>
+        <b>Floaters:</b> There is a Floater when the players can not be split into two equal teams, and there may be
+        more when the game's Minimum Team Size requires them (Floaters count toward both teams' size).
+      </p>
+      <p>
+        <b>Changes during a game:</b> If a Cluer leaves the session, one of their team's guessers takes over, chosen by
+        the same goals, and a new board is dealt. If the team is then too small, everyone is reassigned. A guesser who
+        takes over as Cluer by choice counts as a Cluer turn.
       </p>
 
       <h3>Small Groups</h3>
@@ -105,7 +123,8 @@ export const HowToPlay = ({ onClose }) => (
       <p>
         If Cluers agree, for any reason, to reject a particular set of 25 words, they can click <u>Next Board</u> to
         retrieve another random set of words without changing any team assignments or roles. Clicking <u>Next Game</u>{' '}
-        will produce both a new board and new assignments (depending on the Team Assignment mode).
+        will produce both a new board and new assignments (depending on the Team Assignment mode). With Fixed Roles,
+        Next Game keeps everyone's roles, so there is no separate <u>Next Board</u> button.
       </p>
     </div>
     <CloseRow onClose={onClose} />
