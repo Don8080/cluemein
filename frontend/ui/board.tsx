@@ -458,18 +458,10 @@ export const Board = ({ view, act }) => {
         </div>
 
         <div className="board-bottom">
-          {/* Left: Prev Board and Next Board; middle: Floaters; right: Next Game. */}
-          <div className="board-buttons left">
-            <button type="button" className="btn-amber" disabled={!board.has_prev} onClick={() => act('prev-board')}>
-              <Arrow dir="left" /> Prev Board
-            </button>
-            {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
-            {view.ruleset.team_mode !== 'fixed_roles' && (
-              <button type="button" className="btn-amber" onClick={() => next('next-board')}>
-                Next Board <Arrow dir="right" />
-              </button>
-            )}
-          </div>
+          {/* Middle: Floaters (the empty left column keeps them centered).
+              Right: Prev Board and Next Board, with Next Game centered below
+              the gap between them. */}
+          <div className="board-buttons left" />
           <div className={'floater-list' + (over ? '' : ` turn-${board.current_team}`)}>
             <div className="section-label">Floaters</div>
             {floaters.length ? (
@@ -479,9 +471,22 @@ export const Board = ({ view, act }) => {
             )}
           </div>
           <div className="board-buttons right">
-            <button type="button" className="btn-red" onClick={() => next('next-game')}>
-              Next Game
-            </button>
+            <div className="board-nav">
+              <div className="board-nav-row">
+                <button type="button" className="btn-amber" disabled={!board.has_prev} onClick={() => act('prev-board')}>
+                  <Arrow dir="left" /> Prev Board
+                </button>
+                {/* With Fixed Roles, Next Game keeps the roles too, so Next Board would be the same. */}
+                {view.ruleset.team_mode !== 'fixed_roles' && (
+                  <button type="button" className="btn-amber" onClick={() => next('next-board')}>
+                    Next Board <Arrow dir="right" />
+                  </button>
+                )}
+              </div>
+              <button type="button" className="btn-red" onClick={() => next('next-game')}>
+                Next Game
+              </button>
+            </div>
           </div>
         </div>
 

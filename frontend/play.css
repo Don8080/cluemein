@@ -346,16 +346,26 @@ button.turn-banner.end-turn:disabled {
   margin-top: 0.8em;
 }
 
-/* Prev Board and Next Board at the left, a comfortable gap apart; Next
-   Game alone at the right edge of the board. */
+/* At the right edge of the board: Prev Board and Next Board side by side,
+   a comfortable gap apart, and Next Game below, centered on that gap. */
 .board-bottom .board-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6em 1.2em;
+  justify-content: flex-end;
 }
 
-.board-bottom .board-buttons.right {
-  justify-content: flex-end;
+.board-nav {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+}
+
+/* Equal-width columns, so the middle of the row is the middle of the gap. */
+.board-nav-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 1.2em;
 }
 
 /* Floaters under the board, one per line, centered. */
